@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ function SubmitButton() {
 export function EditDocumentForm({ collectionId, document }: { collectionId: string, document: any }) {
     const { toast } = useToast();
     const initialState = { message: null, success: false };
-    const [state, dispatch] = useFormState(updateDocumentAction, initialState);
+    const [state, dispatch] = useActionState(updateDocumentAction, initialState);
 
     useEffect(() => {
         if (state.message) {
