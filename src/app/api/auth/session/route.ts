@@ -20,21 +20,25 @@ export async function POST(request: NextRequest) {
 
     try {
         const decodedToken = await authAdmin!.verifyIdToken(idToken);
-        const user = await authAdmin!.getUser(decodedToken.uid);
+        const adminEmail = process.env.FIREBASE_ADMIN_EMAIL;
 
-        // This is a new user if they don't have a custom role set.
-        if (!user.customClaims?.role) {
-            const adminEmail = process.env.FIREBASE_ADMIN_EMAIL;
-            
-            if (adminEmail && user.email === adminEmail) {
-                // If the user's email matches the admin email, make them an Admin.
-                await authAdmin!.setCustomUserClaims(user.uid, { role: 'Admin' });
-            } else {
-                // Otherwise, assign a default role.
-                await authAdmin!.setCustomUserClaims(user.uid, { role: 'Viewer' });
-            }
+        // Check if the admin email is configured
+        if (!adminEmail) {
+            console.error('FIREBASE_ADMIN_EMAIL no está configurado. No se puede verificar al propietario del sitio.');
+            return NextResponse.json({ error: 'La configuración del servidor está incompleta. No se puede iniciar sesión.' }, { status: 500 });
         }
 
+        // Check if the user's email matches the owner's email
+        if (decodedToken.email !== adminEmail) {
+            return NextResponse.json({ error: 'Acceso denegado. Solo el propietario del sitio puede iniciar sesión.' }, { status: 403 });
+        }
+
+        // If it's the owner, ensure they have the Admin role
+        const user = await authAdmin!.getUser(decodedToken.uid);
+        if (user.customClaims?.role !== 'Admin') {
+            await authAdmin!.setCustomUserClaims(user.uid, { role: 'Admin' });
+        }
+        
         const sessionCookie = await authAdmin!.createSessionCookie(idToken, { expiresIn });
         cookies().set('__session', sessionCookie, {
             maxAge: expiresIn / 1000,
