@@ -13,18 +13,8 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { Badge } from "@/components/ui/badge"
   import { Users, Database, Folder, Activity } from "lucide-react"
-  import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-  
-  const chartData = [
-    { name: 'Jan', users: 400 },
-    { name: 'Feb', users: 300 },
-    { name: 'Mar', users: 500 },
-    { name: 'Apr', users: 200 },
-    { name: 'May', users: 800 },
-    { name: 'Jun', users: 700 },
-  ];
+  import { UserChart } from "./components/user-chart";
   
   const recentActivities = [
     { id: 1, user: "admin@example.com", action: "Created collection 'posts'", timestamp: "2 hours ago", type: "CREATE" },
@@ -87,21 +77,7 @@ import {
               <CardDescription>A look at new user sign-ups over the last 6 months.</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: 'var(--radius)',
-                    }}
-                   />
-                  <Bar dataKey="users" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+               <UserChart />
             </CardContent>
           </Card>
           <Card className="lg:col-span-3">
