@@ -28,10 +28,16 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { AiSummaryButton } from "./components/ai-summary-button"
 import { getCollectionData } from "@/lib/mock-data"
 
+function toSingularTitleCase(str: string) {
+    const singular = str.endsWith('s') ? str.slice(0, -1) : str;
+    return singular.charAt(0).toUpperCase() + singular.slice(1);
+}
+
 export default function SingleCollectionPage({ params }: { params: { id: string } }) {
   const collectionId = params.id;
   const data = getCollectionData(collectionId);
   const fields = data.length > 0 ? Object.keys(data[0]) : [];
+  const buttonText = `Add ${toSingularTitleCase(collectionId)}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,7 +51,7 @@ export default function SingleCollectionPage({ params }: { params: { id: string 
             <Button asChild>
               <Link href={`/collections/${collectionId}/new`}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Document
+                {buttonText}
               </Link>
             </Button>
         </div>
