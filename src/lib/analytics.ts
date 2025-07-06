@@ -50,7 +50,7 @@ export async function getAnalyticsData() {
             }
         });
     } catch (error) {
-        console.error('Error de inicialización del cliente de la API de Google Analytics Data:', error);
+        console.error('Error de inicialización del cliente de la API de Google Analytics Data:', String(error));
         console.warn("Devolviendo datos de ejemplo debido a un error de inicialización del cliente de Analytics.");
         return mockAnalyticsData;
     }
@@ -116,7 +116,7 @@ export async function getAnalyticsData() {
         return { summary, userChartData, topPages };
 
     } catch (error) {
-        console.error("Error al obtener datos de Google Analytics:", error);
+        console.error("Error al obtener datos de Google Analytics:", String(error));
         console.warn("Devolviendo datos de ejemplo debido a un error de la API de Analytics.");
         return mockAnalyticsData;
     }

@@ -16,7 +16,7 @@ export function usePinnedCollections() {
                 setPinnedCollections(JSON.parse(item));
             }
         } catch (error) {
-            console.error("Failed to read pinned collections from localStorage", error);
+            console.error("Failed to read pinned collections from localStorage", String(error));
             setPinnedCollections([]);
         }
     }, []);
@@ -30,7 +30,7 @@ export function usePinnedCollections() {
             try {
                 window.localStorage.setItem(PINNED_COLLECTIONS_KEY, JSON.stringify(newPinned));
             } catch (error) {
-                console.error("Failed to save pinned collections to localStorage", error);
+                console.error("Failed to save pinned collections to localStorage", String(error));
             }
             return newPinned;
         });

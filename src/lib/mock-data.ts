@@ -17,7 +17,7 @@ export async function getCollectionDocuments(collectionId: string) {
       }
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-      console.error(`Error al obtener documentos para la colección "${collectionId}":`, error);
+      console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
       return mockData[collectionId] || [];
   }
 }
@@ -73,7 +73,7 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
       return { definition, icon };
   
     } catch (error) {
-      console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, error);
+      console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
       const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n  // Revisa los logs del servidor y la configuración de Firebase para más detalles.\n});`;
       return { definition, icon: null };
     }
@@ -133,7 +133,7 @@ export async function fetchPublicData() {
         ]);
         return { products, posts, galleryImages };
     } catch (error) {
-        console.error("Error al obtener datos públicos de Firebase:", error);
+        console.error("Error al obtener datos públicos de Firebase:", String(error));
         return {
             products: [],
             posts: [],

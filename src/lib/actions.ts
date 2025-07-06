@@ -118,7 +118,7 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
       success: true,
     };
   } catch (error) {
-    console.error("Error al actualizar el esquema en Firestore:", error);
+    console.error("Error al actualizar el esquema en Firestore:", String(error));
     return {
       errors: null,
       message: `No se pudo actualizar el esquema en Firestore. Por favor, revisa los logs del servidor y la configuración de Firebase.`,
@@ -181,7 +181,7 @@ export async function createCollectionAction(prevState: any, formData: FormData)
         errors: null,
     };
   } catch (error) {
-    console.error("Error al crear la colección en Firestore:", error);
+    console.error("Error al crear la colección en Firestore:", String(error));
     return {
       message: `No se pudo crear la colección. Por favor, revisa los logs del servidor y la configuración de Firebase.`,
       success: false,
@@ -301,7 +301,7 @@ export async function createDocumentAction(prevState: any, formData: FormData) {
             errors: null,
         };
     } catch (error) {
-        console.error("Error al crear el documento:", error);
+        console.error("Error al crear el documento:", String(error));
         return { 
             message: `No se pudo crear el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
             success: false,
@@ -496,7 +496,7 @@ export async function uploadFileAction(formData: FormData, folder: string) {
         return { success: true, url: fileUpload.publicUrl() };
 
     } catch (error) {
-        console.error("Error al subir el archivo:", error);
+        console.error("Error al subir el archivo:", String(error));
         return { success: false, error: `No se pudo subir el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}` };
     }
 }
@@ -563,7 +563,7 @@ export async function getCollectionIdeasAction(collectionName: string) {
         error: null,
     };
   } catch (error) {
-    console.error("Error generating collection ideas:", error);
+    console.error("Error generating collection ideas:", String(error));
     return {
         ideas: null,
         error: `Ocurrió un error al generar ideas: ${error instanceof Error ? error.message : 'Error desconocido'}`,
