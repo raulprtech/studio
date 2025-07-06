@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDocumentAction } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Github } from 'lucide-react';
 import type { Metadata } from 'next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -68,13 +68,22 @@ export default async function ProjectDetailPage({ params }: Props) {
               ))}
             </div>
           </div>
-          {project.liveUrl && (
-            <Button asChild className="w-full" size="lg">
-              <Link href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                Ver Proyecto en Vivo <ExternalLink className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
+          <div className="flex flex-col gap-2">
+            {project.liveUrl && (
+              <Button asChild className="w-full" size="lg">
+                <Link href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                  Ver Proyecto en Vivo <ExternalLink className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+             {project.githubUrl && (
+              <Button asChild className="w-full" size="lg" variant="secondary">
+                <Link href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                  <Github className="mr-2 h-4 w-4" /> Ver Código Fuente
+                </Link>
+              </Button>
+            )}
+          </div>
         </aside>
       </div>
 

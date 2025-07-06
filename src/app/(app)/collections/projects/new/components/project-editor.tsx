@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useTransition, useActionState, useRef, type RefObject } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { updateDocumentAction, writingAssistantAction, uploadFileAction } from "@/lib/actions";
+import { createDocumentAction, writingAssistantAction, uploadFileAction } from "@/lib/actions";
 import { Loader2, Wand2, Eye, Pencil, Sparkles, ChevronDown, Heading1, Heading2, Heading3, Bold, Italic, Strikethrough, Code, Link as LinkIcon, List, ListOrdered, Quote, Image as ImageIcon, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import {
@@ -41,7 +42,7 @@ function SubmitButton() {
     return (
         <Button type="submit" disabled={pending} className="w-full">
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Guardar Cambios
+            Guardar Proyecto
         </Button>
     );
 }
@@ -167,13 +168,14 @@ function AiTools({ selectedText, isGenerating, onActionStart }: { selectedText: 
 
 // #endregion
 
-export function ProjectEditor({ collectionId, document }: { collectionId: string, document: any }) {
+export function ProjectEditor() {
+    const router = useRouter();
     const { toast } = useToast();
-    const initialState = { message: null, success: false };
-    const [state, dispatch] = useActionState(updateDocumentAction, initialState);
+    const initialState = { message: null, success: false, redirectUrl: null };
+    const [state, dispatch] = useActionState(createDocumentAction, initialState);
     
-    const [content, setContent] = useState(document.longDescription || "");
-    const [coverImageUrl, setCoverImageUrl] = useState(document.coverImageUrl || null);
+    const [content, setContent] = useState("");
+    const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
     const [isUploading, startUploading] = useTransition();
     const [isAiGenerating, startAiTransition] = useTransition();
@@ -183,14 +185,21 @@ export function ProjectEditor({ collectionId, document }: { collectionId: string
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        if (state.message) {
+        if (state.success && state.redirectUrl) {
             toast({
-                title: state.success ? "Éxito" : "Error",
+                title: "Éxito",
+                description: state.message || "Proyecto creado.",
+            });
+            router.push(state.redirectUrl);
+        } else if (state.message && !state.success) {
+            toast({
+                title: "Error",
                 description: state.message,
-                variant: state.success ? "default" : "destructive",
+                variant: "destructive",
             });
         }
-    }, [state, toast]);
+    }, [state, router, toast]);
+
     
     const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -322,7 +331,7 @@ export function ProjectEditor({ collectionId, document }: { collectionId: string
                         <CardContent className="p-0">
                             <div className="grid gap-2 p-4">
                                 <Label htmlFor="title" className="sr-only">Título</Label>
-                                <Input id="title" name="title" placeholder="Título del Proyecto" defaultValue={document.title} className="text-2xl font-bold h-14 border-none shadow-none focus-visible:ring-0 px-0" />
+                                <Input id="title" name="title" placeholder="Título del Proyecto" className="text-2xl font-bold h-14 border-none shadow-none focus-visible:ring-0 px-0" />
                             </div>
                            
                             <EditorToolbar 
@@ -368,8 +377,7 @@ export function ProjectEditor({ collectionId, document }: { collectionId: string
                              <CardTitle>Detalles del Proyecto</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <input type="hidden" name="collectionId" value={collectionId} />
-                            <input type="hidden" name="documentId" value={document.id} />
+                            <input type="hidden" name="collectionId" value="projects" />
                             <input type="hidden" name="coverImageUrl" value={coverImageUrl || ""} />
 
                              <div className="grid gap-2">
@@ -381,23 +389,23 @@ export function ProjectEditor({ collectionId, document }: { collectionId: string
                             
                             <div className="grid gap-2">
                                 <Label htmlFor="description">Descripción Corta</Label>
-                                <Textarea id="description" name="description" placeholder="Una breve descripción para la tarjeta del proyecto." defaultValue={document.description} rows={3} />
+                                <Textarea id="description" name="description" placeholder="Una breve descripción para la tarjeta del proyecto." rows={3} />
                             </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="tags">Etiquetas (separadas por coma)</Label>
-                                <Input id="tags" name="tags" placeholder="Ej. React, Next.js, Firebase" defaultValue={document.tags?.join(', ') || ''} />
+                                <Input id="tags" name="tags" placeholder="Ej. React, Next.js, Firebase" />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="liveUrl">URL del Proyecto</Label>
-                                <Input id="liveUrl" name="liveUrl" placeholder="https://mi-proyecto.com" defaultValue={document.liveUrl} />
+                                <Input id="liveUrl" name="liveUrl" placeholder="https://mi-proyecto.com" />
                             </div>
-                            <div className="grid gap-2">
+                             <div className="grid gap-2">
                                 <Label htmlFor="githubUrl">URL de GitHub</Label>
-                                <Input id="githubUrl" name="githubUrl" placeholder="https://github.com/usuario/repo" defaultValue={document.githubUrl} />
+                                <Input id="githubUrl" name="githubUrl" placeholder="https://github.com/usuario/repo" />
                             </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="gallery">Galería (URLs de imagen separadas por coma)</Label>
-                                <Textarea id="gallery" name="gallery" placeholder="https://url/imagen1.png, https://url/imagen2.png" defaultValue={document.gallery?.join(',\n')} rows={4} />
+                                <Textarea id="gallery" name="gallery" placeholder="https://url/imagen1.png, https://url/imagen2.png" rows={4} />
                             </div>
                         </CardContent>
                         <CardFooter>

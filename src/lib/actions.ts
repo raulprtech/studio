@@ -254,6 +254,61 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
 
 // Document Management Actions
 
+export async function createDocumentAction(prevState: any, formData: FormData) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false, redirectUrl: null };
+    }
+
+    const collectionId = formData.get('collectionId') as string;
+    if (!collectionId) {
+        return { message: "Se requiere el ID de la colección.", success: false, redirectUrl: null };
+    }
+
+    const dataToCreate: { [key: string]: any } = {};
+    for (const [key, value] of formData.entries()) {
+        if (key === 'collectionId' || key.startsWith('$ACTION_ID')) continue;
+        if (key === 'tags' || key === 'gallery') {
+            dataToCreate[key] = (value as string) ? (value as string).split(',').map(item => item.trim()).filter(Boolean) : [];
+        } else if (key === 'publishedAt' && value) {
+            dataToCreate[key] = admin.firestore.Timestamp.fromDate(new Date(value as string));
+        }
+        else {
+            dataToCreate[key] = value;
+        }
+    }
+    
+    dataToCreate.createdAt = admin.firestore.Timestamp.now();
+    dataToCreate.updatedAt = admin.firestore.Timestamp.now();
+
+    try {
+        const docRef = await firestoreAdmin!.collection(collectionId).add(dataToCreate);
+        
+        revalidatePath(`/collections/${collectionId}`);
+        if(collectionId === 'projects') {
+             revalidatePath('/proyectos');
+             revalidatePath('/');
+        }
+        if(collectionId === 'posts') {
+            revalidatePath('/blog');
+            revalidatePath('/');
+        }
+
+        return {
+            success: true,
+            message: `Documento creado con éxito en '${collectionId}'.`,
+            redirectUrl: `/collections/${collectionId}/${docRef.id}/edit`,
+            errors: null,
+        };
+    } catch (error) {
+        console.error("Error al crear el documento:", error);
+        return { 
+            message: `No se pudo crear el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
+            success: false,
+            redirectUrl: null 
+        };
+    }
+}
+
 export async function duplicateDocumentAction(collectionId: string, documentId: string) {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
         return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
@@ -359,6 +414,8 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
                  dataToUpdate[key] = false;
             }
         });
+
+        dataToUpdate.updatedAt = admin.firestore.Timestamp.now();
         
         await docRef.update(dataToUpdate);
 
@@ -366,6 +423,8 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
         revalidatePath(`/collections/${collectionId}/${documentId}/edit`);
         revalidatePath(`/collections/posts/edit/${documentId}`);
         revalidatePath('/blog'); // Revalidate blog index page
+        revalidatePath('/proyectos'); // Revalidate projects index page
+        revalidatePath(`/proyectos/${documentId}`); // Revalidate project detail page
         return { message: `Documento '${documentId}' actualizado con éxito.`, success: true };
 
     } catch (error) {
