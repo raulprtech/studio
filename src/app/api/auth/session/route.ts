@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
 
     try {
         const decodedToken = await authAdmin!.verifyIdToken(idToken);
+        const user = await authAdmin!.getUser(decodedToken.uid);
+        
         const adminEmail = process.env.FIREBASE_ADMIN_EMAIL;
 
         // Check if the admin email is configured
@@ -27,18 +29,21 @@ export async function POST(request: NextRequest) {
             console.error('FIREBASE_ADMIN_EMAIL no está configurado. No se puede verificar al propietario del sitio.');
             return NextResponse.json({ error: 'La configuración del servidor está incompleta. No se puede iniciar sesión.' }, { status: 500 });
         }
-
-        // Check if the user's email matches the owner's email
-        if (decodedToken.email !== adminEmail) {
-            return NextResponse.json({ error: 'Acceso denegado. Solo el propietario del sitio puede iniciar sesión.' }, { status: 403 });
-        }
-
-        // If it's the owner, ensure they have the Admin role
-        const user = await authAdmin!.getUser(decodedToken.uid);
-        if (user.customClaims?.role !== 'Admin') {
+        
+        const isOwner = user.email === adminEmail;
+        let isAdmin = user.customClaims?.role === 'Admin';
+        
+        // If the user is the owner, ensure they have the Admin role. This promotes them on first login.
+        if (isOwner && !isAdmin) {
             await authAdmin!.setCustomUserClaims(user.uid, { role: 'Admin' });
+            isAdmin = true; // They are now an admin
         }
         
+        // Allow access only to admins. This includes the owner who was just promoted.
+        if (!isAdmin) {
+            return NextResponse.json({ error: 'Acceso denegado. Solo los administradores pueden iniciar sesión.' }, { status: 403 });
+        }
+
         const sessionCookie = await authAdmin!.createSessionCookie(idToken, { expiresIn });
         cookies().set('__session', sessionCookie, {
             maxAge: expiresIn / 1000,
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
             path: '/',
         });
         return NextResponse.json({ success: true });
+
     } catch (error) {
         console.error('Error al crear la cookie de sesión:', String(error));
         return NextResponse.json({ error: 'No se pudo crear la sesión.' }, { status: 401 });
