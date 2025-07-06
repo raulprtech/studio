@@ -57,7 +57,14 @@ export async function getCollections() {
         return successfulCollections;
 
     } catch (error) {
-        console.error("Error al listar las colecciones de Firebase:", String(error));
+        const errorMessage = String(error);
+        // This specific error code (5 NOT_FOUND) often means the Firestore database hasn't been created yet.
+        // We'll treat it as a warning instead of a critical error to avoid breaking the app layout in dev mode.
+        if (errorMessage.includes('NOT_FOUND')) {
+            console.warn(`Advertencia de Firebase: No se encontró la base de datos de Firestore. ¿La has creado en tu proyecto de Firebase? La aplicación continuará con una lista de colecciones vacía. Error original: ${errorMessage}`);
+        } else {
+            console.error("Error al listar las colecciones de Firebase:", errorMessage);
+        }
         return [];
     }
 }
