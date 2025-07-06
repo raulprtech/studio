@@ -105,7 +105,7 @@ export async function getStorageFiles() {
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
                 return {
-                    name: file.name.split('/').pop() || file.name,
+                    name: file.name,
                     type: metadata.contentType || 'application/octet-stream',
                     size: formatBytes(Number(metadata.size)),
                     date: metadata.updated,

@@ -1,23 +1,17 @@
 
 import Image from "next/image"
-import { MoreVertical, FileText, FileImage, FileAudio } from "lucide-react"
+import { FileText, FileImage, FileAudio } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { getCurrentUser } from "@/lib/auth"
 import { getStorageFiles } from "@/lib/data"
 import { StorageActions } from "./components/storage-actions"
+import { FileActionItems } from "./components/file-action-items"
 
 function FileIcon({ fileType }: { fileType: string }) {
   if (fileType.startsWith("image/")) {
@@ -50,20 +44,9 @@ export default async function StoragePage() {
         )}
         {files.map((file) => (
           <Card key={file.name}>
-            <CardHeader className="relative">
+            <CardHeader className="relative h-10">
               {canEdit && (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2">
-                        <MoreVertical className="h-4 w-4" />
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                    <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
-                    <DropdownMenuItem>Descargar</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <FileActionItems file={file} />
               )}
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center p-6 pt-0">
@@ -83,7 +66,7 @@ export default async function StoragePage() {
               )}
             </CardContent>
             <CardFooter className="flex flex-col items-start text-sm">
-                <p className="font-medium truncate w-full">{file.name}</p>
+                <p className="font-medium truncate w-full" title={file.name}>{file.name.split('/').pop()}</p>
                 <p className="text-muted-foreground">{file.size}</p>
             </CardFooter>
           </Card>

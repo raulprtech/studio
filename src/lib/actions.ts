@@ -729,4 +729,23 @@ export async function uploadFileAction(formData: FormData, folder: string) {
         return { success: false, error: `No se pudo subir el archivo: ${String(error)}` };
     }
 }
+
+export async function deleteFileAction(filePath: string) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
+        return { success: false, error: "La aplicación está en modo demo." };
+    }
+    if (!storageAdmin) {
+        return { success: false, error: "El almacenamiento de Firebase no está configurado." };
+    }
+
+    try {
+        const bucket = storageAdmin.bucket();
+        await bucket.file(filePath).delete();
+        revalidatePath('/storage');
+        return { success: true, message: "Archivo eliminado con éxito." };
+    } catch (error) {
+        console.error("Error al eliminar el archivo:", String(error));
+        return { success: false, error: `No se pudo eliminar el archivo: ${String(error)}` };
+    }
+}
 // #endregion
