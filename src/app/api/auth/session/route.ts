@@ -45,12 +45,19 @@ export async function POST(request: NextRequest) {
         }
 
         const sessionCookie = await authAdmin!.createSessionCookie(idToken, { expiresIn });
-        cookies().set('__session', sessionCookie, {
+        
+        const options = {
+            name: '__session',
+            value: sessionCookie,
             maxAge: expiresIn / 1000,
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             path: '/',
-        });
+            sameSite: 'lax' as const,
+        };
+
+        cookies().set(options);
+        
         return NextResponse.json({ success: true });
 
     } catch (error) {
