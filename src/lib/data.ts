@@ -1,6 +1,6 @@
 
 
-import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
+import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
 
@@ -9,8 +9,8 @@ export async function getCollections() {
         console.warn(`Firebase no está en modo real. Devolviendo colecciones de ejemplo.`);
         return Object.keys(mockData).map(name => ({
             name,
-            count: mockData[name].length,
-            schemaFields: Object.keys(mockData[name][0] || {}).length,
+            count: mockData[name]?.length || 0,
+            schemaFields: Object.keys(mockData[name]?.[0] || {}).length,
             lastUpdated: new Date().toISOString(),
             icon: mockSchemas[name]?.icon || null,
         }));
@@ -66,5 +66,59 @@ export async function getCollections() {
             console.error("Error al listar las colecciones de Firebase:", errorMessage);
         }
         return [];
+    }
+}
+
+
+function formatBytes(bytes: number, decimals = 2) {
+    if (!+bytes) return '0 Bytes'
+
+    const k = 1024
+    const dm = decimals < 0 ? 0 : decimals
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
+
+
+export async function getStorageFiles() {
+    if (getMode() !== 'live' || !isFirebaseConfigured || !storageAdmin) {
+        console.warn(`Storage no está en modo real. Devolviendo archivos de ejemplo.`);
+        return mockData.storage || [];
+    }
+
+    try {
+        const bucket = storageAdmin.bucket();
+        // Set a prefix to avoid listing all files from other folders by default
+        const [files] = await bucket.getFiles({ maxResults: 50 });
+
+        if (files.length === 0) {
+            return [];
+        }
+
+        const fileDetails = await Promise.all(
+            files
+              // Filter out "folder" objects
+              .filter(file => !file.name.endsWith('/'))
+              .map(async (file) => {
+                const [metadata] = await file.getMetadata();
+                return {
+                    name: file.name.split('/').pop() || file.name,
+                    type: metadata.contentType || 'application/octet-stream',
+                    size: formatBytes(Number(metadata.size)),
+                    date: metadata.updated,
+                    url: file.publicUrl(),
+                    hint: "file icon"
+                };
+            })
+        );
+        return fileDetails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    } catch (error) {
+        console.error("Error al obtener archivos de Storage:", String(error));
+        // Return mock data on error to prevent page crash
+        return mockData.storage || [];
     }
 }
