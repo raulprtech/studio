@@ -19,6 +19,22 @@ export async function POST(request: NextRequest) {
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
 
     try {
+        const decodedToken = await authAdmin!.verifyIdToken(idToken);
+        const user = await authAdmin!.getUser(decodedToken.uid);
+
+        // This is a new user if they don't have a custom role set.
+        if (!user.customClaims?.role) {
+            const adminEmail = process.env.FIREBASE_ADMIN_EMAIL;
+            
+            if (adminEmail && user.email === adminEmail) {
+                // If the user's email matches the admin email, make them an Admin.
+                await authAdmin!.setCustomUserClaims(user.uid, { role: 'Admin' });
+            } else {
+                // Otherwise, assign a default role.
+                await authAdmin!.setCustomUserClaims(user.uid, { role: 'Viewer' });
+            }
+        }
+
         const sessionCookie = await authAdmin!.createSessionCookie(idToken, { expiresIn });
         cookies().set('__session', sessionCookie, {
             maxAge: expiresIn / 1000,
