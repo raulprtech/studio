@@ -1,31 +1,6 @@
+
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { isFirebaseAdminInitialized } from './firebase-admin'; // Use the same check to see if creds are available
-
-let analyticsDataClient: BetaAnalyticsDataClient | undefined;
-let isAnalyticsInitialized = false;
-
-const propertyId = process.env.GOOGLE_ANALYTICS_PROPERTY_ID;
-
-// Reuse Firebase credentials for Analytics
-if (isFirebaseAdminInitialized && propertyId) {
-    try {
-        analyticsDataClient = new BetaAnalyticsDataClient({
-            credentials: {
-                client_email: process.env.FIREBASE_CLIENT_EMAIL,
-                private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-            }
-        });
-        isAnalyticsInitialized = true;
-        console.log('Google Analytics Data API client initialized successfully.');
-    } catch (error) {
-        console.error('Google Analytics Data API client initialization error:', error);
-        isAnalyticsInitialized = false;
-    }
-} else {
-    if (!propertyId) {
-        console.warn('GOOGLE_ANALYTICS_PROPERTY_ID not set. Analytics features will be disabled.');
-    }
-}
+import { isAnalyticsLive } from './mode';
 
 // MOCK DATA for when analytics is not configured
 const mockAnalyticsData = {
@@ -52,13 +27,28 @@ const mockAnalyticsData = {
     ]
 };
 
-
 export async function getAnalyticsData() {
-    if (!isAnalyticsInitialized || !analyticsDataClient) {
-        console.warn("Analytics not initialized. Returning mock data.");
+    if (!isAnalyticsLive()) {
+        console.warn("Analytics not live. Returning mock data.");
         return mockAnalyticsData;
     }
 
+    const propertyId = process.env.GOOGLE_ANALYTICS_PROPERTY_ID;
+    let analyticsDataClient: BetaAnalyticsDataClient;
+
+    try {
+        analyticsDataClient = new BetaAnalyticsDataClient({
+            credentials: {
+                client_email: process.env.FIREBASE_CLIENT_EMAIL,
+                private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            }
+        });
+    } catch (error) {
+        console.error('Google Analytics Data API client initialization error:', error);
+        console.warn("Returning mock data due to Analytics client initialization error.");
+        return mockAnalyticsData;
+    }
+    
     try {
         const [summaryResponse, userChartResponse, topPagesResponse] = await Promise.all([
             // Summary Cards Data (last 28 days)

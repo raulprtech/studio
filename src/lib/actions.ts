@@ -1,12 +1,21 @@
+
 "use server";
 
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { z } from "zod";
-import { authAdmin, firestoreAdmin, isFirebaseAdminInitialized } from "./firebase-admin";
+import { authAdmin, firestoreAdmin } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
 import { mockData } from "./mock-data";
+import { isFirebaseLive } from "./mode";
+import { cookies } from "next/headers";
+
+export async function setAppModeAction(mode: 'live' | 'demo') {
+  cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
+  revalidatePath('/', 'layout');
+  return { success: true, message: `Mode set to ${mode}` };
+}
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
@@ -64,10 +73,10 @@ const updateSchemaSchema = z.object({
 });
 
 export async function updateSchemaAction(prevState: any, formData: FormData) {
-  if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+  if (!isFirebaseLive()) {
     return {
         errors: null,
-        message: "Action failed: Firebase is not configured on the server. Please check your .env.local file.",
+        message: "Action failed: App is in demo mode. Switch to live mode to save to Firestore.",
         success: false,
     };
   }
@@ -88,7 +97,7 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   const { collectionId, schemaDefinition } = validatedFields.data;
 
   try {
-    const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionId);
+    const schemaDocRef = firestoreAdmin!.collection('_schemas').doc(collectionId);
     await schemaDocRef.set({
       definition: schemaDefinition,
       updatedAt: new Date(),
@@ -118,8 +127,8 @@ const updateUserRoleSchema = z.object({
 });
 
 export async function updateUserRoleAction(prevState: any, formData: FormData) {
-  if (!isFirebaseAdminInitialized || !authAdmin) {
-    return { message: "Action failed: Firebase is not configured.", success: false };
+  if (!isFirebaseLive()) {
+    return { message: "Action failed: App is in demo mode.", success: false };
   }
 
   const validatedFields = updateUserRoleSchema.safeParse({
@@ -138,7 +147,7 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
   const { uid, role } = validatedFields.data;
   
   try {
-    await authAdmin.setCustomUserClaims(uid, { role });
+    await authAdmin!.setCustomUserClaims(uid, { role });
     revalidatePath('/authentication');
     return { message: `Successfully updated role to ${role}.`, success: true };
   } catch (error) {
@@ -147,13 +156,11 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
 }
 
 export async function sendPasswordResetAction(email: string) {
-    if (!isFirebaseAdminInitialized || !authAdmin) {
-        return { message: "Action failed: Firebase is not configured.", success: false };
+    if (!isFirebaseLive()) {
+        return { message: "Action failed: App is in demo mode.", success: false };
     }
     try {
-        // This only generates a link. A real app would use an email service to send it.
-        // For this demo, successfully generating the link is considered a success.
-        await authAdmin.generatePasswordResetLink(email);
+        await authAdmin!.generatePasswordResetLink(email);
         return { message: `Password reset successfully initiated for ${email}.`, success: true };
     } catch (error) {
         return { message: `Failed to send password reset: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
@@ -162,11 +169,11 @@ export async function sendPasswordResetAction(email: string) {
 
 
 export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
-    if (!isFirebaseAdminInitialized || !authAdmin) {
-        return { message: "Action failed: Firebase is not configured.", success: false };
+    if (!isFirebaseLive()) {
+        return { message: "Action failed: App is in demo mode.", success: false };
     }
     try {
-        await authAdmin.updateUser(uid, { disabled: isDisabled });
+        await authAdmin!.updateUser(uid, { disabled: isDisabled });
         revalidatePath('/authentication');
         const status = isDisabled ? "disabled" : "enabled";
         return { message: `User successfully ${status}.`, success: true };
@@ -178,17 +185,17 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
 // Document Management Actions
 
 export async function duplicateDocumentAction(collectionId: string, documentId: string) {
-    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
-        return { message: "Action failed: Firebase is not configured.", success: false };
+    if (!isFirebaseLive()) {
+        return { message: "Action failed: App is in demo mode.", success: false };
     }
     try {
-        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
+        const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
             return { message: `Document with ID ${documentId} not found.`, success: false };
         }
         const data = docSnap.data();
-        await firestoreAdmin.collection(collectionId).add(data!);
+        await firestoreAdmin!.collection(collectionId).add(data!);
         revalidatePath(`/collections/${collectionId}`);
         return { message: `Document duplicated successfully.`, success: true };
     } catch (error) {
@@ -197,11 +204,11 @@ export async function duplicateDocumentAction(collectionId: string, documentId: 
 }
 
 export async function deleteDocumentAction(collectionId: string, documentId: string) {
-    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
-        return { message: "Action failed: Firebase is not configured.", success: false };
+    if (!isFirebaseLive()) {
+        return { message: "Action failed: App is in demo mode.", success: false };
     }
     try {
-        await firestoreAdmin.collection(collectionId).doc(documentId).delete();
+        await firestoreAdmin!.collection(collectionId).doc(documentId).delete();
         revalidatePath(`/collections/${collectionId}`);
         return { message: `Document deleted successfully.`, success: true };
     } catch (error) {
@@ -210,8 +217,8 @@ export async function deleteDocumentAction(collectionId: string, documentId: str
 }
 
 export async function getDocumentAction(collectionId: string, documentId: string) {
-    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
-        console.warn("Firebase not initialized. Returning mock data.");
+    if (!isFirebaseLive()) {
+        console.warn("Firebase not live. Returning mock data for getDocumentAction.");
         const collectionData = mockData[collectionId] || [];
         const document = collectionData.find(doc => doc.id === documentId);
         if (!document) {
@@ -221,7 +228,7 @@ export async function getDocumentAction(collectionId: string, documentId: string
     }
 
     try {
-        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
+        const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
             return { data: null, error: "Document not found." };
@@ -233,8 +240,8 @@ export async function getDocumentAction(collectionId: string, documentId: string
 }
 
 export async function updateDocumentAction(prevState: any, formData: FormData) {
-    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
-        return { message: "Action failed: Firebase is not configured.", success: false };
+    if (!isFirebaseLive()) {
+        return { message: "Action failed: App is in demo mode.", success: false };
     }
 
     const collectionId = formData.get('collectionId') as string;
@@ -245,7 +252,7 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
     }
 
     try {
-        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
+        const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
         const originalDocSnap = await docRef.get();
         if (!originalDocSnap.exists) {
             return { message: "Document not found.", success: false };

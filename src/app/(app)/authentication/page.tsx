@@ -1,3 +1,4 @@
+
 import { PlusCircle, MoreHorizontal } from "lucide-react"
 import { revalidatePath } from "next/cache"
 
@@ -28,15 +29,17 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getCurrentUser } from "@/lib/auth"
-import { authAdmin, isFirebaseAdminInitialized } from "@/lib/firebase-admin"
+import { authAdmin } from "@/lib/firebase-admin"
 import { mockData } from "@/lib/mock-data"
 import { EditRoleMenuItem, SendPasswordResetMenuItem, ToggleUserStatusMenuItem } from "./components/user-action-items"
+import { isFirebaseLive } from "@/lib/mode"
 
 export default async function AuthenticationPage() {
   const currentUser = await getCurrentUser();
   let users: any[] = [];
+  const useLive = isFirebaseLive();
 
-  if (isFirebaseAdminInitialized && authAdmin) {
+  if (useLive && authAdmin) {
     try {
       const userRecords = await authAdmin.listUsers();
       users = userRecords.users.map(user => ({
@@ -51,11 +54,9 @@ export default async function AuthenticationPage() {
       }));
     } catch (error) {
         console.error("Error fetching users from Firebase Auth:", error);
-        // Fallback to mock data on error
         users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
     }
   } else {
-    // Fallback to mock data if Firebase isn't set up
     users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
   }
 

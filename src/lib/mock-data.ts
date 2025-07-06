@@ -1,10 +1,12 @@
-import { firestoreAdmin, isFirebaseAdminInitialized, storageAdmin } from './firebase-admin';
+
+import { firestoreAdmin, storageAdmin } from './firebase-admin';
+import { isFirebaseLive } from './mode';
 
 export const mockData: { [key: string]: any[] } = {
   users: [
-    { id: "user-1", email: "alice@example.com", name: "Alice Johnson", role: "Admin", createdAt: "2024-01-15", disabled: false },
-    { id: "user-2", email: "bob@example.com", name: "Bob Williams", role: "Editor", createdAt: "2024-02-20", disabled: false },
-    { id: "user-3", email: "charlie@example.com", name: "Charlie Brown", role: "Viewer", createdAt: "2024-03-10", disabled: true },
+    { id: "user-1", uid: "user-1", email: "alice@example.com", name: "Alice Johnson", role: "Admin", createdAt: "2024-01-15", disabled: false },
+    { id: "user-2", uid: "user-2", email: "bob@example.com", name: "Bob Williams", role: "Editor", createdAt: "2024-02-20", disabled: false },
+    { id: "user-3", uid: "user-3", email: "charlie@example.com", name: "Charlie Brown", role: "Viewer", createdAt: "2024-03-10", disabled: true },
   ],
   posts: [
     { id: "post-1", title: "Getting Started with Next.js", status: "Published", authorId: "user-1", publishedAt: "2024-05-10", content: "A detailed guide on setting up a new Next.js project." },
@@ -32,19 +34,17 @@ const mockSchemas: { [key: string]: string } = {
 
 
 export function getCollectionData(collectionId: string) {
-    // This function still returns mock data. 
-    // It can be replaced with a real Firestore query later.
     return mockData[collectionId] || [];
 }
 
 export async function getCollectionDocuments(collectionId: string) {
-  if (!isFirebaseAdminInitialized || !firestoreAdmin) {
-      console.warn(`Firebase not initialized. Returning mock data for collection: ${collectionId}`);
+  if (!isFirebaseLive()) {
+      console.warn(`Firebase not live. Returning mock data for collection: ${collectionId}`);
       return mockData[collectionId] || [];
   }
 
   try {
-      const collectionRef = firestoreAdmin.collection(collectionId);
+      const collectionRef = firestoreAdmin!.collection(collectionId);
       const snapshot = await collectionRef.get();
       if (snapshot.empty) {
           return [];
@@ -52,28 +52,24 @@ export async function getCollectionDocuments(collectionId: string) {
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
       console.error(`Error fetching documents for collection "${collectionId}":`, error);
-      // Fallback to mock data on error to prevent crash
       return mockData[collectionId] || [];
   }
 }
 
-// This function now fetches a saved schema from Firestore.
-// If not found, it falls back to inferring from the first document in the live collection.
 export async function getCollectionSchema(collectionId: string): Promise<string> {
-    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
-        console.warn(`Firebase not initialized. Returning mock schema for collection: ${collectionId}`);
-        return mockSchemas[collectionId] || `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Firebase is not configured. This is a default schema for '${collectionId}'.\n});`;
+    if (!isFirebaseLive()) {
+        console.warn(`Firebase not live. Returning mock schema for collection: ${collectionId}`);
+        return mockSchemas[collectionId] || `import { z } from 'zod';\n\nexport const schema = z.object({\n  // App is in demo mode. This is a default schema for '${collectionId}'.\n});`;
     }
 
     try {
-      const schemaDoc = await firestoreAdmin.collection('_schemas').doc(collectionId).get();
+      const schemaDoc = await firestoreAdmin!.collection('_schemas').doc(collectionId).get();
   
       if (schemaDoc.exists && schemaDoc.data()?.definition) {
           return schemaDoc.data()?.definition;
       }
   
-      // Fallback: Infer from the first document in the actual Firestore collection.
-      const collectionRef = firestoreAdmin.collection(collectionId);
+      const collectionRef = firestoreAdmin!.collection(collectionId);
       const snapshot = await collectionRef.limit(1).get();
       
       if (snapshot.empty) {
@@ -92,7 +88,6 @@ export async function getCollectionSchema(collectionId: string): Promise<string>
           if (type === 'number') return 'z.number()';
           if (type === 'boolean') return 'z.boolean()';
           if (value === null) return 'z.any().nullable()';
-          // Check for Firestore Timestamp
           if (value && typeof value.toDate === 'function') return 'z.date()';
           return 'z.any()';
       }
@@ -120,7 +115,7 @@ async function getPublicStorageImages(limit: number) {
     if (!storageAdmin) throw new Error("Storage not initialized");
 
     const bucket = storageAdmin.bucket();
-    const [files] = await bucket.getFiles({ maxResults: limit * 2 }); // Fetch more to filter
+    const [files] = await bucket.getFiles({ maxResults: limit * 2 });
     
     const imageFiles = files.filter(file => file.metadata.contentType?.startsWith('image/')).slice(0, limit);
 
@@ -128,7 +123,7 @@ async function getPublicStorageImages(limit: number) {
         imageFiles.map(async (file) => {
             const [url] = await file.getSignedUrl({
                 action: 'read',
-                expires: '03-09-2491' // Far future expiration
+                expires: '03-09-2491'
             });
             return {
                 url,
@@ -141,8 +136,8 @@ async function getPublicStorageImages(limit: number) {
 }
 
 export async function fetchPublicData() {
-    if (!isFirebaseAdminInitialized) {
-        console.warn("Firebase not initialized. Returning mock data for public page.");
+    if (!isFirebaseLive()) {
+        console.warn("Firebase not live. Returning mock data for public page.");
         return {
             products: mockData.products.slice(0, 3),
             posts: mockData.posts.slice(0, 2),
