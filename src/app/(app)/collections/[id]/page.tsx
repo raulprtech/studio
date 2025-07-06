@@ -71,7 +71,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                     <Checkbox />
                 </TableHead>
                 {fields.map((field) => (
-                    <TableHead key={field} className="capitalize hidden md:table-cell">{field}</TableHead>
+                    <TableHead key={field} className="capitalize hidden md:table-cell whitespace-nowrap">{field}</TableHead>
                 ))}
                 <TableHead>
                   <span className="sr-only">Acciones</span>
@@ -85,7 +85,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                         <Checkbox />
                     </TableCell>
                     {fields.map((field) => (
-                        <TableCell key={`${item.id}-${field}`} className="hidden md:table-cell">
+                        <TableCell key={`${item.id}-${field}`} className="hidden md:table-cell whitespace-nowrap">
                             {typeof item[field] === 'boolean' ? (
                                 <Badge variant={item[field] ? "default" : "secondary"}>{String(item[field])}</Badge>
                             ) : (
