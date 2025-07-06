@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +22,7 @@ function SubmitButton() {
 
 export function SchemaForm() {
     const initialState = { message: null, errors: {}, schema: null };
-    const [state, dispatch] = useFormState(getSchemaSuggestionAction, initialState);
+    const [state, dispatch] = useActionState(getSchemaSuggestionAction, initialState);
 
     return (
         <form action={dispatch} className="grid gap-6">
