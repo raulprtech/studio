@@ -40,7 +40,7 @@ export default function PortfolioPage() {
     { name: "TailwindCSS", level: 95 }, { name: "Firebase", level: 90 },
   ];
 
-  const projects = mockData.projects.slice(0, 6);
+  const projects = mockData.projects.slice(0, 3);
 
   const experiences = [
     { role: "Desarrollador Frontend Senior", company: "Tech Innovators Inc.", date: "2021 - Presente", description: "Liderando el desarrollo de una nueva plataforma para clientes usando Next.js y TypeScript, con foco en rendimiento y escalabilidad." },
