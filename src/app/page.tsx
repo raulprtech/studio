@@ -1,178 +1,283 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchPublicData } from "@/lib/mock-data";
-import { Logo } from "@/components/logo";
-import { ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Github, Twitter, Linkedin, Dribbble, ArrowRight, Mail, Phone, MapPin, Download, Send } from "lucide-react";
 
-export default async function PublicPage() {
-  const { products, posts, galleryImages } = await fetchPublicData();
+// Helper component for section titles
+const SectionTitle = ({ label, title }: { label: string; title: string }) => (
+  <div className="flex flex-col items-center text-center gap-2 mb-12">
+    <span className="text-sm font-medium text-primary border border-primary/50 rounded-full px-3 py-1">{label}</span>
+    <h2 className="text-3xl md:text-4xl font-bold">{title}</h2>
+  </div>
+);
+
+// Dot pattern component for the hero section
+const GridPattern = () => (
+    <div className="hidden md:block absolute top-1/2 right-0 -translate-y-1/2 w-64 h-64 lg:w-96 lg:h-96" aria-hidden="true">
+        <div className="grid grid-cols-10 grid-rows-10 w-full h-full gap-4">
+            {Array.from({ length: 100 }).map((_, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full ${i % 3 === 0 ? 'bg-accent/80' : 'bg-primary/60' } animate-pulse`} style={{ animationDelay: `${i * 10}ms`, animationDuration: '3s' }}></div>
+            ))}
+        </div>
+    </div>
+)
+
+export default function PortfolioPage() {
+  const skills = [
+    { name: "JavaScript", level: 90 }, { name: "TypeScript", level: 85 },
+    { name: "React / Next.js", level: 95 }, { name: "Node.js", level: 80 },
+    { name: "Python", level: 70 }, { name: "SQL / NoSQL", level: 85 },
+    { name: "UI/UX Design", level: 75 }, { name: "Figma", level: 80 },
+    { name: "DevOps (Docker, K8s)", level: 65 }, { name: "GraphQL", level: 70 },
+    { name: "TailwindCSS", level: 95 }, { name: "Firebase", level: 90 },
+  ];
+
+  const projects = [
+    { title: "E-Commerce Platform", description: "A full-stack e-commerce solution with a custom CMS.", tags: ["Next.js", "Firebase", "Stripe"], image: "https://placehold.co/600x400.png", hint: "website screenshot" },
+    { title: "AI Management App", description: "An application to manage and monitor AI models.", tags: ["React", "Python", "FastAPI"], image: "https://placehold.co/600x400.png", hint: "dashboard ui" },
+    { title: "SaaS Admin Dashboard", description: "A comprehensive dashboard for a SaaS product.", tags: ["Next.js", "Tailwind", "Charts"], image: "https://placehold.co/600x400.png", hint: "admin dashboard" },
+    { title: "Mobile Wallet", description: "A cross-platform mobile wallet for digital assets.", tags: ["React Native", "Node.js", "Security"], image: "https://placehold.co/600x400.png", hint: "mobile app" },
+    { title: "Cyber Dashboard", description: "Real-time cybersecurity threat monitoring dashboard.", tags: ["Data Viz", "Websockets", "React"], image: "https://placehold.co/600x400.png", hint: "cybersecurity dashboard" },
+    { title: "Portfolio Website", description: "A personal portfolio to showcase my work and skills.", tags: ["Astro", "TailwindCSS", "Animations"], image: "https://placehold.co/600x400.png", hint: "portfolio website" },
+  ];
+
+  const experiences = [
+    { role: "Senior Frontend Developer", company: "Tech Innovators Inc.", date: "2021 - Present", description: "Leading the development of a new client-facing platform using Next.js and TypeScript, focusing on performance and scalability." },
+    { role: "Frontend Developer", company: "Creative Solutions", date: "2019 - 2021", description: "Developed and maintained several large-scale web applications for various clients, improving user experience and code quality." },
+    { role: "Web Developer", company: "Digital Agency", date: "2017 - 2019", description: "Built responsive websites and e-commerce stores for small to medium-sized businesses using WordPress, Shopify, and custom code." },
+    { role: "Intern", company: "Startup Hub", date: "2016 - 2017", description: "Assisted the development team in various tasks, including bug fixing, feature implementation, and learning the ropes of professional software development." },
+  ];
+
+  const socialLinks = [
+    { icon: Github, href: "#" },
+    { icon: Twitter, href: "#" },
+    { icon: Linkedin, href: "#" },
+    { icon: Dribbble, href: "#" },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <Link href="/" className="flex items-center justify-center gap-2">
-          <Logo />
-          <span className="font-semibold text-lg">Admin Spark</span>
-        </Link>
-        <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#products">
-            Productos
+    <div className="bg-background text-foreground antialiased selection:bg-primary/40">
+      <div className="pointer-events-none fixed inset-0 -z-10 h-full w-full">
+        <div className="absolute -top-40 right-0 h-[400px] w-[400px] rounded-full bg-primary/20 blur-[150px]"></div>
+        <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-accent/20 blur-[150px]"></div>
+      </div>
+      
+      <header className="fixed top-0 left-0 w-full z-50 bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="font-bold text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">SKA</span>
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#posts">
-            Blog
-          </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#gallery">
-            Galería
-          </Link>
-        </nav>
-        <div className="ml-auto md:ml-4">
-            <Button asChild>
-                <Link href="/dashboard">Panel de Admin</Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            {["About", "Skills", "Projects", "Experience", "Contact"].map((item) => (
+              <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="hover:text-primary transition-colors">
+                {item}
+              </Link>
+            ))}
+          </nav>
+           <Button asChild className="hidden md:flex">
+                <Link href="/dashboard">Admin Panel</Link>
             </Button>
         </div>
       </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-muted/40">
-            <div className="container px-4 md:px-6">
-                <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-                    <div className="flex flex-col justify-center space-y-4">
-                        <div className="space-y-2">
-                            <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                                El Headless CMS Definitivo para tus Proyectos
-                            </h1>
-                            <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                                Gestiona tu contenido con facilidad y potencia tu frontend. Construido con Next.js, Firebase y Google AI.
-                            </p>
-                        </div>
-                        <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                            <Button size="lg" asChild>
-                                <Link href="/dashboard">
-                                    Empezar ahora
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
-                    <Image
-                        src="https://placehold.co/600x500.png"
-                        width="600"
-                        height="500"
-                        alt="Hero"
-                        className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:aspect-square"
-                        data-ai-hint="abstract geometric"
-                    />
-                </div>
+
+      <main className="container mx-auto px-4 pt-16">
+        {/* Hero Section */}
+        <section id="hero" className="relative flex items-center min-h-[calc(100vh-4rem)] py-20">
+          <div className="relative z-10 space-y-6">
+            <span className="text-primary font-semibold">Full Stack Developer</span>
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
+              Hi, I'm <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Shine Kyaw</span>
+              <br />
+              Kyaw Aung
+            </h1>
+            <p className="max-w-lg text-muted-foreground">
+              I'm a passionate developer creating modern and responsive web applications.
+              I turn complex problems into simple, beautiful, and intuitive designs.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Button size="lg" className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold">
+                MY WORKS
+              </Button>
+              <Button size="lg" variant="outline">
+                MY RESUME <Download className="ml-2 h-4 w-4" />
+              </Button>
             </div>
+            <div className="flex items-center gap-4 pt-4">
+              {socialLinks.map((link, index) => (
+                <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <link.icon className="h-6 w-6" />
+                </Link>
+              ))}
+            </div>
+          </div>
+          <GridPattern />
         </section>
-        
-        {products && products.length > 0 && (
-          <section id="products" className="w-full py-12 md:py-24 lg:py-32">
-            <div className="container px-4 md:px-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Productos Destacados</h2>
-                    <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                        Explora nuestra selección de productos directamente desde nuestra colección de Firestore.
-                    </p>
-                </div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {products.map((product: any) => (
-                        <Card key={product.id}>
-                            <CardHeader>
-                                <Image
-                                    src={product.imageUrl || "https://placehold.co/600x400.png"}
-                                    alt={product.name}
-                                    width={600}
-                                    height={400}
-                                    className="rounded-t-lg object-cover aspect-[3/2]"
-                                    data-ai-hint="product photo"
-                                />
-                            </CardHeader>
-                            <CardContent>
-                                <CardTitle>{product.name}</CardTitle>
-                                <p className="text-lg font-semibold text-primary">${Number(product.price).toFixed(2)}</p>
-                                <p className="text-sm text-muted-foreground">{product.category}</p>
-                            </CardContent>
-                            <CardFooter>
-                                <Button className="w-full">Añadir al carrito</Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-          </section>
-        )}
 
-        {posts && posts.length > 0 && (
-           <section id="posts" className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
-            <div className="container px-4 md:px-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Últimas Publicaciones</h2>
-                    <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                        Lee nuestro contenido más reciente, gestionado desde nuestro panel de administración.
-                    </p>
-                </div>
-                <div className="grid gap-8 md:grid-cols-2">
-                    {posts.map((post: any) => (
-                        <Card key={post.id} className="flex flex-col">
-                           <CardHeader>
-                             <CardTitle>{post.title}</CardTitle>
-                             <CardDescription>Publicado el {new Date(post.publishedAt).toLocaleDateString()}</CardDescription>
-                           </CardHeader>
-                           <CardContent className="flex-grow">
-                                <p className="text-muted-foreground line-clamp-3">{post.content}</p>
-                           </CardContent>
-                           <CardFooter>
-                                <Button variant="link" className="p-0 h-auto">
-                                    Leer más
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                           </CardFooter>
-                        </Card>
-                    ))}
-                </div>
+        {/* About Me Section */}
+        <section id="about" className="py-24">
+          <SectionTitle label="INTRODUCTION" title="About Me" />
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="w-full aspect-square bg-card rounded-2xl p-6">
+              <Image
+                src="https://placehold.co/600x600.png"
+                width={600}
+                height={600}
+                alt="Shine Kyaw Kyaw Aung"
+                className="rounded-lg object-cover w-full h-full"
+                data-ai-hint="portrait man"
+              />
             </div>
-           </section>
-        )}
+            <div className="space-y-6">
+              <p className="text-muted-foreground leading-relaxed">
+                I'm a self-taught developer with a passion for building beautiful and functional websites. 
+                I have a strong background in both frontend and backend development, and I'm always looking for new challenges to tackle. 
+                I love learning new technologies and I'm a firm believer in the power of continuous learning.
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><span className="font-semibold text-foreground">Name:</span> Shine K. K. Aung</div>
+                <div><span className="font-semibold text-foreground">Email:</span> contact@shineaung.dev</div>
+                <div><span className="font-semibold text-foreground">Location:</span> Yangon, Myanmar</div>
+                <div><span className="font-semibold text-foreground">Availability:</span> Open to work</div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        {galleryImages && galleryImages.length > 0 && (
-          <section id="gallery" className="w-full py-12 md:py-24 lg:py-32">
-            <div className="container px-4 md:px-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Desde Nuestro Almacenamiento</h2>
-                    <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                        Imágenes directamente desde nuestro bucket de Firebase Storage.
-                    </p>
+        {/* Skills Section */}
+        <section id="skills" className="py-24">
+          <SectionTitle label="MY ABILITIES" title="My Skills" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {skills.map((skill) => (
+              <Card key={skill.name} className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
+                <h3 className="font-semibold mb-2">{skill.name}</h3>
+                <Progress value={skill.level} className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-accent" />
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Projects Section */}
+        <section id="projects" className="py-24">
+          <SectionTitle label="MY PORTFOLIO" title="Featured Projects" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {projects.map((project) => (
+              <Card key={project.title} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group">
+                <CardHeader className="p-0">
+                    <Image
+                      src={project.image}
+                      alt={project.title}
+                      width={600}
+                      height={400}
+                      className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+                      data-ai-hint={project.hint}
+                    />
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-xl font-bold">{project.title}</h3>
+                  <p className="text-muted-foreground text-sm flex-grow">{project.description}</p>
+                   <div className="flex flex-wrap gap-2">
+                      {project.tags.map(tag => (
+                          <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{tag}</span>
+                      ))}
+                    </div>
+                  <Button variant="outline" className="w-full mt-4 bg-transparent border-primary/50 hover:bg-primary/10 text-primary group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground group-hover:border-transparent transition-all">
+                    View Project <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Work Experience Section */}
+        <section id="experience" className="py-24">
+          <SectionTitle label="CAREER PATH" title="Work Experience" />
+          <div className="relative">
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border -translate-x-1/2 hidden md:block"></div>
+            {experiences.map((exp, index) => (
+              <div key={exp.role} className={`relative flex items-center md:justify-center mb-12`}>
+                <div className={`flex w-full md:w-1/2 ${index % 2 === 0 ? 'md:justify-end' : 'md:justify-start'}`}>
+                  <div className={`w-full md:w-11/12 p-6 rounded-lg bg-card/80 backdrop-blur-sm border-border/50 ${index % 2 === 0 ? 'md:mr-8' : 'md:ml-8'}`}>
+                    <p className="text-sm text-primary font-semibold mb-1">{exp.date}</p>
+                    <h3 className="text-xl font-bold mb-2">{exp.role}</h3>
+                    <p className="text-sm text-muted-foreground font-medium mb-3">{exp.company}</p>
+                    <p className="text-sm text-muted-foreground">{exp.description}</p>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {galleryImages.map((image: any) => (
-                        <div key={image.name} className="overflow-hidden rounded-lg">
-                            <Image
-                                src={image.url}
-                                alt={image.name}
-                                width={400}
-                                height={400}
-                                className="aspect-square w-full object-cover transition-transform duration-300 hover:scale-105"
-                                data-ai-hint={image.hint}
-                            />
-                        </div>
-                    ))}
+                <div className="absolute left-1/2 top-1/2 w-4 h-4 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 border-4 border-background hidden md:block"></div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Contact Section */}
+        <section id="contact" className="py-24">
+          <SectionTitle label="GET IN TOUCH" title="Contact Me" />
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="space-y-8">
+              <h3 className="text-2xl font-bold">Contact Information</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Mail className="w-6 h-6 text-primary" /></div>
+                  <div>
+                    <p className="text-muted-foreground">Email</p>
+                    <a href="mailto:contact@shineaung.dev" className="font-semibold hover:text-primary">contact@shineaung.dev</a>
+                  </div>
                 </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Phone className="w-6 h-6 text-primary" /></div>
+                  <div>
+                    <p className="text-muted-foreground">Phone</p>
+                    <a href="tel:+95912345678" className="font-semibold hover:text-primary">+95 9 123 456 789</a>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><MapPin className="w-6 h-6 text-primary" /></div>
+                  <div>
+                    <p className="text-muted-foreground">Address</p>
+                    <p className="font-semibold">Yangon, Myanmar</p>
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold pt-8">Contact On</h3>
+              <div className="flex items-center gap-4">
+                {socialLinks.map((link, index) => (
+                    <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-lg bg-card flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+                      <link.icon className="h-6 w-6" />
+                    </Link>
+                ))}
+              </div>
             </div>
-          </section>
-        )}
+            <Card className="p-8 bg-card/80 backdrop-blur-sm border-border/50">
+              <h3 className="text-2xl font-bold mb-6">Send Me a Message</h3>
+              <form className="space-y-4">
+                <Input type="text" placeholder="Your Name" className="bg-background/50 border-border/80 h-12"/>
+                <Input type="email" placeholder="Your Email" className="bg-background/50 border-border/80 h-12"/>
+                <Textarea placeholder="Your Message" rows={5} className="bg-background/50 border-border/80"/>
+                <Button type="submit" size="lg" className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold">
+                  Send Message <Send className="ml-2 h-4 w-4" />
+                </Button>
+              </form>
+            </Card>
+          </div>
+        </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">&copy; 2024 Admin Spark. Todos los derechos reservados.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-xs hover:underline underline-offset-4" href="#">
-            Términos de Servicio
-          </Link>
-          <Link className="text-xs hover:underline underline-offset-4" href="#">
-            Privacidad
-          </Link>
-        </nav>
+
+      <footer className="border-t border-border/50">
+          <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">&copy; 2024 Shine Kyaw Kyaw Aung. All rights reserved.</p>
+             <div className="flex items-center gap-4">
+              {socialLinks.map((link, index) => (
+                <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <link.icon className="h-5 w-5" />
+                </Link>
+              ))}
+            </div>
+          </div>
       </footer>
     </div>
   );
