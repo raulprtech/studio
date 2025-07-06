@@ -18,7 +18,7 @@ export async function getCollectionDocuments(collectionId: string) {
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
       console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
-      return mockData[collectionId] || [];
+      return [];
   }
 }
 
