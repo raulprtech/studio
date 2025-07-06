@@ -8,6 +8,7 @@ import { es } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Search } from 'lucide-react';
 
 export const metadata = {
   title: 'Blog | Raul Pacheco',
@@ -83,29 +84,41 @@ export default async function BlogIndexPage({
         <p className="text-muted-foreground mt-2">Explorando el mundo del código, el diseño y la tecnología.</p>
       </div>
 
-      <div className="mb-12 max-w-3xl mx-auto p-4 bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl">
-        <form className="flex flex-col sm:flex-row items-center gap-4">
-            <Input
-              name="q"
-              type="search"
-              placeholder="Buscar posts..."
-              defaultValue={query}
-              className="bg-background/50 border-border/80 h-10 w-full sm:flex-1"
-            />
-            <select
-              name="category"
-              defaultValue={category}
-              className="flex h-10 w-full sm:w-auto sm:min-w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="">Todas las categorías</option>
-              {uniqueCategories.map((cat, index) => <option key={index} value={cat}>{cat}</option>)}
-            </select>
-          <Button type="submit" className="w-full sm:w-auto">Filtrar</Button>
-          <Button variant="outline" asChild className="w-full sm:w-auto">
-            <Link href="/blog">Limpiar</Link>
+      <div className="mb-12 max-w-2xl mx-auto">
+        <form className="flex items-center gap-2 bg-card/80 backdrop-blur-sm border border-border/50 rounded-full shadow-md p-1 pr-2">
+          <Input
+            name="q"
+            type="search"
+            placeholder="Buscar por título, etiqueta..."
+            defaultValue={query}
+            className="flex-1 bg-transparent border-none focus-visible:ring-0 h-11 pl-5"
+          />
+          
+          <div className="h-6 w-px bg-border"></div>
+
+          <select
+            name="category"
+            defaultValue={category}
+            className="bg-transparent border-none focus:outline-none text-sm text-muted-foreground hover:text-foreground pr-2 pl-4 appearance-none"
+          >
+            <option value="">Todas las categorías</option>
+            {uniqueCategories.map((cat, index) => <option key={index} value={cat}>{cat}</option>)}
+          </select>
+          
+          <Button type="submit" size="icon" className="rounded-full w-10 h-10 shrink-0">
+              <Search className="h-4 w-4" />
           </Button>
         </form>
+        {/* Add a way to clear filters if they are active */}
+        {(query || category) && (
+          <div className="text-center mt-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/blog">Limpiar filtros</Link>
+            </Button>
+          </div>
+        )}
       </div>
+
 
       {paginatedPosts.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
