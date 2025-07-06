@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ export function FileActionItems({ file }: FileActionProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,6 +56,9 @@ export function FileActionItems({ file }: FileActionProps) {
         description: result.message || result.error,
         variant: result.success ? "default" : "destructive",
       });
+      if (result.success) {
+        router.refresh();
+      }
     });
   };
 
