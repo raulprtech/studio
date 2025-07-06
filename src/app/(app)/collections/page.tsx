@@ -25,15 +25,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { getCollections } from "@/lib/data"
+import { PinCollectionMenuItem } from "./components/pin-collection-menu-item"
+import { PinStatusIcon } from "./components/pin-status-icon"
 
-const collections = [
-  { name: "users", count: 1234, schemaFields: 5, lastUpdated: "2024-05-20T10:00:00Z" },
-  { name: "posts", count: 567, schemaFields: 8, lastUpdated: "2024-05-21T14:30:00Z" },
-  { name: "products", count: 89, schemaFields: 12, lastUpdated: "2024-05-19T08:45:00Z" },
-  { name: "orders", count: 2456, schemaFields: 15, lastUpdated: "2024-05-21T18:00:00Z" },
-]
+export default async function CollectionsPage() {
+  const collections = await getCollections();
 
-export default function CollectionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center">
@@ -67,9 +65,12 @@ export default function CollectionsPage() {
               {collections.map((collection) => (
                 <TableRow key={collection.name}>
                   <TableCell className="font-medium">
-                    <Link href={`/collections/${collection.name}`} className="hover:underline">
-                      {collection.name}
-                    </Link>
+                    <div className="flex items-center">
+                      <Link href={`/collections/${collection.name}`} className="hover:underline">
+                        {collection.name}
+                      </Link>
+                      <PinStatusIcon collectionName={collection.name} />
+                    </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{collection.count.toLocaleString()}</TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -89,6 +90,7 @@ export default function CollectionsPage() {
                         <DropdownMenuItem asChild>
                            <Link href={`/collections/${collection.name}`}>View</Link>
                         </DropdownMenuItem>
+                        <PinCollectionMenuItem collectionName={collection.name} />
                         <DropdownMenuItem asChild>
                           <Link href={`/collections/${collection.name}/edit`}>Edit Schema</Link>
                         </DropdownMenuItem>

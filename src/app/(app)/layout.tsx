@@ -3,10 +3,12 @@ import { cookies } from 'next/headers';
 import { isFirebaseConfigured } from '@/lib/firebase-admin';
 import { ModeSwitch } from './dashboard/components/mode-switch';
 import { AppLayoutClient } from './components/app-layout-client';
+import { getCollections } from '@/lib/data';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const mode = cookies().get('app-mode')?.value === 'live' ? 'live' : 'demo';
   const isConfigured = isFirebaseConfigured;
+  const collections = await getCollections();
 
   const modeSwitchComponent = (
     <>
@@ -18,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <AppLayoutClient modeSwitch={modeSwitchComponent}>
+    <AppLayoutClient modeSwitch={modeSwitchComponent} collections={collections}>
       {children}
     </AppLayoutClient>
   );

@@ -10,6 +10,7 @@ import {
   Settings,
   PlusCircle,
   TestTube2,
+  Bookmark,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -21,18 +22,26 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarInset,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/app-header';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePinnedCollections } from '@/hooks/use-pinned-collections';
 
 type UserRole = 'Admin' | 'Editor' | 'Viewer';
 
-export function AppLayoutClient({ children, modeSwitch }: { children: React.ReactNode, modeSwitch: React.ReactNode }) {
+type Collection = {
+  name: string;
+}
+
+export function AppLayoutClient({ children, modeSwitch, collections }: { children: React.ReactNode, modeSwitch: React.ReactNode, collections: Collection[] }) {
   const pathname = usePathname();
   const role: UserRole = 'Admin';
+  const { pinnedCollections, isClient } = usePinnedCollections();
 
 
   const isActive = (path: string) => {
@@ -43,7 +52,8 @@ export function AppLayoutClient({ children, modeSwitch }: { children: React.Reac
   };
 
   const isAdmin = role === 'Admin';
-  const isViewer = role === 'Viewer';
+  
+  const pinned = isClient ? collections.filter(c => pinnedCollections.includes(c.name)) : [];
 
   return (
     <SidebarProvider>
@@ -60,24 +70,45 @@ export function AppLayoutClient({ children, modeSwitch }: { children: React.Reac
               <SidebarMenuButton href="/dashboard" asChild isActive={isActive('/dashboard')}>
                 <Link href="/dashboard">
                   <Home />
-                  Dashboard
+                  <span>Dashboard</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/collections" asChild isActive={isActive('/collections')}>
+              <SidebarMenuButton href="/collections" asChild isActive={isActive('/collections') && !pinned.some(p => pathname.includes(p.name))}>
                 <Link href="/collections">
                   <Database />
-                  Collections
+                  <span>Collections</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            
+            {pinned.length > 0 && (
+                <SidebarGroup className="p-0">
+                    {pinned.map((collection) => (
+                        <SidebarMenuItem key={collection.name}>
+                            <SidebarMenuButton
+                                href={`/collections/${collection.name}`}
+                                asChild
+                                isActive={isActive(`/collections/${collection.name}`)}
+                                tooltip={collection.name}
+                            >
+                                <Link href={`/collections/${collection.name}`}>
+                                    <Bookmark className="h-4 w-4" />
+                                    <span>{collection.name}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarGroup>
+            )}
+
             {isAdmin && (
               <SidebarMenuItem>
                 <SidebarMenuButton href="/authentication" asChild isActive={isActive('/authentication')}>
                   <Link href="/authentication">
                     <Users />
-                    Authentication
+                    <span>Authentication</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -86,7 +117,7 @@ export function AppLayoutClient({ children, modeSwitch }: { children: React.Reac
               <SidebarMenuButton href="/storage" asChild isActive={isActive('/storage')}>
                 <Link href="/storage">
                   <Folder />
-                  Storage
+                  <span>Storage</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -95,7 +126,7 @@ export function AppLayoutClient({ children, modeSwitch }: { children: React.Reac
                 <SidebarMenuButton href="/settings" asChild isActive={isActive('/settings')}>
                   <Link href="/settings">
                     <Settings />
-                    Settings
+                    <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -114,13 +145,6 @@ export function AppLayoutClient({ children, modeSwitch }: { children: React.Reac
                     </CardContent>
                 </Card>
             </div>
-          {!isViewer && (
-            <Button asChild>
-              <Link href="/collections/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> New Collection
-              </Link>
-            </Button>
-          )}
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
