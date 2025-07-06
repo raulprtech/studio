@@ -36,6 +36,7 @@ type FileActionProps = {
 export function FileActionItems({ file }: FileActionProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [isDownloading, startDownloadTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -58,6 +59,30 @@ export function FileActionItems({ file }: FileActionProps) {
       });
       if (result.success) {
         router.refresh();
+      }
+    });
+  };
+
+  const handleDownload = () => {
+    startDownloadTransition(async () => {
+      try {
+        const response = await fetch(file.url);
+        if (!response.ok) {
+          throw new Error('La respuesta de la red no fue correcta.');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = file.name.split('/').pop() || 'download';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (err) {
+        console.error("Error al descargar el archivo:", err);
+        toast({ title: "Error de Descarga", description: "No se pudo descargar el archivo.", variant: "destructive" });
       }
     });
   };
@@ -90,11 +115,9 @@ export function FileActionItems({ file }: FileActionProps) {
             <Copy className="mr-2 h-4 w-4" />
             Copiar URL
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href={file.url} download={file.name.split('/').pop()}>
-              <Download className="mr-2 h-4 w-4" />
-              Descargar
-            </a>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleDownload} disabled={isDownloading}>
+            {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            Descargar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
