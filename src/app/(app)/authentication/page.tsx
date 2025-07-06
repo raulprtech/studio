@@ -1,6 +1,5 @@
 
-import { PlusCircle, MoreHorizontal } from "lucide-react"
-import { revalidatePath } from "next/cache"
+import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,6 +32,7 @@ import { authAdmin, isFirebaseConfigured } from "@/lib/firebase-admin"
 import { mockData } from "@/lib/mock-data-client"
 import { EditRoleMenuItem, SendPasswordResetMenuItem, ToggleUserStatusMenuItem } from "./components/user-action-items"
 import { getMode } from "@/lib/mode"
+import { AddUserButton } from "./components/add-user-dialog"
 
 export default async function AuthenticationPage() {
   const currentUser = await getCurrentUser();
@@ -72,12 +72,7 @@ export default async function AuthenticationPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center">
         <h1 className="flex-1 text-2xl font-semibold">Usuarios</h1>
-        {isAdmin && (
-            <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Añadir Usuario
-            </Button>
-        )}
+        {isAdmin && <AddUserButton />}
       </div>
       <Card>
         <CardHeader>

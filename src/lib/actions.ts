@@ -191,6 +191,55 @@ export async function createCollectionAction(prevState: any, formData: FormData)
 
 
 // User Management Actions
+const createUserSchema = z.object({
+  email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
+  displayName: z.string().min(1, { message: "El nombre es obligatorio." }),
+  role: z.enum(["Admin", "Editor", "Viewer"]),
+});
+
+export async function createUserAction(prevState: any, formData: FormData) {
+  if (getMode() !== 'live' || !isFirebaseConfigured) {
+    return { message: "Acción fallida: La aplicación está en modo demo.", success: false, errors: {} };
+  }
+
+  const validatedFields = createUserSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+    displayName: formData.get('displayName'),
+    role: formData.get('role'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Validación fallida.',
+      success: false,
+    };
+  }
+
+  const { email, password, displayName, role } = validatedFields.data;
+
+  try {
+    const userRecord = await authAdmin!.createUser({
+      email,
+      password,
+      displayName,
+    });
+    
+    await authAdmin!.setCustomUserClaims(userRecord.uid, { role });
+
+    revalidatePath('/authentication');
+    return { message: `Usuario ${displayName} creado con éxito.`, success: true, errors: {} };
+  } catch (error) {
+    const firebaseError = error as { code?: string; message: string };
+    let errorMessage = `No se pudo crear el usuario: ${firebaseError.message || 'Error desconocido'}`;
+    if (firebaseError.code === 'auth/email-already-exists') {
+        errorMessage = 'Este correo electrónico ya está en uso.';
+    }
+    return { message: errorMessage, success: false, errors: {} };
+  }
+}
 
 const updateUserRoleSchema = z.object({
   uid: z.string().min(1),
