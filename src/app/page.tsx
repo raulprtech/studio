@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Github, Twitter, Linkedin, Dribbble, ArrowRight, Mail, Phone, MapPin, Download, Send } from "lucide-react";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
-import { mockData } from "@/lib/mock-data";
+import { getCollectionDocuments } from "@/lib/mock-data";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -48,7 +48,7 @@ function getExcerpt(markdownText: string, length = 150) {
   return plainText.substring(0, length).trim() + '...';
 }
 
-export default function PortfolioPage() {
+export default async function PortfolioPage() {
   const skills = [
     { name: "JavaScript", level: 90 }, { name: "TypeScript", level: 85 },
     { name: "React / Next.js", level: 95 }, { name: "Node.js", level: 80 },
@@ -58,11 +58,13 @@ export default function PortfolioPage() {
     { name: "TailwindCSS", level: 95 }, { name: "Firebase", level: 90 },
   ];
 
-  const projects = mockData.projects.slice(0, 3);
+  const allProjects = await getCollectionDocuments('projects');
+  const projects = allProjects.slice(0, 3);
   
-  const posts = mockData.posts
+  const allPosts = await getCollectionDocuments('posts');
+  const posts = allPosts
     .filter(p => p.status === 'Publicado' && p.publishedAt)
-    .sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime())
+    .sort((a, b) => new Date(b.publishedAt?.toDate ? b.publishedAt.toDate() : b.publishedAt).getTime() - new Date(a.publishedAt?.toDate ? a.publishedAt.toDate() : a.publishedAt).getTime())
     .slice(0, 3);
 
   const experiences = [
@@ -172,7 +174,7 @@ export default function PortfolioPage() {
               <Card key={project.id} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group flex flex-col">
                 <CardHeader className="p-0">
                     <Image
-                      src={project.image}
+                      src={project.coverImageUrl || "https://placehold.co/600x400.png"}
                       alt={project.title}
                       width={600}
                       height={400}
@@ -184,7 +186,7 @@ export default function PortfolioPage() {
                   <h3 className="text-xl font-bold">{project.title}</h3>
                   <p className="text-muted-foreground text-sm">{project.description}</p>
                    <div className="flex flex-wrap gap-2">
-                      {project.tags.map(tag => (
+                      {project.tags?.map((tag: string) => (
                           <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{tag}</span>
                       ))}
                     </div>
@@ -230,8 +232,8 @@ export default function PortfolioPage() {
                     <h2 className="text-xl font-bold group-hover:text-primary transition-colors">{post.title}</h2>
                     <p className="text-muted-foreground text-sm flex-grow my-3">{getExcerpt(post.content || '', 120)}</p>
                     {post.publishedAt && (
-                    <time dateTime={new Date(post.publishedAt).toISOString()} className="text-sm text-muted-foreground mt-auto">
-                      {format(new Date(post.publishedAt), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                    <time dateTime={new Date(post.publishedAt?.toDate ? post.publishedAt.toDate() : post.publishedAt).toISOString()} className="text-sm text-muted-foreground mt-auto">
+                      {format(new Date(post.publishedAt?.toDate ? post.publishedAt.toDate() : post.publishedAt), "d 'de' LLLL 'de' yyyy", { locale: es })}
                     </time>
                     )}
                   </CardContent>

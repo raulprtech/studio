@@ -2,17 +2,19 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { mockData } from '@/lib/mock-data';
+import { getDocumentAction } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import type { Metadata } from 'next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Props = {
   params: { id: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const project = mockData.projects.find(p => p.id === params.id);
+  const { data: project } = await getDocumentAction('projects', params.id);
 
   if (!project) {
     return {
@@ -27,9 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
-  const project = mockData.projects.find(p => p.id === params.id);
+  const { data: project, error } = await getDocumentAction('projects', params.id);
 
-  if (!project) {
+  if (error || !project) {
     notFound();
   }
 
@@ -42,7 +44,7 @@ export default async function ProjectDetailPage({ params }: Props) {
 
       <div className="mb-8 overflow-hidden rounded-lg shadow-lg">
         <Image
-          src={project.image}
+          src={project.coverImageUrl || 'https://placehold.co/1200x675.png'}
           alt={`Imagen principal de ${project.title}`}
           width={1200}
           height={675}
@@ -55,13 +57,13 @@ export default async function ProjectDetailPage({ params }: Props) {
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 prose prose-lg dark:prose-invert max-w-none">
           <h2>Sobre el Proyecto</h2>
-          <p>{project.longDescription}</p>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{project.longDescription || ''}</ReactMarkdown>
         </div>
         <aside className="md:col-span-1 space-y-6">
           <div className="p-6 rounded-lg bg-card/80 border border-border/50">
             <h3 className="text-lg font-semibold mb-4">Tecnologías Utilizadas</h3>
             <div className="flex flex-wrap gap-2">
-              {project.tags.map(tag => (
+              {project.tags?.map((tag: string) => (
                 <span key={tag} className="text-sm bg-secondary text-secondary-foreground px-3 py-1 rounded-full">{tag}</span>
               ))}
             </div>
@@ -80,7 +82,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         <div className="mt-12">
           <h2 className="text-3xl font-bold text-center mb-8">Galería del Proyecto</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {project.gallery.map((imgUrl, index) => (
+            {project.gallery.map((imgUrl: string, index: number) => (
               <div key={index} className="overflow-hidden rounded-lg shadow-md">
                 <Image
                   src={imgUrl}

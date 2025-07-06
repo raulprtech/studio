@@ -1,7 +1,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { mockData } from '@/lib/mock-data';
+import { getCollectionDocuments } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 export default async function ProjectsPage() {
-  const projects = mockData.projects;
+  const projects = await getCollectionDocuments('projects');
 
   return (
     <div className="py-12">
@@ -26,7 +26,7 @@ export default async function ProjectsPage() {
           <Card key={project.id} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group flex flex-col">
             <CardHeader className="p-0">
                 <Image
-                  src={project.image}
+                  src={project.coverImageUrl || 'https://placehold.co/600x400.png'}
                   alt={project.title}
                   width={600}
                   height={400}
@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
               <h3 className="text-xl font-bold">{project.title}</h3>
               <p className="text-muted-foreground text-sm">{project.description}</p>
                <div className="flex flex-wrap gap-2">
-                  {project.tags.map(tag => (
+                  {project.tags?.map((tag: string) => (
                       <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{tag}</span>
                   ))}
                 </div>
