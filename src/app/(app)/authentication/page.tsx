@@ -1,4 +1,5 @@
 import { PlusCircle, MoreHorizontal } from "lucide-react"
+import { revalidatePath } from "next/cache"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,12 +23,14 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getCurrentUser } from "@/lib/auth"
 import { authAdmin, isFirebaseAdminInitialized } from "@/lib/firebase-admin"
 import { mockData } from "@/lib/mock-data"
+import { EditRoleMenuItem, SendPasswordResetMenuItem, ToggleUserStatusMenuItem } from "./components/user-action-items"
 
 export default async function AuthenticationPage() {
   const currentUser = await getCurrentUser();
@@ -38,21 +41,22 @@ export default async function AuthenticationPage() {
       const userRecords = await authAdmin.listUsers();
       users = userRecords.users.map(user => ({
         uid: user.uid,
-        email: user.email || 'No email',
+        email: user.email || null,
         name: user.displayName || user.email?.split('@')[0] || 'Unnamed User',
         role: user.customClaims?.role || 'Viewer', // Default to viewer
         lastSignIn: user.metadata.lastSignInTime,
         createdAt: user.metadata.creationTime,
-        avatar: user.photoURL || `https://placehold.co/40x40.png`
+        avatar: user.photoURL || `https://placehold.co/40x40.png`,
+        disabled: user.disabled,
       }));
     } catch (error) {
         console.error("Error fetching users from Firebase Auth:", error);
         // Fallback to mock data on error
-        users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png'}));
+        users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
     }
   } else {
     // Fallback to mock data if Firebase isn't set up
-    users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png'}));
+    users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
   }
 
   const isAdmin = currentUser.role === 'Admin';
@@ -88,7 +92,7 @@ export default async function AuthenticationPage() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.uid}>
+                <TableRow key={user.uid} className={user.disabled ? 'opacity-50' : ''}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
@@ -97,12 +101,13 @@ export default async function AuthenticationPage() {
                       </Avatar>
                       <div>
                         <div>{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                        <div className="text-sm text-muted-foreground">{user.email || 'No email'}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+                    {user.disabled && <Badge variant="destructive" className="ml-2">Disabled</Badge>}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{user.lastSignIn ? new Date(user.lastSignIn).toLocaleString() : 'Never'}</TableCell>
                   <TableCell className="hidden md:table-cell">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
@@ -117,9 +122,10 @@ export default async function AuthenticationPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit Role</DropdownMenuItem>
-                            <DropdownMenuItem>Send Password Reset</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Disable User</DropdownMenuItem>
+                            <EditRoleMenuItem user={user} />
+                            <SendPasswordResetMenuItem user={user} />
+                            <DropdownMenuSeparator />
+                            <ToggleUserStatusMenuItem user={user} />
                         </DropdownMenuContent>
                         </DropdownMenu>
                     )}

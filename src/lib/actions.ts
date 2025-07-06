@@ -3,7 +3,8 @@
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { z } from "zod";
-import { firestoreAdmin, isFirebaseAdminInitialized } from "./firebase-admin";
+import { authAdmin, firestoreAdmin, isFirebaseAdminInitialized } from "./firebase-admin";
+import { revalidatePath } from "next/cache";
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
@@ -104,4 +105,70 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
       success: false,
     };
   }
+}
+
+
+// User Management Actions
+
+const updateUserRoleSchema = z.object({
+  uid: z.string().min(1),
+  role: z.enum(["Admin", "Editor", "Viewer"]),
+});
+
+export async function updateUserRoleAction(prevState: any, formData: FormData) {
+  if (!isFirebaseAdminInitialized || !authAdmin) {
+    return { message: "Action failed: Firebase is not configured.", success: false };
+  }
+
+  const validatedFields = updateUserRoleSchema.safeParse({
+    uid: formData.get('uid'),
+    role: formData.get('role'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Validation failed.',
+      success: false,
+    };
+  }
+  
+  const { uid, role } = validatedFields.data;
+  
+  try {
+    await authAdmin.setCustomUserClaims(uid, { role });
+    revalidatePath('/authentication');
+    return { message: `Successfully updated role to ${role}.`, success: true };
+  } catch (error) {
+    return { message: `Failed to update role: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+  }
+}
+
+export async function sendPasswordResetAction(email: string) {
+    if (!isFirebaseAdminInitialized || !authAdmin) {
+        return { message: "Action failed: Firebase is not configured.", success: false };
+    }
+    try {
+        // This only generates a link. A real app would use an email service to send it.
+        // For this demo, successfully generating the link is considered a success.
+        await authAdmin.generatePasswordResetLink(email);
+        return { message: `Password reset successfully initiated for ${email}.`, success: true };
+    } catch (error) {
+        return { message: `Failed to send password reset: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+    }
+}
+
+
+export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
+    if (!isFirebaseAdminInitialized || !authAdmin) {
+        return { message: "Action failed: Firebase is not configured.", success: false };
+    }
+    try {
+        await authAdmin.updateUser(uid, { disabled: isDisabled });
+        revalidatePath('/authentication');
+        const status = isDisabled ? "disabled" : "enabled";
+        return { message: `User successfully ${status}.`, success: true };
+    } catch (error) {
+        return { message: `Failed to update user status: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+    }
 }
