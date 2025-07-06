@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { getCurrentUser } from "@/lib/auth"
+import { getRequiredCurrentUser } from "@/lib/auth"
 import { authAdmin, isFirebaseConfigured } from "@/lib/firebase-admin"
 import { mockData } from "@/lib/mock-data-client"
 import { EditRoleMenuItem, SendPasswordResetMenuItem, ToggleUserStatusMenuItem } from "./components/user-action-items"
@@ -35,7 +35,7 @@ import { getMode } from "@/lib/mode"
 import { AddUserButton } from "./components/add-user-dialog"
 
 export default async function AuthenticationPage() {
-  const currentUser = await getCurrentUser();
+  const currentUser = await getRequiredCurrentUser();
   let users: any[] = [];
   const useLive = getMode() === 'live' && isFirebaseConfigured;
 

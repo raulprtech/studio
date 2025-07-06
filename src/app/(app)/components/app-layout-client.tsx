@@ -8,8 +8,6 @@ import {
   Database,
   Folder,
   Settings,
-  PlusCircle,
-  TestTube2,
   Bookmark,
 } from 'lucide-react';
 import {
@@ -23,28 +21,24 @@ import {
   SidebarFooter,
   SidebarInset,
   SidebarGroup,
-  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/app-header';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePinnedCollections } from '@/hooks/use-pinned-collections';
 import { DynamicIcon } from '@/components/dynamic-icon';
-
-type UserRole = 'Admin' | 'Editor' | 'Viewer';
+import { type AuthenticatedUser } from '@/lib/auth';
+import { TestTube2 } from 'lucide-react';
 
 type Collection = {
   name: string;
   icon?: string | null;
 }
 
-export function AppLayoutClient({ children, modeSwitch, collections }: { children: React.ReactNode, modeSwitch: React.ReactNode, collections: Collection[] }) {
+export function AppLayoutClient({ children, user, modeSwitch, collections }: { children: React.ReactNode, user: AuthenticatedUser, modeSwitch: React.ReactNode, collections: Collection[] }) {
   const pathname = usePathname();
-  const role: UserRole = 'Admin';
   const { pinnedCollections, isClient } = usePinnedCollections();
-
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {
@@ -53,7 +47,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
     return pathname.startsWith(path);
   };
 
-  const isAdmin = role === 'Admin';
+  const isAdmin = user.role === 'Admin';
   
   const pinned = isClient ? collections.filter(c => pinnedCollections.includes(c.name)) : [];
 
@@ -150,7 +144,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <AppHeader />
+        <AppHeader user={user} />
         <main className="flex-1 p-4 sm:px-6 sm:py-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>

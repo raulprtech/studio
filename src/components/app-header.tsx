@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Breadcrumb,
@@ -20,15 +20,47 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, Settings, User, Loader2 } from 'lucide-react';
 import { SidebarTrigger } from './ui/sidebar';
 import { ModeToggle } from './mode-toggle';
+import { type AuthenticatedUser } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 function toTitleCase(str: string) {
   return str.replace(/-/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 
-export function AppHeader() {
+function LogoutButton() {
+    const router = useRouter();
+    const { toast } = useToast();
+    const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            const response = await fetch('/api/auth/session', { method: 'DELETE' });
+            if (response.ok) {
+                router.push('/login');
+                toast({ title: "Sesión cerrada", description: "Has cerrado sesión con éxito." });
+            } else {
+                 throw new Error("No se pudo cerrar la sesión.");
+            }
+        } catch (error) {
+            toast({ title: "Error", description: String(error), variant: "destructive" });
+        } finally {
+            setIsLoggingOut(false);
+        }
+    }
+
+    return (
+        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleLogout(); }} disabled={isLoggingOut}>
+            {isLoggingOut ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
+            <span>Cerrar Sesión</span>
+        </DropdownMenuItem>
+    )
+}
+
+export function AppHeader({ user }: { user: AuthenticatedUser }) {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
 
@@ -44,6 +76,15 @@ export function AppHeader() {
 
   const getBreadcrumbName = (segment: string) => {
     return breadcrumbNameMap[segment] || toTitleCase(segment);
+  }
+
+  const getAvatarFallback = (name: string | null) => {
+      if (!name) return 'U';
+      const parts = name.split(' ');
+      if (parts.length > 1) {
+          return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
   }
 
   return (
@@ -84,27 +125,29 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
               <Avatar>
-                <AvatarImage src="https://placehold.co/32x32.png" alt="@user" />
-                <AvatarFallback>UA</AvatarFallback>
+                <AvatarImage src={user.avatar || undefined} alt={user.name || "Usuario"} />
+                <AvatarFallback>{getAvatarFallback(user.name)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuLabel>
+                <p className="font-medium">{user.name}</p>
+                <p className="text-xs text-muted-foreground font-normal">{user.email}</p>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem disabled>
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configuración</span>
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configuración</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Cerrar Sesión</span>
-            </DropdownMenuItem>
+            <LogoutButton />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

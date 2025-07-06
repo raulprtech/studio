@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card"
-import { getCurrentUser } from "@/lib/auth"
+import { getRequiredCurrentUser } from "@/lib/auth"
 import { getStorageFiles } from "@/lib/data"
 import { StorageActions } from "./components/storage-actions"
 import { FileActionItems } from "./components/file-action-items"
@@ -24,7 +24,7 @@ function FileIcon({ fileType }: { fileType: string }) {
 }
 
 export default async function StoragePage() {
-  const currentUser = await getCurrentUser();
+  const currentUser = await getRequiredCurrentUser();
   const canEdit = currentUser.role === 'Admin' || currentUser.role === 'Editor';
   const files = await getStorageFiles();
 

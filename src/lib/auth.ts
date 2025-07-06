@@ -1,58 +1,55 @@
-// En una aplicación real, este archivo contendría la lógica para gestionar las sesiones de usuario,
-// como obtener el usuario actual a partir de una cookie de sesión.
-
-// Para fines de demostración, simularemos el usuario actual.
-// Esto nos permite probar la interfaz de usuario y la lógica de autorización sin un sistema de autenticación completo.
+'use server';
+import 'server-only';
+import { cookies } from 'next/headers';
+import { authAdmin, isFirebaseConfigured } from './firebase-admin';
+import { redirect } from 'next/navigation';
 
 type UserRole = 'Admin' | 'Editor' | 'Viewer';
 
-interface SimulatedUser {
+export interface AuthenticatedUser {
     uid: string;
-    name: string;
-    email: string;
+    name: string | null;
+    email: string | null;
+    avatar: string | null;
     role: UserRole;
 }
 
-/**
- * Simula la obtención del usuario que ha iniciado sesión actualmente.
- * 
- * Para probar diferentes niveles de permisos, puedes cambiar la variable `role`
- * dentro de esta función a 'Admin', 'Editor' o 'Viewer' y luego refrescar la aplicación.
- * 
- * @returns Una promesa que se resuelve con el objeto del usuario simulado.
- */
-export async function getCurrentUser(): Promise<SimulatedUser> {
-    //
-    // === CAMBIA ESTE VALOR PARA PROBAR DIFERENTES ROLES ===
-    //
-    const role: UserRole = 'Admin'; 
-    //
-    // Opciones: 'Admin', 'Editor', 'Viewer'
-    //
-    
-    if (role === 'Admin') {
-        return { 
-            uid: 'sim-admin-01', 
-            name: 'Admin Simulado', 
-            email: 'admin@example.com', 
-            role: 'Admin' 
-        };
-    }
-    
-    if (role === 'Editor') {
-        return { 
-            uid: 'sim-editor-01', 
-            name: 'Editor Simulado', 
-            email: 'editor@example.com', 
-            role: 'Editor' 
-        };
+export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+    if (!isFirebaseConfigured) {
+        console.warn('Firebase no está configurado, no se puede autenticar al usuario.');
+        return null;
     }
 
-    // Por defecto, Lector
-    return { 
-        uid: 'sim-viewer-01', 
-        name: 'Lector Simulado', 
-        email: 'viewer@example.com', 
-        role: 'Viewer' 
-    };
+    const sessionCookie = cookies().get('__session')?.value;
+    if (!sessionCookie) {
+        return null;
+    }
+
+    try {
+        const decodedToken = await authAdmin!.verifySessionCookie(sessionCookie, true);
+        const userRecord = await authAdmin!.getUser(decodedToken.uid);
+
+        const user: AuthenticatedUser = {
+            uid: userRecord.uid,
+            name: userRecord.displayName || userRecord.email?.split('@')[0] || null,
+            email: userRecord.email || null,
+            avatar: userRecord.photoURL || null,
+            role: (userRecord.customClaims?.role as UserRole) || 'Viewer', // Default to Viewer
+        };
+
+        return user;
+    } catch (error) {
+        console.error('Error al verificar la cookie de sesión:', String(error));
+        // This likely means the cookie is invalid or expired.
+        return null;
+    }
+}
+
+export async function getRequiredCurrentUser(): Promise<AuthenticatedUser> {
+    const user = await getCurrentUser();
+    if (!user) {
+        // This should theoretically be caught by middleware, but it's a good safeguard.
+        redirect('/login');
+    }
+    return user;
 }

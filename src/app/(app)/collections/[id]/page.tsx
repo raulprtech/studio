@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AiSummaryButton } from "./components/ai-summary-button"
 import { getCollectionDocuments } from "@/lib/mock-data"
-import { getCurrentUser } from "@/lib/auth"
+import { getRequiredCurrentUser } from "@/lib/auth"
 import { DeleteDocumentMenuItem, DuplicateDocumentMenuItem, EditDocumentMenuItem } from "./components/collection-action-items"
 import { AiBrainstormButton } from "./components/ai-brainstorm-button"
 
@@ -41,7 +41,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
   const fields = data.length > 0 ? Object.keys(data[0]) : [];
   const buttonText = `Añadir ${toSingularTitleCase(collectionId)}`;
   
-  const currentUser = await getCurrentUser();
+  const currentUser = await getRequiredCurrentUser();
   const canEdit = currentUser.role === 'Admin' || currentUser.role === 'Editor';
 
   const brainstormDisabledCollections = ['users'];
