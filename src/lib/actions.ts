@@ -732,10 +732,11 @@ export async function uploadFileAction(formData: FormData, folder: string) {
 }
 
 export async function deleteFileAction(filePath: string) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
+    if (getMode() !== 'live') {
         return { success: false, error: "La aplicación está en modo demo." };
     }
-    if (!storageAdmin) {
+
+    if (!isFirebaseConfigured || !storageAdmin) {
         return { success: false, error: "El almacenamiento de Firebase no está configurado." };
     }
 
