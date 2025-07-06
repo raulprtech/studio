@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,10 +19,16 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadFileAction } from "@/lib/actions";
 
 export function UploadFileButton() {
+  const [isClient, setIsClient] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, startUploading] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,6 +48,17 @@ export function UploadFileButton() {
       }
     });
   };
+
+  if (!isClient) {
+    // Renderiza un marcador de posición en el servidor y durante la carga inicial del cliente
+    // para evitar errores de hidratación y reservar el espacio.
+    return (
+        <Button disabled>
+            <Upload className="mr-2 h-4 w-4" />
+            Subir Archivo
+        </Button>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
