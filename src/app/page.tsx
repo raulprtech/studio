@@ -176,6 +176,13 @@ export default function PortfolioPage() {
               </Card>
             ))}
           </div>
+          <div className="mt-12 text-center">
+            <Button asChild size="lg" variant="outline">
+              <Link href="/proyectos">
+                Ver Más Proyectos <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </section>
 
         {/* Work Experience Section */}
