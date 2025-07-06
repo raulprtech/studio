@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getCollectionSchema } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { updateSchemaAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
@@ -21,22 +20,30 @@ function SubmitButton() {
     );
 }
 
-export function EditSchemaForm({ collectionId }: { collectionId: string }) {
+export function EditSchemaForm({ collectionId, initialSchema }: { collectionId: string, initialSchema: string }) {
     const { toast } = useToast();
-    const [schema, setSchema] = useState(() => getCollectionSchema(collectionId));
+    const [schema, setSchema] = useState(initialSchema);
 
     const initialState = { message: null, errors: null, success: false };
     const [state, dispatch] = useActionState(updateSchemaAction, initialState);
 
     useEffect(() => {
-        if (state.success && state.message) {
-            toast({
-                title: "Schema Updated",
-                description: state.message,
-            });
-        } else if (!state.success && state.message && state.errors) {
+        if (state.success) {
+            if(state.message) {
+                 toast({
+                    title: "Schema Updated",
+                    description: state.message,
+                });
+            }
+        } else if (state.message) { // Handles failure message from server
              toast({
-                title: "Error updating schema",
+                title: "Error Updating Schema",
+                description: state.message,
+                variant: "destructive",
+            });
+        } else if (state.errors) { // Handles validation errors
+             toast({
+                title: "Validation Error",
                 description: Object.values(state.errors).flat().join('\n'),
                 variant: "destructive",
             });

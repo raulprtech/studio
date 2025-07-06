@@ -3,6 +3,7 @@
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { z } from "zod";
+import { firestoreAdmin } from "./firebase-admin";
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
@@ -73,17 +74,26 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
     };
   }
 
-  // Simulate a network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  const { collectionId, schemaDefinition } = validatedFields.data;
 
-  // In a real app, you'd save this to your database.
-  // For this mock app, we'll just log it and return success.
-  console.log('Simulating schema update for:', validatedFields.data.collectionId);
-  console.log('New schema:', validatedFields.data.schemaDefinition);
+  try {
+    const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionId);
+    await schemaDocRef.set({
+      definition: schemaDefinition,
+      updatedAt: new Date(),
+    });
 
-  return {
-    errors: null,
-    message: `Schema for '${validatedFields.data.collectionId}' updated successfully (simulated).`,
-    success: true,
-  };
+    return {
+      errors: null,
+      message: `Schema for '${collectionId}' updated successfully in Firestore.`,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error updating schema in Firestore:", error);
+    return {
+      errors: null,
+      message: `Failed to update schema in Firestore. Please check server logs and Firebase configuration.`,
+      success: false,
+    };
+  }
 }

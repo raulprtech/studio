@@ -6,9 +6,13 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { EditSchemaForm } from "./components/edit-schema-form"
+import { getCollectionSchema } from "@/lib/mock-data"
 
-export default function EditCollectionSchemaPage({ params }: { params: { id: string } }) {
+export default async function EditCollectionSchemaPage({ params }: { params: { id: string } }) {
     const collectionId = params.id;
+    // This function now fetches data from Firestore, so we await its result.
+    const initialSchema = await getCollectionSchema(collectionId);
+    
     return (
         <div className="flex flex-col gap-6">
             <h1 className="text-2xl font-semibold capitalize">Edit Schema for <span className="font-mono bg-muted px-2 py-1 rounded-md">{collectionId}</span></h1>
@@ -20,7 +24,8 @@ export default function EditCollectionSchemaPage({ params }: { params: { id: str
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <EditSchemaForm collectionId={collectionId} />
+                    {/* The fetched schema is passed as a prop to the form component */}
+                    <EditSchemaForm collectionId={collectionId} initialSchema={initialSchema} />
                 </CardContent>
             </Card>
         </div>

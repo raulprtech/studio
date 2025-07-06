@@ -1,3 +1,4 @@
+import { firestoreAdmin } from './firebase-admin';
 
 export const mockData: { [key: string]: any[] } = {
   users: [
@@ -23,31 +24,54 @@ export const mockData: { [key: string]: any[] } = {
 }
 
 export function getCollectionData(collectionId: string) {
+    // This function still returns mock data. 
+    // It can be replaced with a real Firestore query later.
     return mockData[collectionId] || [];
 }
 
-function getZodType(value: any): string {
-    const type = typeof value;
-    if (type === 'string') {
-        if (value.includes('@')) return 'z.string().email()';
-        return 'z.string()';
+// This function now fetches a saved schema from Firestore.
+// If not found, it falls back to inferring from the first document in the live collection.
+export async function getCollectionSchema(collectionId: string): Promise<string> {
+    try {
+      const schemaDoc = await firestoreAdmin.collection('_schemas').doc(collectionId).get();
+  
+      if (schemaDoc.exists && schemaDoc.data()?.definition) {
+          return schemaDoc.data()?.definition;
+      }
+  
+      // Fallback: Infer from the first document in the actual Firestore collection.
+      const collectionRef = firestoreAdmin.collection(collectionId);
+      const snapshot = await collectionRef.limit(1).get();
+      
+      if (snapshot.empty) {
+          return "z.object({\n  // Collection is empty or does not exist. Cannot infer schema.\n});";
+      }
+  
+      const firstItem = snapshot.docs[0].data();
+      
+      const getZodType = (value: any): string => {
+          const type = typeof value;
+          if (type === 'string') {
+              if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Invalid email address" })';
+              if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/) || !isNaN(Date.parse(value))) return 'z.string().datetime()';
+              return 'z.string()';
+          }
+          if (type === 'number') return 'z.number()';
+          if (type === 'boolean') return 'z.boolean()';
+          if (value === null) return 'z.any().nullable()';
+          // Check for Firestore Timestamp
+          if (value && typeof value.toDate === 'function') return 'z.date()';
+          return 'z.any()';
+      }
+  
+      const schemaFields = Object.entries(firstItem)
+          .map(([key, value]) => `  ${key}: ${getZodType(value)}`)
+          .join(',\n');
+      
+      return `import { z } from 'zod';\n\nexport const schema = z.object({\n${schemaFields}\n});`;
+  
+    } catch (error) {
+      console.error(`Error fetching collection schema for "${collectionId}":`, error);
+      return `import { z } from 'zod';\n\nexport const schema = z.object({\n  // An error occurred while fetching the schema.\n  // Check server logs and Firebase configuration for details.\n});`;
     }
-    if (type === 'number') return 'z.number()';
-    if (type === 'boolean') return 'z.boolean()';
-    if (value === null) return 'z.any().nullable()';
-    return 'z.any()';
-}
-
-export function getCollectionSchema(collectionId: string): string {
-    const data = getCollectionData(collectionId);
-    if (!data || data.length === 0) {
-        return "z.object({\n  // No data found to infer schema.\n});";
-    }
-
-    const firstItem = data[0];
-    const schemaFields = Object.entries(firstItem)
-        .map(([key, value]) => `  ${key}: ${getZodType(value)}`)
-        .join(',\n');
-    
-    return `z.object({\n${schemaFields}\n})`;
-}
+  }
