@@ -1,6 +1,7 @@
 
 import Image from "next/image"
-import { MoreVertical, FileText, FileImage, FileAudio } from "lucide-react"
+import dynamic from "next/dynamic"
+import { MoreVertical, FileText, FileImage, FileAudio, Upload } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +18,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getCurrentUser } from "@/lib/auth"
 import { getStorageFiles } from "@/lib/data"
-import { UploadFileButton } from "./components/upload-file-button"
+
+const UploadFileButton = dynamic(() => import('./components/upload-file-button').then(mod => mod.UploadFileButton), {
+  ssr: false,
+  loading: () => (
+    <Button disabled>
+      <Upload className="mr-2 h-4 w-4" />
+      Subir Archivo
+    </Button>
+  )
+})
 
 function FileIcon({ fileType }: { fileType: string }) {
   if (fileType.startsWith("image/")) {
