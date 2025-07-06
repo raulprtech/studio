@@ -17,35 +17,46 @@ export async function getCollections() {
 
     try {
         const collectionRefs = await firestoreAdmin!.listCollections();
-        const collections = collectionRefs
+        const collectionIds = collectionRefs
             .map(col => col.id)
             .filter(name => !name.startsWith('_'));
 
-        const collectionsData = await Promise.all(
-            collections.map(async (name) => {
-                const [schemaDoc, countSnapshot] = await Promise.all([
-                    firestoreAdmin!.collection('_schemas').doc(name).get(),
-                    // This is a more efficient way to get document count
-                    firestoreAdmin!.collection(name).count().get()
-                ]);
+        const promises = collectionIds.map(async (name) => {
+            const [schemaDoc, countSnapshot] = await Promise.all([
+                firestoreAdmin!.collection('_schemas').doc(name).get(),
+                firestoreAdmin!.collection(name).count().get()
+            ]);
 
-                const schemaData = schemaDoc.data();
-                const schemaString = schemaData?.definition || '';
-                // A simple regex to count fields in a Zod object schema.
-                const fieldCount = (schemaString.match(/:\s*z\./g) || []).length;
-                
-                return {
-                    name,
-                    count: countSnapshot.data().count,
-                    schemaFields: fieldCount,
-                    lastUpdated: schemaData?.updatedAt?.toDate().toISOString() || new Date().toISOString(),
-                    icon: schemaData?.icon || null
-                };
+            const schemaData = schemaDoc.data();
+            const schemaString = schemaData?.definition || '';
+            const fieldCount = (schemaString.match(/:\s*z\./g) || []).length;
+            
+            return {
+                name,
+                count: countSnapshot.data().count,
+                schemaFields: fieldCount,
+                lastUpdated: schemaData?.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+                icon: schemaData?.icon || null
+            };
+        });
+
+        const results = await Promise.allSettled(promises);
+        
+        const successfulCollections = results
+            .map((result, index) => {
+                if (result.status === 'fulfilled') {
+                    return result.value;
+                } else {
+                    console.error(`Error al obtener datos para la colección ${collectionIds[index]}:`, result.reason);
+                    return null;
+                }
             })
-        );
-        return collectionsData;
+            .filter((c): c is NonNullable<Awaited<ReturnType<typeof promises[number]>>> => c !== null);
+
+        return successfulCollections;
+
     } catch (error) {
-        console.error("Error al obtener las colecciones de Firebase:", error);
+        console.error("Error al listar las colecciones de Firebase:", error);
         return [];
     }
 }
