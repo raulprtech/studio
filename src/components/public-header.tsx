@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -5,7 +6,7 @@ export function PublicHeader() {
   const navItems = [
     { name: "Sobre mí", href: "/#sobre-mí" },
     { name: "Habilidades", href: "/#habilidades" },
-    { name: "Proyectos", href: "/#proyectos" },
+    { name: "Proyectos", href: "/proyectos" },
     { name: "Experiencia", href: "/#experiencia" },
     { name: "Blog", href: "/blog" },
     { name: "Contacto", href: "/#contacto" },

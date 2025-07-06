@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Github, Twitter, Linkedin, Dribbble, ArrowRight, Mail, Phone, MapPin, Download, Send } from "lucide-react";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
+import { mockData } from "@/lib/mock-data";
 
 // Helper component for section titles
 const SectionTitle = ({ label, title }: { label: string; title: string }) => (
@@ -39,14 +40,7 @@ export default function PortfolioPage() {
     { name: "TailwindCSS", level: 95 }, { name: "Firebase", level: 90 },
   ];
 
-  const projects = [
-    { title: "Plataforma de E-Commerce", description: "Una solución de e-commerce full-stack con un CMS personalizado.", tags: ["Next.js", "Firebase", "Stripe"], image: "https://placehold.co/600x400.png", hint: "website screenshot" },
-    { title: "App de Gestión de IA", description: "Una aplicación para gestionar y monitorizar modelos de IA.", tags: ["React", "Python", "FastAPI"], image: "https://placehold.co/600x400.png", hint: "dashboard ui" },
-    { title: "Panel de Admin SaaS", description: "Un panel de control completo para un producto SaaS.", tags: ["Next.js", "Tailwind", "Charts"], image: "https://placehold.co/600x400.png", hint: "admin dashboard" },
-    { title: "Billetera Móvil", description: "Una billetera móvil multiplataforma para activos digitales.", tags: ["React Native", "Node.js", "Seguridad"], image: "https://placehold.co/600x400.png", hint: "mobile app" },
-    { title: "Panel de Ciberseguridad", description: "Panel de monitorización de amenazas de ciberseguridad en tiempo real.", tags: ["Data Viz", "Websockets", "React"], image: "https://placehold.co/600x400.png", hint: "cybersecurity dashboard" },
-    { title: "Sitio Web de Portafolio", description: "Un portafolio personal para mostrar mi trabajo y habilidades.", tags: ["Astro", "TailwindCSS", "Animaciones"], image: "https://placehold.co/600x400.png", hint: "portfolio website" },
-  ];
+  const projects = mockData.projects.slice(0, 6);
 
   const experiences = [
     { role: "Desarrollador Frontend Senior", company: "Tech Innovators Inc.", date: "2021 - Presente", description: "Liderando el desarrollo de una nueva plataforma para clientes usando Next.js y TypeScript, con foco en rendimiento y escalabilidad." },
@@ -152,7 +146,7 @@ export default function PortfolioPage() {
           <SectionTitle label="MI PORTAFOLIO" title="Proyectos Destacados" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
-              <Card key={project.title} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group flex flex-col">
+              <Card key={project.id} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group flex flex-col">
                 <CardHeader className="p-0">
                     <Image
                       src={project.image}
@@ -173,8 +167,10 @@ export default function PortfolioPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button variant="outline" className="w-full bg-transparent border-primary/50 hover:bg-primary/10 text-primary group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground group-hover:border-transparent transition-all">
-                        Ver Proyecto <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button asChild variant="outline" className="w-full bg-transparent border-primary/50 hover:bg-primary/10 text-primary group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground group-hover:border-transparent transition-all">
+                        <Link href={`/proyectos/${project.id}`}>
+                          Ver Proyecto <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
                     </Button>
                 </CardFooter>
               </Card>
