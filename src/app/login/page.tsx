@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, linkWithCredential } from "firebase/auth";
 import { auth } from "@/lib/firebase-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,7 +79,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
-     if (!auth) {
+    if (!auth) {
       toast({
           title: "Configuración Incompleta",
           description: "Firebase no está configurado del lado del cliente. Revisa las variables de entorno.",
@@ -95,22 +95,56 @@ export default function LoginPage() {
         const idToken = await result.user.getIdToken();
         await handleAuthSuccess(idToken);
     } catch (error: any) {
-        let errorMessage = error.message || "No se pudo iniciar sesión con Google.";
-        if (error.code === 'auth/popup-closed-by-user') {
-            errorMessage = "El inicio de sesión fue cancelado.";
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-            errorMessage = "Ya existe una cuenta con este correo electrónico pero con un método de inicio de sesión diferente.";
+        if (error.code === 'auth/account-exists-with-different-credential' && error.customData.email) {
+            const email = error.customData.email;
+            const pendingCred = GoogleAuthProvider.credentialFromError(error);
+
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+
+            if (methods.includes('password')) {
+                const password = prompt('Parece que ya tienes una cuenta con este correo. Por favor, introduce tu contraseña para vincular tu cuenta de Google.');
+                if (password) {
+                    try {
+                        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                        await linkWithCredential(userCredential.user, pendingCred!);
+                        const idToken = await userCredential.user.getIdToken();
+                        await handleAuthSuccess(idToken);
+                    } catch (linkError: any) {
+                        toast({
+                            title: "Error al Vincular la Cuenta",
+                            description: "La contraseña es incorrecta o ocurrió un error. Por favor, inténtalo de nuevo.",
+                            variant: "destructive"
+                        });
+                    }
+                } else {
+                    toast({
+                        title: "Vinculación Cancelada",
+                        description: "El inicio de sesión fue cancelado.",
+                        variant: "destructive"
+                    });
+                }
+            } else {
+                toast({
+                    title: "Conflicto de Cuentas",
+                    description: "Ya existe una cuenta con este correo, pero usa un proveedor de inicio de sesión diferente que no podemos vincular automáticamente.",
+                    variant: "destructive"
+                });
+            }
+        } else {
+            let errorMessage = error.message || "No se pudo iniciar sesión con Google.";
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "El inicio de sesión fue cancelado.";
+            }
+            toast({
+                title: "Error de Inicio de Sesión con Google",
+                description: errorMessage,
+                variant: "destructive",
+            });
         }
-        
-        toast({
-            title: "Error de Inicio de Sesión con Google",
-            description: errorMessage,
-            variant: "destructive",
-        });
     } finally {
         setIsGoogleLoading(false);
     }
-  }
+}
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
