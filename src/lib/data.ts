@@ -122,6 +122,13 @@ export async function getStorageFiles() {
 
     try {
         const bucket = storageAdmin.bucket();
+        const [bucketExists] = await bucket.exists();
+
+        if (!bucketExists) {
+            console.error(`Error: El bucket de almacenamiento "${bucket.name}" no existe. Por favor, revisa tu configuración de Firebase Storage y la variable de entorno 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'.`);
+            return [];
+        }
+
         const [files] = await bucket.getFiles({ maxResults: 50 });
 
         if (files.length === 0) {

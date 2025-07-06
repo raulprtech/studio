@@ -23,7 +23,7 @@ if (!admin.apps.length) {
         try {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
-                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+                storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
             });
             isFirebaseConfigured = true;
             console.log('Firebase Admin SDK initialized successfully.');
