@@ -1,12 +1,13 @@
 'use server';
 
 /**
- * @fileOverview This file contains the Genkit flow for generating schema suggestions based on a data description.
+ * @fileOverview Este archivo contiene el flujo de Genkit para generar sugerencias de esquemas de Zod
+ * basadas en la descripción de datos proporcionada.
  *
- * It exports:
- * - `generateSchemaSuggestion`: The main function to trigger the flow.
- * - `SchemaSuggestionInput`: The input type for the `generateSchemaSuggestion` function.
- * - `SchemaSuggestionOutput`: The output type for the `generateSchemaSuggestion` function.
+ * Exporta:
+ * - `generateSchemaSuggestion`: La función principal para activar el flujo.
+ * - `SchemaSuggestionInput`: El tipo de entrada para la función `generateSchemaSuggestion`.
+ * - `SchemaSuggestionOutput`: El tipo de salida de la función `generateSchemaSuggestion`.
  */
 
 import {ai} from '@/ai/genkit';
@@ -15,7 +16,7 @@ import {z} from 'genkit';
 const SchemaSuggestionInputSchema = z.object({
   dataDescription: z
     .string()
-    .describe('A description of the data to be stored in Firestore.'),
+    .describe('Una descripción de los datos que se almacenarán en Firestore.'),
 });
 export type SchemaSuggestionInput = z.infer<typeof SchemaSuggestionInputSchema>;
 
@@ -23,7 +24,7 @@ const SchemaSuggestionOutputSchema = z.object({
   suggestedSchema: z
     .string()
     .describe(
-      'A suggested Zod schema based on the data description. The schema should define the shape and types of data expected in Firestore.'
+      'Un esquema de Zod sugerido basado en la descripción de los datos. El esquema debe definir la forma y los tipos de datos esperados en Firestore.'
     ),
 });
 export type SchemaSuggestionOutput = z.infer<typeof SchemaSuggestionOutputSchema>;
@@ -38,7 +39,7 @@ const prompt = ai.definePrompt({
   name: 'schemaSuggestionPrompt',
   input: {schema: SchemaSuggestionInputSchema},
   output: {schema: SchemaSuggestionOutputSchema},
-  prompt: `You are an AI schema generator. Please provide a Zod schema based on the following data description:\n\nData Description: {{{dataDescription}}}\n\nEnsure that the schema is well-structured and includes appropriate data types for each field described. The schema should be complete and ready to use.
+  prompt: `Eres un generador de esquemas de IA. Proporciona un esquema de Zod basado en la siguiente descripción de datos:\n\nDescripción de Datos: {{{dataDescription}}}\n\nAsegúrate de que el esquema esté bien estructurado e incluya los tipos de datos apropiados para cada campo descrito. El esquema debe estar completo y listo para usar.
 `,
 });
 
