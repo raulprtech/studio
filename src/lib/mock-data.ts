@@ -37,6 +37,26 @@ export function getCollectionData(collectionId: string) {
     return mockData[collectionId] || [];
 }
 
+export async function getCollectionDocuments(collectionId: string) {
+  if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+      console.warn(`Firebase not initialized. Returning mock data for collection: ${collectionId}`);
+      return mockData[collectionId] || [];
+  }
+
+  try {
+      const collectionRef = firestoreAdmin.collection(collectionId);
+      const snapshot = await collectionRef.get();
+      if (snapshot.empty) {
+          return [];
+      }
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+      console.error(`Error fetching documents for collection "${collectionId}":`, error);
+      // Fallback to mock data on error to prevent crash
+      return mockData[collectionId] || [];
+  }
+}
+
 // This function now fetches a saved schema from Firestore.
 // If not found, it falls back to inferring from the first document in the live collection.
 export async function getCollectionSchema(collectionId: string): Promise<string> {

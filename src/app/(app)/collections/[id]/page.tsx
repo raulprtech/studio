@@ -19,15 +19,15 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AiSummaryButton } from "./components/ai-summary-button"
-import { getCollectionData } from "@/lib/mock-data"
+import { getCollectionDocuments } from "@/lib/mock-data"
 import { getCurrentUser } from "@/lib/auth"
+import { DeleteDocumentMenuItem, DuplicateDocumentMenuItem, EditDocumentMenuItem } from "./components/collection-action-items"
 
 function toSingularTitleCase(str: string) {
     const singular = str.endsWith('s') ? str.slice(0, -1) : str;
@@ -36,7 +36,7 @@ function toSingularTitleCase(str: string) {
 
 export default async function SingleCollectionPage({ params }: { params: { id: string } }) {
   const collectionId = params.id;
-  const data = getCollectionData(collectionId);
+  const data = await getCollectionDocuments(collectionId);
   const fields = data.length > 0 ? Object.keys(data[0]) : [];
   const buttonText = `Add ${toSingularTitleCase(collectionId)}`;
   
@@ -89,7 +89,9 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                             {typeof item[field] === 'boolean' ? (
                                 <Badge variant={item[field] ? "default" : "secondary"}>{String(item[field])}</Badge>
                             ) : (
-                                item[field] || 'N/A'
+                                item[field] instanceof Date ? item[field].toLocaleString() : 
+                                item[field] && typeof item[field].toDate === 'function' ? item[field].toDate().toLocaleString() :
+                                String(item[field] || 'N/A')
                             )}
                         </TableCell>
                     ))}
@@ -104,9 +106,13 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                            <EditDocumentMenuItem collectionId={collectionId} documentId={item.id} />
+                            <DuplicateDocumentMenuItem collectionId={collectionId} documentId={item.id} />
+                            <DeleteDocumentMenuItem 
+                                collectionId={collectionId} 
+                                documentId={item.id} 
+                                documentName={item.name || item.title || item.id} 
+                            />
                         </DropdownMenuContent>
                         </DropdownMenu>
                     )}

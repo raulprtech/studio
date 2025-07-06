@@ -5,6 +5,7 @@ import { generateSummary } from "@/ai/flows/generate-summary";
 import { z } from "zod";
 import { authAdmin, firestoreAdmin, isFirebaseAdminInitialized } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
+import admin from 'firebase-admin';
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
@@ -170,5 +171,120 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
         return { message: `User successfully ${status}.`, success: true };
     } catch (error) {
         return { message: `Failed to update user status: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+    }
+}
+
+// Document Management Actions
+
+export async function duplicateDocumentAction(collectionId: string, documentId: string) {
+    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+        return { message: "Action failed: Firebase is not configured.", success: false };
+    }
+    try {
+        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) {
+            return { message: `Document with ID ${documentId} not found.`, success: false };
+        }
+        const data = docSnap.data();
+        await firestoreAdmin.collection(collectionId).add(data!);
+        revalidatePath(`/collections/${collectionId}`);
+        return { message: `Document duplicated successfully.`, success: true };
+    } catch (error) {
+        return { message: `Failed to duplicate document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+    }
+}
+
+export async function deleteDocumentAction(collectionId: string, documentId: string) {
+    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+        return { message: "Action failed: Firebase is not configured.", success: false };
+    }
+    try {
+        await firestoreAdmin.collection(collectionId).doc(documentId).delete();
+        revalidatePath(`/collections/${collectionId}`);
+        return { message: `Document deleted successfully.`, success: true };
+    } catch (error) {
+        return { message: `Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+    }
+}
+
+export async function getDocumentAction(collectionId: string, documentId: string) {
+    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+        console.warn("Firebase not initialized. Returning mock data.");
+        const collectionData = mockData[collectionId] || [];
+        const document = collectionData.find(doc => doc.id === documentId);
+        if (!document) {
+            return { data: null, error: "Document not found in mock data." };
+        }
+        return { data: document, error: null };
+    }
+
+    try {
+        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) {
+            return { data: null, error: "Document not found." };
+        }
+        return { data: { id: docSnap.id, ...docSnap.data() }, error: null };
+    } catch (error) {
+        return { data: null, error: `Failed to fetch document: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+}
+
+export async function updateDocumentAction(prevState: any, formData: FormData) {
+    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+        return { message: "Action failed: Firebase is not configured.", success: false };
+    }
+
+    const collectionId = formData.get('collectionId') as string;
+    const documentId = formData.get('documentId') as string;
+
+    if (!collectionId || !documentId) {
+        return { message: "Collection ID and Document ID are required.", success: false };
+    }
+
+    try {
+        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
+        const originalDocSnap = await docRef.get();
+        if (!originalDocSnap.exists) {
+            return { message: "Document not found.", success: false };
+        }
+        const originalData = originalDocSnap.data()!;
+        
+        const dataToUpdate: { [key: string]: any } = {};
+        
+        for (const key in originalData) {
+            if (Object.prototype.hasOwnProperty.call(originalData, key)) {
+                if (formData.has(key)) {
+                    const formValue = formData.get(key) as string;
+                    const originalValue = originalData[key];
+
+                    if (typeof originalValue === 'number') {
+                        dataToUpdate[key] = Number(formValue);
+                    } else if (typeof originalValue === 'boolean') {
+                        dataToUpdate[key] = formValue === 'on'; // HTML checkbox sends 'on' when checked
+                    } else if (originalValue && typeof originalValue.toDate === 'function') { // Firestore Timestamp
+                        dataToUpdate[key] = admin.firestore.Timestamp.fromDate(new Date(formValue));
+                    } else if (originalValue instanceof Date) {
+                         dataToUpdate[key] = new Date(formValue);
+                    }
+                    else {
+                        dataToUpdate[key] = formValue;
+                    }
+                } else if (typeof originalData[key] === 'boolean') {
+                    // If a checkbox is not in form data, it was unchecked.
+                     dataToUpdate[key] = false;
+                }
+            }
+        }
+        
+        await docRef.update(dataToUpdate);
+
+        revalidatePath(`/collections/${collectionId}`);
+        revalidatePath(`/collections/${collectionId}/${documentId}/edit`);
+        return { message: `Document '${documentId}' updated successfully.`, success: true };
+
+    } catch (error) {
+        return { message: `Failed to update document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
     }
 }
