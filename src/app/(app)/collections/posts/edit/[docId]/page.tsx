@@ -17,10 +17,10 @@ export default async function EditPostPage({ params }: { params: { docId: string
     if (error || !document) {
         return (
             <div className="flex flex-col gap-6">
-                 <h1 className="text-2xl font-semibold capitalize">Edit Post</h1>
+                 <h1 className="text-2xl font-semibold capitalize">Editar Post</h1>
                  <Alert variant="destructive">
                     <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error || "The requested document could not be found."}</AlertDescription>
+                    <AlertDescription>{error || "No se pudo encontrar el documento solicitado."}</AlertDescription>
                  </Alert>
             </div>
         )
@@ -28,7 +28,7 @@ export default async function EditPostPage({ params }: { params: { docId: string
 
     return (
         <div className="flex flex-col gap-6">
-             <h1 className="text-2xl font-semibold capitalize">Edit Post</h1>
+             <h1 className="text-2xl font-semibold capitalize">Editar Post</h1>
              <PostEditor collectionId={collectionId} document={document} />
         </div>
     )

@@ -22,8 +22,8 @@ export function UserChart({ data }: UserChartProps) {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: 'var(--radius)',
                     }}
-                    formatter={(value: number) => [value.toLocaleString(), 'Users']}
-                    labelFormatter={(label: string) => `Month: ${label}`}
+                    formatter={(value: number) => [value.toLocaleString(), 'Usuarios']}
+                    labelFormatter={(label: string) => `Mes: ${label}`}
                 />
                 <Bar dataKey="users" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
             </BarChart>

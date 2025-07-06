@@ -1,8 +1,8 @@
-// In a real application, this file would contain logic to manage user sessions,
-// like getting the current user from a session cookie.
+// En una aplicación real, este archivo contendría la lógica para gestionar las sesiones de usuario,
+// como obtener el usuario actual a partir de una cookie de sesión.
 
-// For demonstration purposes, we'll simulate the current user.
-// This allows us to test the UI and authorization logic without a full auth system.
+// Para fines de demostración, simularemos el usuario actual.
+// Esto nos permite probar la interfaz de usuario y la lógica de autorización sin un sistema de autenticación completo.
 
 type UserRole = 'Admin' | 'Editor' | 'Viewer';
 
@@ -14,26 +14,26 @@ interface SimulatedUser {
 }
 
 /**
- * Simulates fetching the currently logged-in user.
+ * Simula la obtención del usuario que ha iniciado sesión actualmente.
  * 
- * To test different permission levels, you can change the `role` variable
- * inside this function to 'Admin', 'Editor', or 'Viewer' and then refresh the app.
+ * Para probar diferentes niveles de permisos, puedes cambiar la variable `role`
+ * dentro de esta función a 'Admin', 'Editor' o 'Viewer' y luego refrescar la aplicación.
  * 
- * @returns A promise that resolves to the simulated user object.
+ * @returns Una promesa que se resuelve con el objeto del usuario simulado.
  */
 export async function getCurrentUser(): Promise<SimulatedUser> {
     //
-    // === CHANGE THIS VALUE TO TEST DIFFERENT ROLES ===
+    // === CAMBIA ESTE VALOR PARA PROBAR DIFERENTES ROLES ===
     //
     const role: UserRole = 'Admin'; 
     //
-    // Options: 'Admin', 'Editor', 'Viewer'
+    // Opciones: 'Admin', 'Editor', 'Viewer'
     //
     
     if (role === 'Admin') {
         return { 
             uid: 'sim-admin-01', 
-            name: 'Simulated Admin', 
+            name: 'Admin Simulado', 
             email: 'admin@example.com', 
             role: 'Admin' 
         };
@@ -42,16 +42,16 @@ export async function getCurrentUser(): Promise<SimulatedUser> {
     if (role === 'Editor') {
         return { 
             uid: 'sim-editor-01', 
-            name: 'Simulated Editor', 
+            name: 'Editor Simulado', 
             email: 'editor@example.com', 
             role: 'Editor' 
         };
     }
 
-    // Default to Viewer
+    // Por defecto, Lector
     return { 
         uid: 'sim-viewer-01', 
-        name: 'Simulated Viewer', 
+        name: 'Lector Simulado', 
         email: 'viewer@example.com', 
         role: 'Viewer' 
     };

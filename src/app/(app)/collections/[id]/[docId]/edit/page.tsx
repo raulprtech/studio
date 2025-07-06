@@ -16,10 +16,10 @@ export default async function EditDocumentPage({ params }: { params: { id: strin
     if (error || !document) {
         return (
             <div className="flex flex-col gap-6">
-                 <h1 className="text-2xl font-semibold capitalize">Edit Document</h1>
+                 <h1 className="text-2xl font-semibold capitalize">Editar Documento</h1>
                  <Alert variant="destructive">
                     <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error || "The requested document could not be found."}</AlertDescription>
+                    <AlertDescription>{error || "No se pudo encontrar el documento solicitado."}</AlertDescription>
                  </Alert>
             </div>
         )
@@ -27,12 +27,12 @@ export default async function EditDocumentPage({ params }: { params: { id: strin
 
     return (
         <div className="flex flex-col gap-6">
-            <h1 className="text-2xl font-semibold capitalize">Edit Document <span className="font-mono bg-muted px-2 py-1 rounded-md">{docId}</span> in <span className="font-mono bg-muted px-2 py-1 rounded-md">{collectionId}</span></h1>
+            <h1 className="text-2xl font-semibold capitalize">Editar Documento <span className="font-mono bg-muted px-2 py-1 rounded-md">{docId}</span> en <span className="font-mono bg-muted px-2 py-1 rounded-md">{collectionId}</span></h1>
             <Card>
                 <CardHeader>
-                    <CardTitle>Edit Content</CardTitle>
+                    <CardTitle>Editar Contenido</CardTitle>
                     <CardDescription>
-                        Modify the fields below to update the document.
+                        Modifica los campos a continuación para actualizar el documento.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <>
       <ModeSwitch initialMode={mode} isConfigured={isConfigured} />
       <p className="text-xs text-muted-foreground pt-2">
-        {isConfigured ? "Toggle between live and demo data." : "Firebase not configured. Only demo mode is available."}
+        {isConfigured ? "Alterna entre datos reales y de demostración." : "Firebase no configurado. Solo modo demo disponible."}
       </p>
     </>
   );

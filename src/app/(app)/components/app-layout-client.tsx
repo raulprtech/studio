@@ -72,7 +72,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
               <SidebarMenuButton href="/dashboard" asChild isActive={isActive('/dashboard')}>
                 <Link href="/dashboard">
                   <Home />
-                  <span>Dashboard</span>
+                  <span>Panel</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -80,7 +80,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
               <SidebarMenuButton href="/collections" asChild isActive={isActive('/collections') && !pinned.some(p => pathname.includes(p.name))}>
                 <Link href="/collections">
                   <Database />
-                  <span>Collections</span>
+                  <span>Colecciones</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -110,7 +110,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
                 <SidebarMenuButton href="/authentication" asChild isActive={isActive('/authentication')}>
                   <Link href="/authentication">
                     <Users />
-                    <span>Authentication</span>
+                    <span>Autenticación</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -119,7 +119,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
               <SidebarMenuButton href="/storage" asChild isActive={isActive('/storage')}>
                 <Link href="/storage">
                   <Folder />
-                  <span>Storage</span>
+                  <span>Almacenamiento</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -128,7 +128,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
                 <SidebarMenuButton href="/settings" asChild isActive={isActive('/settings')}>
                   <Link href="/settings">
                     <Settings />
-                    <span>Settings</span>
+                    <span>Configuración</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -139,7 +139,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
             <div className="border-t border-sidebar-border -mx-2 mb-2 pt-2 px-2">
                 <Card className="shadow-none border-none bg-transparent p-0">
                     <CardHeader className="p-0 pb-2 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-sm font-medium">Application Mode</CardTitle>
+                        <CardTitle className="text-sm font-medium">Modo de Aplicación</CardTitle>
                         <TestTube2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-0">

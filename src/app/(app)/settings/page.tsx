@@ -10,63 +10,63 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <h1 className="text-2xl font-semibold">Configuración</h1>
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="security">Seguridad</TabsTrigger>
+          <TabsTrigger value="integrations">Integraciones</TabsTrigger>
+          <TabsTrigger value="appearance">Apariencia</TabsTrigger>
         </TabsList>
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>General Settings</CardTitle>
+              <CardTitle>Configuración General</CardTitle>
               <CardDescription>
-                Manage your project settings here.
+                Gestiona la configuración de tu proyecto aquí.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>General settings form will go here.</p>
+              <p>El formulario de configuración general irá aquí.</p>
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle>Security</CardTitle>
+              <CardTitle>Seguridad</CardTitle>
               <CardDescription>
-                Manage your project's security settings.
+                Gestiona la configuración de seguridad de tu proyecto.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Security settings form will go here.</p>
+              <p>El formulario de configuración de seguridad irá aquí.</p>
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="integrations">
         <Card>
             <CardHeader>
-              <CardTitle>Integrations</CardTitle>
+              <CardTitle>Integraciones</CardTitle>
               <CardDescription>
-                Connect with third-party services.
+                Conecta con servicios de terceros.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Integrations settings will go here.</p>
+              <p>La configuración de integraciones irá aquí.</p>
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="appearance">
         <Card>
             <CardHeader>
-              <CardTitle>Appearance</CardTitle>
+              <CardTitle>Apariencia</CardTitle>
               <CardDescription>
-                Customize the look and feel of your admin panel.
+                Personaliza la apariencia de tu panel de administración.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Appearance settings will go here (e.g., light/dark mode toggle).</p>
+              <p>La configuración de apariencia irá aquí (ej., selector de modo claro/oscuro).</p>
             </CardContent>
           </Card>
         </TabsContent>

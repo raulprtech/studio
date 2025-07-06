@@ -27,8 +27,8 @@ export function ModeSwitch({ initialMode, isConfigured }: ModeSwitchProps) {
         startTransition(async () => {
             await setAppModeAction(newMode);
             toast({
-                title: 'Mode Changed',
-                description: `App is now in ${newMode} mode. The page will now reload.`,
+                title: 'Modo Cambiado',
+                description: `La aplicación está ahora en modo ${newMode}. La página se recargará.`,
             });
             // Use router.refresh() to re-run Server Components and get new data
             router.refresh();
@@ -46,7 +46,7 @@ export function ModeSwitch({ initialMode, isConfigured }: ModeSwitchProps) {
                 aria-readonly={!isConfigured || isPending}
             />
             <Label htmlFor="mode-switch" className={!isConfigured ? 'text-muted-foreground' : ''}>
-                {isChecked ? 'Live Mode' : 'Demo Mode'}
+                {isChecked ? 'Modo Real' : 'Modo Demo'}
             </Label>
         </div>
     );

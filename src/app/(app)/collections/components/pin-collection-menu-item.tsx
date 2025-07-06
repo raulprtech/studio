@@ -11,7 +11,7 @@ export function PinCollectionMenuItem({ collectionName }: { collectionName: stri
     return (
         <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => togglePin(collectionName)}>
             {pinned ? <BookmarkMinus className="mr-2 h-4 w-4" /> : <Bookmark className="mr-2 h-4 w-4" />}
-            <span>{pinned ? "Unpin from sidebar" : "Pin to sidebar"}</span>
+            <span>{pinned ? "Desanclar de la barra lateral" : "Anclar a la barra lateral"}</span>
         </DropdownMenuItem>
     );
 }

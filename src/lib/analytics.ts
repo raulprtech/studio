@@ -5,31 +5,31 @@ import { isAnalyticsLive } from './mode';
 // MOCK DATA for when analytics is not configured
 const mockAnalyticsData = {
     summary: {
-        totalUsers: '1,234',
+        totalUsers: '1.234',
         activeUsers: '57',
         newUsers: '256',
-        sessions: '2,456',
+        sessions: '2.456',
     },
     userChartData: [
-        { date: 'Jan', users: 400 },
+        { date: 'Ene', users: 400 },
         { date: 'Feb', users: 300 },
         { date: 'Mar', users: 500 },
-        { date: 'Apr', users: 200 },
+        { date: 'Abr', users: 200 },
         { date: 'May', users: 800 },
         { date: 'Jun', users: 700 },
     ],
     topPages: [
-        { page: '/', views: '10,234' },
-        { page: '/products', views: '8,765' },
-        { page: '/blog', views: '5,432' },
-        { page: '/about', views: '2,109' },
-        { page: '/contact', views: '1,876' },
+        { page: '/', views: '10.234' },
+        { page: '/productos', views: '8.765' },
+        { page: '/blog', views: '5.432' },
+        { page: '/sobre-nosotros', views: '2.109' },
+        { page: '/contacto', views: '1.876' },
     ]
 };
 
 export async function getAnalyticsData() {
     if (!isAnalyticsLive()) {
-        console.warn("Analytics not live. Returning mock data.");
+        console.warn("Analytics no está en modo real. Devolviendo datos de ejemplo.");
         return mockAnalyticsData;
     }
 
@@ -44,8 +44,8 @@ export async function getAnalyticsData() {
             }
         });
     } catch (error) {
-        console.error('Google Analytics Data API client initialization error:', error);
-        console.warn("Returning mock data due to Analytics client initialization error.");
+        console.error('Error de inicialización del cliente de la API de Google Analytics Data:', error);
+        console.warn("Devolviendo datos de ejemplo debido a un error de inicialización del cliente de Analytics.");
         return mockAnalyticsData;
     }
     
@@ -84,14 +84,14 @@ export async function getAnalyticsData() {
         // Process summary data
         const summaryRow = summaryResponse[0].rows?.[0]?.metricValues;
         const summary = {
-            totalUsers: Number(summaryRow?.[0]?.value || 0).toLocaleString(),
-            activeUsers: Number(summaryRow?.[1]?.value || 0).toLocaleString(),
-            newUsers: Number(summaryRow?.[2]?.value || 0).toLocaleString(),
-            sessions: Number(summaryRow?.[3]?.value || 0).toLocaleString(),
+            totalUsers: Number(summaryRow?.[0]?.value || 0).toLocaleString('es-ES'),
+            activeUsers: Number(summaryRow?.[1]?.value || 0).toLocaleString('es-ES'),
+            newUsers: Number(summaryRow?.[2]?.value || 0).toLocaleString('es-ES'),
+            sessions: Number(summaryRow?.[3]?.value || 0).toLocaleString('es-ES'),
         };
 
         // Process user chart data
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
         const userChartData = userChartResponse[0].rows?.map(row => {
             const monthIndex = parseInt(row.dimensionValues?.[0]?.value || '1', 10) - 1;
             return {
@@ -102,16 +102,16 @@ export async function getAnalyticsData() {
 
         // Process top pages
         const topPages = topPagesResponse[0].rows?.map(row => ({
-            page: row.dimensionValues?.[0]?.value || 'N/A',
-            views: Number(row.metricValues?.[0]?.value || 0).toLocaleString(),
+            page: row.dimensionValues?.[0]?.value || 'N/D',
+            views: Number(row.metricValues?.[0]?.value || 0).toLocaleString('es-ES'),
         })) || [];
 
 
         return { summary, userChartData, topPages };
 
     } catch (error) {
-        console.error("Error fetching Google Analytics data:", error);
-        console.warn("Returning mock data due to Analytics API error.");
+        console.error("Error al obtener datos de Google Analytics:", error);
+        console.warn("Devolviendo datos de ejemplo debido a un error de la API de Analytics.");
         return mockAnalyticsData;
     }
 }

@@ -38,7 +38,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
   const collectionId = params.id;
   const data = await getCollectionDocuments(collectionId);
   const fields = data.length > 0 ? Object.keys(data[0]) : [];
-  const buttonText = `Add ${toSingularTitleCase(collectionId)}`;
+  const buttonText = `Añadir ${toSingularTitleCase(collectionId)}`;
   
   const currentUser = await getCurrentUser();
   const canEdit = currentUser.role === 'Admin' || currentUser.role === 'Editor';
@@ -48,7 +48,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
       <div className="flex items-start">
         <div className="flex-1">
           <h1 className="text-2xl font-semibold capitalize">{collectionId}</h1>
-          <p className="text-sm text-muted-foreground">Manage the documents in the '{collectionId}' collection.</p>
+          <p className="text-sm text-muted-foreground">Gestiona los documentos en la colección '{collectionId}'.</p>
         </div>
         <div className="flex items-center gap-2">
             <AiSummaryButton collectionName={collectionId} />
@@ -74,7 +74,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                     <TableHead key={field} className="capitalize hidden md:table-cell">{field}</TableHead>
                 ))}
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -91,7 +91,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                             ) : (
                                 item[field] instanceof Date ? item[field].toLocaleString() : 
                                 item[field] && typeof item[field].toDate === 'function' ? item[field].toDate().toLocaleString() :
-                                String(item[field] || 'N/A')
+                                String(item[field] || 'N/D')
                             )}
                         </TableCell>
                     ))}
@@ -101,11 +101,11 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
                         <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">Menú de acciones</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                             <EditDocumentMenuItem collectionId={collectionId} documentId={item.id} />
                             <DuplicateDocumentMenuItem collectionId={collectionId} documentId={item.id} />
                             <DeleteDocumentMenuItem 

@@ -46,11 +46,11 @@ export default async function StoragePage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center">
-        <h1 className="flex-1 text-2xl font-semibold">Storage</h1>
+        <h1 className="flex-1 text-2xl font-semibold">Almacenamiento</h1>
         {canEdit && (
             <Button>
                 <Upload className="mr-2 h-4 w-4" />
-                Upload File
+                Subir Archivo
             </Button>
         )}
       </div>
@@ -66,9 +66,9 @@ export default async function StoragePage() {
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                    <DropdownMenuItem>View Details</DropdownMenuItem>
-                    <DropdownMenuItem>Download</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                    <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
+                    <DropdownMenuItem>Descargar</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
               )}

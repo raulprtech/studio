@@ -15,12 +15,12 @@ export default async function EditCollectionSchemaPage({ params }: { params: { i
     
     return (
         <div className="flex flex-col gap-6">
-            <h1 className="text-2xl font-semibold capitalize">Edit Schema for <span className="font-mono bg-muted px-2 py-1 rounded-md">{collectionId}</span></h1>
+            <h1 className="text-2xl font-semibold capitalize">Editar Esquema para <span className="font-mono bg-muted px-2 py-1 rounded-md">{collectionId}</span></h1>
             <Card>
                 <CardHeader>
-                    <CardTitle>Edit Schema</CardTitle>
+                    <CardTitle>Editar Esquema</CardTitle>
                     <CardDescription>
-                        Modify the Zod schema for the '{collectionId}' collection below.
+                        Modifica el esquema de Zod para la colección '{collectionId}' a continuación.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

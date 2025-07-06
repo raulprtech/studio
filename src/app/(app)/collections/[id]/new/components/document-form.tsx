@@ -36,7 +36,7 @@ export function DocumentForm({ collectionId }: { collectionId: string }) {
              return (
                 <div key={field} className="grid gap-2">
                     <Label htmlFor={fieldId}>{title}</Label>
-                    <Textarea id={fieldId} name={field} placeholder={`Enter ${title}`} />
+                    <Textarea id={fieldId} name={field} placeholder={`Introduce ${title}`} />
                 </div>
             )
         }
@@ -44,7 +44,7 @@ export function DocumentForm({ collectionId }: { collectionId: string }) {
         return (
             <div key={field} className="grid gap-2">
                 <Label htmlFor={fieldId}>{title}</Label>
-                <Input id={fieldId} name={field} placeholder={`Enter ${title}`} defaultValue={value} type={typeof value === 'number' ? 'number' : 'text'} />
+                <Input id={fieldId} name={field} placeholder={`Introduce ${title}`} defaultValue={value} type={typeof value === 'number' ? 'number' : 'text'} />
             </div>
         )
     }
@@ -52,14 +52,14 @@ export function DocumentForm({ collectionId }: { collectionId: string }) {
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         // Here you would handle form submission, e.g., send data to a server
-        alert("Form submitted! (Feature in development)");
+        alert("¡Formulario enviado! (Funcionalidad en desarrollo)");
     }
 
     return (
         <form onSubmit={handleSubmit} className="grid gap-6">
             {data.length > 0 && fields.map(field => renderField(field, data[0][field]))}
             <div className="flex justify-end">
-                <Button type="submit">Save Document</Button>
+                <Button type="submit">Guardar Documento</Button>
             </div>
         </form>
     )

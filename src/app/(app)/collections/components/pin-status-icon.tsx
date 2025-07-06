@@ -11,6 +11,6 @@ export function PinStatusIcon({ collectionName }: { collectionName: string }) {
     }
 
     return (
-        <Bookmark className="h-4 w-4 text-primary ml-2 fill-primary" title="Pinned to sidebar" />
+        <Bookmark className="h-4 w-4 text-primary ml-2 fill-primary" title="Anclado a la barra lateral" />
     );
 }

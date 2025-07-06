@@ -36,29 +36,29 @@ export default async function CollectionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center">
-        <h1 className="flex-1 text-2xl font-semibold">Collections</h1>
+        <h1 className="flex-1 text-2xl font-semibold">Colecciones</h1>
         <Button asChild>
           <Link href="/collections/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            New Collection
+            Nueva Colección
           </Link>
         </Button>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Your Firestore Collections</CardTitle>
-          <CardDescription>Manage and view your data collections.</CardDescription>
+          <CardTitle>Tus Colecciones de Firestore</CardTitle>
+          <CardDescription>Gestiona y visualiza tus colecciones de datos.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden md:table-cell">Documents</TableHead>
-                <TableHead className="hidden md:table-cell">Schema Fields</TableHead>
-                <TableHead className="hidden sm:table-cell">Last Updated</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead className="hidden md:table-cell">Documentos</TableHead>
+                <TableHead className="hidden md:table-cell">Campos del Esquema</TableHead>
+                <TableHead className="hidden sm:table-cell">Última Actualización</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -84,19 +84,19 @@ export default async function CollectionsPage() {
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Menú de acciones</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                           <Link href={`/collections/${collection.name}`}>View</Link>
+                           <Link href={`/collections/${collection.name}`}>Ver</Link>
                         </DropdownMenuItem>
                         <PinCollectionMenuItem collectionName={collection.name} />
                         <DropdownMenuItem asChild>
-                          <Link href={`/collections/${collection.name}/edit`}>Edit Schema</Link>
+                          <Link href={`/collections/${collection.name}/edit`}>Editar Esquema</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

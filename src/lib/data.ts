@@ -4,7 +4,7 @@ import { mockData, mockSchemas } from './mock-data';
 
 export async function getCollections() {
     if (!isFirebaseLive()) {
-        console.warn(`Firebase not live. Returning mock collections.`);
+        console.warn(`Firebase no está en modo real. Devolviendo colecciones de ejemplo.`);
         return Object.keys(mockData).map(name => ({
             name,
             count: mockData[name].length,
@@ -44,7 +44,7 @@ export async function getCollections() {
         );
         return collectionsData;
     } catch (error) {
-        console.error("Error fetching collections from Firebase:", error);
+        console.error("Error al obtener las colecciones de Firebase:", error);
         return [];
     }
 }

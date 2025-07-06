@@ -15,12 +15,12 @@ import { cookies } from "next/headers";
 export async function setAppModeAction(mode: 'live' | 'demo') {
   cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
   revalidatePath('/', 'layout');
-  return { success: true, message: `Mode set to ${mode}` };
+  return { success: true, message: `Modo cambiado a ${mode}` };
 }
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
-    message: "Description must be at least 10 characters.",
+    message: "La descripción debe tener al menos 10 caracteres.",
   }),
 });
 
@@ -32,7 +32,7 @@ export async function getSchemaSuggestionAction(prevState: any, formData: FormDa
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Validation failed.',
+      message: 'La validación falló.',
       schema: null,
     };
   }
@@ -41,13 +41,13 @@ export async function getSchemaSuggestionAction(prevState: any, formData: FormDa
     const result = await generateSchemaSuggestion({ dataDescription: validatedFields.data.dataDescription });
     return {
       errors: null,
-      message: "Schema generated successfully.",
+      message: "Esquema generado con éxito.",
       schema: result.suggestedSchema
     };
   } catch (error) {
     return {
       errors: null,
-      message: `An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      message: `Ocurrió un error: ${error instanceof Error ? error.message : 'Error desconocido'}`,
       schema: null,
     };
   }
@@ -63,14 +63,14 @@ export async function getCollectionSummaryAction(collectionName: string) {
   } catch (error) {
     return {
       summary: null,
-      error: `An error occurred while generating summary: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error: `Ocurrió un error al generar el resumen: ${error instanceof Error ? error.message : 'Error desconocido'}`,
     };
   }
 }
 
 const updateSchemaSchema = z.object({
   collectionId: z.string(),
-  schemaDefinition: z.string().min(1, { message: "Schema cannot be empty." }),
+  schemaDefinition: z.string().min(1, { message: "El esquema no puede estar vacío." }),
   icon: z.string().optional(),
 });
 
@@ -78,7 +78,7 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   if (!isFirebaseLive()) {
     return {
         errors: null,
-        message: "Action failed: App is in demo mode. Switch to live mode to save to Firestore.",
+        message: "Acción fallida: La aplicación está en modo demo. Cambia a modo real para guardar en Firestore.",
         success: false,
     };
   }
@@ -92,7 +92,7 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Validation failed. Please check the fields.',
+      message: 'Validación fallida. Por favor, revisa los campos.',
       success: false,
     };
   }
@@ -112,29 +112,29 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
 
     return {
       errors: null,
-      message: `Schema for '${collectionId}' updated successfully in Firestore.`,
+      message: `Esquema para '${collectionId}' actualizado con éxito en Firestore.`,
       success: true,
     };
   } catch (error) {
-    console.error("Error updating schema in Firestore:", error);
+    console.error("Error al actualizar el esquema en Firestore:", error);
     return {
       errors: null,
-      message: `Failed to update schema in Firestore. Please check server logs and Firebase configuration.`,
+      message: `No se pudo actualizar el esquema en Firestore. Por favor, revisa los logs del servidor y la configuración de Firebase.`,
       success: false,
     };
   }
 }
 
 const createCollectionSchema = z.object({
-  collectionName: z.string().min(1, 'Collection name is required.').regex(/^[a-zA-Z0-9_-]+$/, 'Collection name can only contain letters, numbers, underscores, and hyphens.'),
-  schemaDefinition: z.string().min(1, 'Schema definition is required.'),
+  collectionName: z.string().min(1, 'El nombre de la colección es obligatorio.').regex(/^[a-zA-Z0-9_-]+$/, 'El nombre de la colección solo puede contener letras, números, guiones bajos y guiones.'),
+  schemaDefinition: z.string().min(1, 'La definición del esquema es obligatoria.'),
   icon: z.string().optional(),
 });
 
 export async function createCollectionAction(prevState: any, formData: FormData) {
   if (!isFirebaseLive()) {
     return {
-        message: "Action failed: App is in demo mode. Switch to live mode to create collections.",
+        message: "Acción fallida: La aplicación está en modo demo. Cambia a modo real para crear colecciones.",
         success: false,
     };
   }
@@ -148,7 +148,7 @@ export async function createCollectionAction(prevState: any, formData: FormData)
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Validation failed. Please check the fields.',
+      message: 'Validación fallida. Por favor, revisa los campos.',
       success: false,
     };
   }
@@ -159,7 +159,7 @@ export async function createCollectionAction(prevState: any, formData: FormData)
     const schemaDocRef = firestoreAdmin!.collection('_schemas').doc(collectionName);
     const doc = await schemaDocRef.get();
     if (doc.exists) {
-        return { message: `Collection '${collectionName}' already exists.`, success: false };
+        return { message: `La colección '${collectionName}' ya existe.`, success: false };
     }
 
     await schemaDocRef.set({
@@ -174,14 +174,14 @@ export async function createCollectionAction(prevState: any, formData: FormData)
 
     return {
         success: true,
-        message: `Collection '${collectionName}' created successfully.`,
+        message: `Colección '${collectionName}' creada con éxito.`,
         redirectUrl: `/collections/${collectionName}`,
         errors: null,
     };
   } catch (error) {
-    console.error("Error creating collection in Firestore:", error);
+    console.error("Error al crear la colección en Firestore:", error);
     return {
-      message: `Failed to create collection. Please check server logs and Firebase configuration.`,
+      message: `No se pudo crear la colección. Por favor, revisa los logs del servidor y la configuración de Firebase.`,
       success: false,
     };
   }
@@ -197,7 +197,7 @@ const updateUserRoleSchema = z.object({
 
 export async function updateUserRoleAction(prevState: any, formData: FormData) {
   if (!isFirebaseLive()) {
-    return { message: "Action failed: App is in demo mode.", success: false };
+    return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
   }
 
   const validatedFields = updateUserRoleSchema.safeParse({
@@ -208,7 +208,7 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Validation failed.',
+      message: 'Validación fallida.',
       success: false,
     };
   }
@@ -218,36 +218,36 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
   try {
     await authAdmin!.setCustomUserClaims(uid, { role });
     revalidatePath('/authentication');
-    return { message: `Successfully updated role to ${role}.`, success: true };
+    return { message: `Rol actualizado a ${role} con éxito.`, success: true };
   } catch (error) {
-    return { message: `Failed to update role: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+    return { message: `No se pudo actualizar el rol: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
   }
 }
 
 export async function sendPasswordResetAction(email: string) {
     if (!isFirebaseLive()) {
-        return { message: "Action failed: App is in demo mode.", success: false };
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
         await authAdmin!.generatePasswordResetLink(email);
-        return { message: `Password reset successfully initiated for ${email}.`, success: true };
+        return { message: `Restablecimiento de contraseña iniciado con éxito para ${email}.`, success: true };
     } catch (error) {
-        return { message: `Failed to send password reset: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+        return { message: `No se pudo enviar el restablecimiento de contraseña: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
     }
 }
 
 
 export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
     if (!isFirebaseLive()) {
-        return { message: "Action failed: App is in demo mode.", success: false };
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
         await authAdmin!.updateUser(uid, { disabled: isDisabled });
         revalidatePath('/authentication');
-        const status = isDisabled ? "disabled" : "enabled";
-        return { message: `User successfully ${status}.`, success: true };
+        const status = isDisabled ? "deshabilitado" : "habilitado";
+        return { message: `Usuario ${status} con éxito.`, success: true };
     } catch (error) {
-        return { message: `Failed to update user status: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+        return { message: `No se pudo actualizar el estado del usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
     }
 }
 
@@ -255,43 +255,43 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
 
 export async function duplicateDocumentAction(collectionId: string, documentId: string) {
     if (!isFirebaseLive()) {
-        return { message: "Action failed: App is in demo mode.", success: false };
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
         const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
-            return { message: `Document with ID ${documentId} not found.`, success: false };
+            return { message: `Documento con ID ${documentId} no encontrado.`, success: false };
         }
         const data = docSnap.data();
         await firestoreAdmin!.collection(collectionId).add(data!);
         revalidatePath(`/collections/${collectionId}`);
-        return { message: `Document duplicated successfully.`, success: true };
+        return { message: `Documento duplicado con éxito.`, success: true };
     } catch (error) {
-        return { message: `Failed to duplicate document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+        return { message: `No se pudo duplicar el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
     }
 }
 
 export async function deleteDocumentAction(collectionId: string, documentId: string) {
     if (!isFirebaseLive()) {
-        return { message: "Action failed: App is in demo mode.", success: false };
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
         await firestoreAdmin!.collection(collectionId).doc(documentId).delete();
         revalidatePath(`/collections/${collectionId}`);
-        return { message: `Document deleted successfully.`, success: true };
+        return { message: `Documento eliminado con éxito.`, success: true };
     } catch (error) {
-        return { message: `Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+        return { message: `No se pudo eliminar el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
     }
 }
 
 export async function getDocumentAction(collectionId: string, documentId: string) {
     if (!isFirebaseLive()) {
-        console.warn("Firebase not live. Returning mock data for getDocumentAction.");
+        console.warn("Firebase no está en modo real. Devolviendo datos de ejemplo para getDocumentAction.");
         const collectionData = mockData[collectionId] || [];
         const document = collectionData.find(doc => doc.id === documentId);
         if (!document) {
-            return { data: null, error: "Document not found in mock data." };
+            return { data: null, error: "Documento no encontrado en los datos de ejemplo." };
         }
         return { data: document, error: null };
     }
@@ -300,31 +300,31 @@ export async function getDocumentAction(collectionId: string, documentId: string
         const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
-            return { data: null, error: "Document not found." };
+            return { data: null, error: "Documento no encontrado." };
         }
         return { data: { id: docSnap.id, ...docSnap.data() }, error: null };
     } catch (error) {
-        return { data: null, error: `Failed to fetch document: ${error instanceof Error ? error.message : 'Unknown error'}` };
+        return { data: null, error: `No se pudo obtener el documento: ${error instanceof Error ? error.message : 'Error desconocido'}` };
     }
 }
 
 export async function updateDocumentAction(prevState: any, formData: FormData) {
     if (!isFirebaseLive()) {
-        return { message: "Action failed: App is in demo mode.", success: false };
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
 
     const collectionId = formData.get('collectionId') as string;
     const documentId = formData.get('documentId') as string;
 
     if (!collectionId || !documentId) {
-        return { message: "Collection ID and Document ID are required.", success: false };
+        return { message: "Se requieren el ID de la colección y el ID del documento.", success: false };
     }
 
     try {
         const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
         const originalDocSnap = await docRef.get();
         if (!originalDocSnap.exists) {
-            return { message: "Document not found.", success: false };
+            return { message: "Documento no encontrado.", success: false };
         }
         const originalData = originalDocSnap.data()!;
         
@@ -363,10 +363,10 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
         revalidatePath(`/collections/${collectionId}`);
         revalidatePath(`/collections/${collectionId}/${documentId}/edit`);
         revalidatePath(`/collections/posts/edit/${documentId}`); // Also revalidate custom editor
-        return { message: `Document '${documentId}' updated successfully.`, success: true };
+        return { message: `Documento '${documentId}' actualizado con éxito.`, success: true };
 
     } catch (error) {
-        return { message: `Failed to update document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
+        return { message: `No se pudo actualizar el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
     }
 }
 
@@ -385,7 +385,7 @@ const writingAssistantSchema = z.object({
           const errors = validatedFields.error.flatten().fieldErrors;
           const errorMessage = Object.values(errors).flat().join(', ');
           return {
-              error: "Validation failed: " + errorMessage,
+              error: "Validación fallida: " + errorMessage,
               draft: null,
           };
       }
@@ -396,7 +396,7 @@ const writingAssistantSchema = z.object({
       } catch (error) {
           return {
               draft: null,
-              error: `An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              error: `Ocurrió un error: ${error instanceof Error ? error.message : 'Error desconocido'}`,
           };
       }
   }

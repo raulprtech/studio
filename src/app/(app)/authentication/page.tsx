@@ -39,13 +39,19 @@ export default async function AuthenticationPage() {
   let users: any[] = [];
   const useLive = isFirebaseLive();
 
+  const roleDisplayMap: { [key: string]: string } = {
+    Admin: 'Administrador',
+    Editor: 'Editor',
+    Viewer: 'Lector',
+  };
+
   if (useLive && authAdmin) {
     try {
       const userRecords = await authAdmin.listUsers();
       users = userRecords.users.map(user => ({
         uid: user.uid,
         email: user.email || null,
-        name: user.displayName || user.email?.split('@')[0] || 'Unnamed User',
+        name: user.displayName || user.email?.split('@')[0] || 'Usuario sin nombre',
         role: user.customClaims?.role || 'Viewer', // Default to viewer
         lastSignIn: user.metadata.lastSignInTime,
         createdAt: user.metadata.creationTime,
@@ -53,7 +59,7 @@ export default async function AuthenticationPage() {
         disabled: user.disabled,
       }));
     } catch (error) {
-        console.error("Error fetching users from Firebase Auth:", error);
+        console.error("Error al obtener usuarios de Firebase Auth:", error);
         users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
     }
   } else {
@@ -65,29 +71,29 @@ export default async function AuthenticationPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center">
-        <h1 className="flex-1 text-2xl font-semibold">Users</h1>
+        <h1 className="flex-1 text-2xl font-semibold">Usuarios</h1>
         {isAdmin && (
             <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add User
+                Añadir Usuario
             </Button>
         )}
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>Manage user access and roles for your project.</CardDescription>
+          <CardTitle>Gestión de Usuarios</CardTitle>
+          <CardDescription>Gestiona el acceso de usuarios y los roles para tu proyecto.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="hidden md:table-cell">Last Sign-In</TableHead>
-                <TableHead className="hidden md:table-cell">Created At</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead className="hidden md:table-cell">Último Inicio de Sesión</TableHead>
+                <TableHead className="hidden md:table-cell">Fecha de Creación</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -102,15 +108,15 @@ export default async function AuthenticationPage() {
                       </Avatar>
                       <div>
                         <div>{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email || 'No email'}</div>
+                        <div className="text-sm text-muted-foreground">{user.email || 'Sin correo'}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
-                    {user.disabled && <Badge variant="destructive" className="ml-2">Disabled</Badge>}
+                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{roleDisplayMap[user.role] || user.role}</Badge>
+                    {user.disabled && <Badge variant="destructive" className="ml-2">Deshabilitado</Badge>}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{user.lastSignIn ? new Date(user.lastSignIn).toLocaleString() : 'Never'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{user.lastSignIn ? new Date(user.lastSignIn).toLocaleString() : 'Nunca'}</TableCell>
                   <TableCell className="hidden md:table-cell">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell>
                     {isAdmin && (
@@ -118,11 +124,11 @@ export default async function AuthenticationPage() {
                         <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">Menú de acciones</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                             <EditRoleMenuItem user={user} />
                             <SendPasswordResetMenuItem user={user} />
                             <DropdownMenuSeparator />

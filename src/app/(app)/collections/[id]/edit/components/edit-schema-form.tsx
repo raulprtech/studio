@@ -16,7 +16,7 @@ function SubmitButton() {
     return (
         <Button type="submit" disabled={pending}>
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            Guardar Cambios
         </Button>
     );
 }
@@ -33,19 +33,19 @@ export function EditSchemaForm({ collectionId, initialSchema, initialIcon }: { c
         if (state.success) {
             if(state.message) {
                  toast({
-                    title: "Schema Updated",
+                    title: "Esquema Actualizado",
                     description: state.message,
                 });
             }
         } else if (state.message) { // Handles failure message from server
              toast({
-                title: "Error Updating Schema",
+                title: "Error al Actualizar Esquema",
                 description: state.message,
                 variant: "destructive",
             });
         } else if (state.errors) { // Handles validation errors
              toast({
-                title: "Validation Error",
+                title: "Error de Validación",
                 description: Object.values(state.errors).flat().join('\n'),
                 variant: "destructive",
             });
@@ -56,11 +56,11 @@ export function EditSchemaForm({ collectionId, initialSchema, initialIcon }: { c
         <form action={dispatch} className="grid gap-6">
             <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                    <Label htmlFor="collection-name">Collection Name</Label>
+                    <Label htmlFor="collection-name">Nombre de la Colección</Label>
                     <Input id="collection-name" name="collectionId" value={collectionId} readOnly />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="collection-icon">Icon</Label>
+                    <Label htmlFor="collection-icon">Icono</Label>
                      <IconPicker
                         value={icon}
                         onChange={setIcon}
@@ -68,12 +68,12 @@ export function EditSchemaForm({ collectionId, initialSchema, initialIcon }: { c
                     />
                     <input type="hidden" name="icon" value={icon} />
                     <p className="text-xs text-muted-foreground">
-                        Change the visual icon for your collection.
+                        Cambia el icono visual de tu colección.
                     </p>
                 </div>
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="schema-definition">Schema Definition (Zod)</Label>
+                <Label htmlFor="schema-definition">Definición de Esquema (Zod)</Label>
                 <Textarea
                     id="schema-definition"
                     name="schemaDefinition"
@@ -81,7 +81,7 @@ export function EditSchemaForm({ collectionId, initialSchema, initialIcon }: { c
                     onChange={(e) => setSchema(e.target.value)}
                     rows={15}
                     className="font-mono"
-                    placeholder="Enter your Zod schema here."
+                    placeholder="Introduce tu esquema de Zod aquí."
                     required
                 />
                  {state.errors?.schemaDefinition &&

@@ -46,7 +46,7 @@ function SubmitButton() {
     return (
         <Button type="submit" disabled={pending} className="w-full">
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            Guardar Cambios
         </Button>
     );
 }
@@ -59,18 +59,18 @@ function AiGenerateTool({ onDraftReceived }: { onDraftReceived: (draft: string) 
     
     const handleGenerate = () => {
         if (topic.length < 5) {
-            toast({ title: "Topic too short", description: "Please provide a more detailed topic.", variant: "destructive" });
+            toast({ title: "Tema demasiado corto", description: "Por favor, proporciona un tema más detallado.", variant: "destructive" });
             return;
         }
 
         startTransition(async () => {
             const result = await writingAssistantAction({ action: 'generate', topic });
             if (result.error) {
-                toast({ title: "AI Error", description: result.error, variant: "destructive" });
+                toast({ title: "Error de IA", description: result.error, variant: "destructive" });
             } else if (result.draft) {
                 onDraftReceived(result.draft);
                 setIsOpen(false);
-                toast({ title: "Draft generated!", description: "The AI-generated content has been added to the editor." });
+                toast({ title: "¡Borrador generado!", description: "El contenido generado por IA ha sido añadido al editor." });
             }
         });
     }
@@ -80,32 +80,32 @@ function AiGenerateTool({ onDraftReceived }: { onDraftReceived: (draft: string) 
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                     <Wand2 className="mr-2 h-4 w-4" />
-                    AI Writing Assistant
+                    Asistente de Escritura IA
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>AI Writing Assistant</DialogTitle>
+                    <DialogTitle>Asistente de Escritura IA</DialogTitle>
                     <DialogDescription>
-                        Describe the topic or section you want the AI to write about.
+                        Describe el tema o la sección sobre la que quieres que escriba la IA.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="topic">Topic / Headline</Label>
+                        <Label htmlFor="topic">Tema / Titular</Label>
                         <Input 
                             id="topic"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
-                            placeholder="e.g., 'The future of serverless computing'"
+                            placeholder="ej., 'El futuro de la computación sin servidor'"
                         />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
                     <Button onClick={handleGenerate} disabled={isGenerating}>
                         {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Generate
+                        Generar
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -120,20 +120,20 @@ function AiEditTools({ onTextEdited, selectedText, isGenerating, onActionStart }
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" disabled={!selectedText || isGenerating}>
                      {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    AI Tools
+                    Herramientas IA
                     <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onActionStart('paraphrase')}>Paraphrase</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onActionStart('summarize')}>Summarize</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onActionStart('expand')}>Expand</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onActionStart('paraphrase')}>Parafrasear</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onActionStart('summarize')}>Resumir</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onActionStart('expand')}>Expandir</DropdownMenuItem>
                 <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Change Tone</DropdownMenuSubTrigger>
+                    <DropdownMenuSubTrigger>Cambiar Tono</DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Professional')}>Professional</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Professional')}>Profesional</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Casual')}>Casual</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Humorous')}>Humorous</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Humorous')}>Humorístico</DropdownMenuItem>
                     </DropdownMenuSubContent>
                 </DropdownMenuSub>
             </DropdownMenuContent>
@@ -160,7 +160,7 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
     useEffect(() => {
         if (state.message) {
             toast({
-                title: state.success ? "Success" : "Error",
+                title: state.success ? "Éxito" : "Error",
                 description: state.message,
                 variant: state.success ? "default" : "destructive",
             });
@@ -201,10 +201,17 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                 setContent(newContent);
                 setSelectedText("");
                 setSelectionRange(null);
-                const actionVerb = action === 'changeTone' ? `changed tone to ${tone}` : `${action}d`;
-                toast({ title: "Content updated!", description: `The selected text has been ${actionVerb}.` });
+                const actionVerbMap: Record<AiAction, string> = {
+                    generate: 'generado',
+                    paraphrase: 'parafraseado',
+                    summarize: 'resumido',
+                    expand: 'expandido',
+                    changeTone: `cambiado a tono ${tone}`
+                }
+                const actionVerb = actionVerbMap[action];
+                toast({ title: "¡Contenido actualizado!", description: `El texto seleccionado ha sido ${actionVerb}.` });
             } else if (result.error) {
-                toast({ title: "AI Error", description: result.error, variant: "destructive" });
+                toast({ title: "Error de IA", description: result.error, variant: "destructive" });
             }
         });
     };
@@ -217,14 +224,14 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                     <Card>
                         <CardHeader>
                             <div className="grid gap-2">
-                                <Label htmlFor="title" className="sr-only">Title</Label>
-                                <Input id="title" name="title" placeholder="Post Title" defaultValue={document.title} className="text-2xl font-bold h-14 border-none shadow-none focus-visible:ring-0 px-0" />
+                                <Label htmlFor="title" className="sr-only">Título</Label>
+                                <Input id="title" name="title" placeholder="Título del Post" defaultValue={document.title} className="text-2xl font-bold h-14 border-none shadow-none focus-visible:ring-0 px-0" />
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
                                 <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
-                                    <Label htmlFor="content" className="text-xs text-muted-foreground">Content (Markdown Supported)</Label>
+                                    <Label htmlFor="content" className="text-xs text-muted-foreground">Contenido (Soporta Markdown)</Label>
                                     <div className="flex items-center gap-2">
                                         <AiGenerateTool onDraftReceived={handleDraftReceived} />
                                         <AiEditTools 
@@ -235,7 +242,7 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                         />
                                         <Button type="button" variant="outline" size="sm" onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}>
                                             {viewMode === 'edit' ? <Eye className="mr-2 h-4 w-4" /> : <Pencil className="mr-2 h-4 w-4" />}
-                                            {viewMode === 'edit' ? 'Preview' : 'Edit'}
+                                            {viewMode === 'edit' ? 'Vista Previa' : 'Editar'}
                                         </Button>
                                     </div>
                                 </div>
@@ -244,7 +251,7 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                         id="content" 
                                         name="content" 
                                         ref={textAreaRef}
-                                        placeholder="Write your post here..." 
+                                        placeholder="Escribe tu post aquí..." 
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
                                         onSelect={handleSelectionChange}
@@ -253,7 +260,7 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                     />
                                 ) : (
                                     <div className="prose dark:prose-invert w-full max-w-none rounded-md border border-input p-4 min-h-[480px]">
-                                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || "Nothing to preview."}</ReactMarkdown>
+                                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || "Nada que previsualizar."}</ReactMarkdown>
                                     </div>
                                 )}
                             </div>
@@ -265,27 +272,27 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-4">
                     <Card>
                         <CardHeader>
-                             <CardTitle>Details</CardTitle>
+                             <CardTitle>Detalles</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <input type="hidden" name="collectionId" value={collectionId} />
                             <input type="hidden" name="documentId" value={document.id} />
                             
                              <div className="grid gap-2">
-                                <Label htmlFor="status">Status</Label>
+                                <Label htmlFor="status">Estado</Label>
                                 <Select name="status" defaultValue={document.status}>
                                     <SelectTrigger id="status">
-                                        <SelectValue placeholder="Select status" />
+                                        <SelectValue placeholder="Seleccionar estado" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Published">Published</SelectItem>
-                                        <SelectItem value="Draft">Draft</SelectItem>
-                                        <SelectItem value="Archived">Archived</SelectItem>
+                                        <SelectItem value="Published">Publicado</SelectItem>
+                                        <SelectItem value="Draft">Borrador</SelectItem>
+                                        <SelectItem value="Archived">Archivado</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                              <div className="grid gap-2">
-                                <Label htmlFor="publishedAt">Publication Date</Label>
+                                <Label htmlFor="publishedAt">Fecha de Publicación</Label>
                                 <Input
                                     id="publishedAt"
                                     name="publishedAt"
@@ -294,8 +301,8 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                 />
                              </div>
                              <div className="grid gap-2">
-                                <Label htmlFor="authorId">Author ID</Label>
-                                <Input id="authorId" name="authorId" placeholder="Enter author user ID" defaultValue={document.authorId} />
+                                <Label htmlFor="authorId">ID de Autor</Label>
+                                <Input id="authorId" name="authorId" placeholder="Introduce el ID de usuario del autor" defaultValue={document.authorId} />
                             </div>
                         </CardContent>
                         <CardFooter>

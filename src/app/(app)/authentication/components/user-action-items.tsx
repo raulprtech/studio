@@ -50,7 +50,7 @@ function EditRoleSubmitButton() {
     return (
         <Button type="submit" disabled={pending}>
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            Guardar Cambios
         </Button>
     )
 }
@@ -64,7 +64,7 @@ export function EditRoleMenuItem({ user }: { user: User }) {
   useEffect(() => {
     if (state.message) {
       toast({
-          title: state.success ? "Success" : "Error",
+          title: state.success ? "Éxito" : "Error",
           description: state.message,
           variant: state.success ? "default" : "destructive",
       });
@@ -78,34 +78,34 @@ export function EditRoleMenuItem({ user }: { user: User }) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          Edit Role
+          Editar Rol
         </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Role for {user.name}</DialogTitle>
+          <DialogTitle>Editar Rol para {user.name}</DialogTitle>
           <DialogDescription>
-            Select a new role for the user. This will change their permissions across the application.
+            Selecciona un nuevo rol para el usuario. Esto cambiará sus permisos en toda la aplicación.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="uid" value={user.uid} />
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role">Rol</Label>
             <Select name="role" defaultValue={user.role}>
               <SelectTrigger id="role">
-                <SelectValue placeholder="Select a role" />
+                <SelectValue placeholder="Selecciona un rol" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Admin">Administrador</SelectItem>
                 <SelectItem value="Editor">Editor</SelectItem>
-                <SelectItem value="Viewer">Viewer</SelectItem>
+                <SelectItem value="Viewer">Lector</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="ghost" type="button">Cancel</Button>
+              <Button variant="ghost" type="button">Cancelar</Button>
             </DialogClose>
             <EditRoleSubmitButton />
           </DialogFooter>
@@ -121,13 +121,13 @@ export function SendPasswordResetMenuItem({ user }: { user: User }) {
 
   const handleClick = () => {
     if (!user.email) {
-        toast({ title: "Error", description: "User does not have an email address.", variant: "destructive" });
+        toast({ title: "Error", description: "El usuario no tiene una dirección de correo electrónico.", variant: "destructive" });
         return;
     }
     startTransition(async () => {
       const result = await sendPasswordResetAction(user.email!);
       toast({
-        title: result.success ? "Success" : "Error",
+        title: result.success ? "Éxito" : "Error",
         description: result.message,
         variant: result.success ? "default" : "destructive",
       });
@@ -137,7 +137,7 @@ export function SendPasswordResetMenuItem({ user }: { user: User }) {
   return (
     <DropdownMenuItem onClick={handleClick} disabled={isPending || !user.email}>
       {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      Send Password Reset
+      Enviar correo de restablecimiento
     </DropdownMenuItem>
   );
 }
@@ -145,14 +145,14 @@ export function SendPasswordResetMenuItem({ user }: { user: User }) {
 export function ToggleUserStatusMenuItem({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const actionText = user.disabled ? "Enable User" : "Disable User";
+  const actionText = user.disabled ? "Habilitar Usuario" : "Deshabilitar Usuario";
   const newStatus = !user.disabled;
 
   const handleToggle = () => {
     startTransition(async () => {
         const result = await toggleUserStatusAction(user.uid, newStatus);
         toast({
-            title: result.success ? "Success" : "Error",
+            title: result.success ? "Éxito" : "Error",
             description: result.message,
             variant: result.success ? "default" : "destructive",
         });
@@ -168,14 +168,14 @@ export function ToggleUserStatusMenuItem({ user }: { user: User }) {
         </AlertDialogTrigger>
         <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This will {user.disabled ? "enable" : "disable"} the user account for {user.name}. 
-                    {user.disabled ? ' They will be able to sign in again.' : ' They will no longer be able to sign in.'}
+                    Esta acción {user.disabled ? "habilitará" : "deshabilitará"} la cuenta de usuario para {user.name}.
+                    {user.disabled ? ' Podrá volver a iniciar sesión.' : ' Ya no podrá iniciar sesión.'}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction onClick={handleToggle} disabled={isPending} className={!user.disabled ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}>
                      {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {actionText}

@@ -31,25 +31,25 @@ export default function PortfolioPage() {
     { name: "JavaScript", level: 90 }, { name: "TypeScript", level: 85 },
     { name: "React / Next.js", level: 95 }, { name: "Node.js", level: 80 },
     { name: "Python", level: 70 }, { name: "SQL / NoSQL", level: 85 },
-    { name: "UI/UX Design", level: 75 }, { name: "Figma", level: 80 },
+    { name: "Diseño UI/UX", level: 75 }, { name: "Figma", level: 80 },
     { name: "DevOps (Docker, K8s)", level: 65 }, { name: "GraphQL", level: 70 },
     { name: "TailwindCSS", level: 95 }, { name: "Firebase", level: 90 },
   ];
 
   const projects = [
-    { title: "E-Commerce Platform", description: "A full-stack e-commerce solution with a custom CMS.", tags: ["Next.js", "Firebase", "Stripe"], image: "https://placehold.co/600x400.png", hint: "website screenshot" },
-    { title: "AI Management App", description: "An application to manage and monitor AI models.", tags: ["React", "Python", "FastAPI"], image: "https://placehold.co/600x400.png", hint: "dashboard ui" },
-    { title: "SaaS Admin Dashboard", description: "A comprehensive dashboard for a SaaS product.", tags: ["Next.js", "Tailwind", "Charts"], image: "https://placehold.co/600x400.png", hint: "admin dashboard" },
-    { title: "Mobile Wallet", description: "A cross-platform mobile wallet for digital assets.", tags: ["React Native", "Node.js", "Security"], image: "https://placehold.co/600x400.png", hint: "mobile app" },
-    { title: "Cyber Dashboard", description: "Real-time cybersecurity threat monitoring dashboard.", tags: ["Data Viz", "Websockets", "React"], image: "https://placehold.co/600x400.png", hint: "cybersecurity dashboard" },
-    { title: "Portfolio Website", description: "A personal portfolio to showcase my work and skills.", tags: ["Astro", "TailwindCSS", "Animations"], image: "https://placehold.co/600x400.png", hint: "portfolio website" },
+    { title: "Plataforma de E-Commerce", description: "Una solución de e-commerce full-stack con un CMS personalizado.", tags: ["Next.js", "Firebase", "Stripe"], image: "https://placehold.co/600x400.png", hint: "website screenshot" },
+    { title: "App de Gestión de IA", description: "Una aplicación para gestionar y monitorizar modelos de IA.", tags: ["React", "Python", "FastAPI"], image: "https://placehold.co/600x400.png", hint: "dashboard ui" },
+    { title: "Panel de Admin SaaS", description: "Un panel de control completo para un producto SaaS.", tags: ["Next.js", "Tailwind", "Charts"], image: "https://placehold.co/600x400.png", hint: "admin dashboard" },
+    { title: "Billetera Móvil", description: "Una billetera móvil multiplataforma para activos digitales.", tags: ["React Native", "Node.js", "Seguridad"], image: "https://placehold.co/600x400.png", hint: "mobile app" },
+    { title: "Panel de Ciberseguridad", description: "Panel de monitorización de amenazas de ciberseguridad en tiempo real.", tags: ["Data Viz", "Websockets", "React"], image: "https://placehold.co/600x400.png", hint: "cybersecurity dashboard" },
+    { title: "Sitio Web de Portafolio", description: "Un portafolio personal para mostrar mi trabajo y habilidades.", tags: ["Astro", "TailwindCSS", "Animaciones"], image: "https://placehold.co/600x400.png", hint: "portfolio website" },
   ];
 
   const experiences = [
-    { role: "Senior Frontend Developer", company: "Tech Innovators Inc.", date: "2021 - Present", description: "Leading the development of a new client-facing platform using Next.js and TypeScript, focusing on performance and scalability." },
-    { role: "Frontend Developer", company: "Creative Solutions", date: "2019 - 2021", description: "Developed and maintained several large-scale web applications for various clients, improving user experience and code quality." },
-    { role: "Web Developer", company: "Digital Agency", date: "2017 - 2019", description: "Built responsive websites and e-commerce stores for small to medium-sized businesses using WordPress, Shopify, and custom code." },
-    { role: "Intern", company: "Startup Hub", date: "2016 - 2017", description: "Assisted the development team in various tasks, including bug fixing, feature implementation, and learning the ropes of professional software development." },
+    { role: "Desarrollador Frontend Senior", company: "Tech Innovators Inc.", date: "2021 - Presente", description: "Liderando el desarrollo de una nueva plataforma para clientes usando Next.js y TypeScript, con foco en rendimiento y escalabilidad." },
+    { role: "Desarrollador Frontend", company: "Creative Solutions", date: "2019 - 2021", description: "Desarrollé y mantuve varias aplicaciones web a gran escala para diversos clientes, mejorando la experiencia de usuario y la calidad del código." },
+    { role: "Desarrollador Web", company: "Digital Agency", date: "2017 - 2019", description: "Construí sitios web responsive y tiendas de e-commerce para pequeñas y medianas empresas usando WordPress, Shopify y código personalizado." },
+    { role: "Pasante", company: "Startup Hub", date: "2016 - 2017", description: "Asistí al equipo de desarrollo en diversas tareas, incluyendo corrección de errores, implementación de características y aprendiendo los fundamentos del desarrollo de software profesional." },
   ];
 
   const socialLinks = [
@@ -75,8 +75,8 @@ export default function PortfolioPage() {
                     </span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
-                    {["About", "Skills", "Projects", "Experience", "Contact"].map((item) => (
-                    <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="hover:text-foreground transition-colors px-3 py-2 rounded-full">
+                    {["Sobre mí", "Habilidades", "Proyectos", "Experiencia", "Contacto"].map((item) => (
+                    <Link key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="hover:text-foreground transition-colors px-3 py-2 rounded-full">
                         {item}
                     </Link>
                     ))}
@@ -84,7 +84,7 @@ export default function PortfolioPage() {
             </div>
             <div className="pr-2">
                 <Button asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold rounded-full hover:shadow-lg hover:shadow-primary/40 transition-shadow">
-                    <a href="#">Resume</a>
+                    <a href="#">CV</a>
                 </Button>
             </div>
         </div>
@@ -94,22 +94,22 @@ export default function PortfolioPage() {
         {/* Hero Section */}
         <section id="hero" className="relative flex items-center min-h-[calc(100vh-8rem)] py-20">
           <div className="relative z-10 space-y-6">
-            <span className="text-primary font-semibold">Full Stack Developer</span>
+            <span className="text-primary font-semibold">Desarrollador Full Stack</span>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
-              Hi, I'm <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Raul</span>
+              Hola, soy <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Raul</span>
               <br />
               Pacheco
             </h1>
             <p className="max-w-lg text-muted-foreground">
-              I'm a passionate developer creating modern and responsive web applications.
-              I turn complex problems into simple, beautiful, and intuitive designs.
+              Soy un desarrollador apasionado creando aplicaciones web modernas y responsivas.
+              Convierto problemas complejos en diseños simples, hermosos e intuitivos.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Button size="lg" className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold">
-                MY WORKS
+                MIS TRABAJOS
               </Button>
               <Button size="lg" variant="outline">
-                MY RESUME <Download className="ml-2 h-4 w-4" />
+                MI CV <Download className="ml-2 h-4 w-4" />
               </Button>
             </div>
             <div className="flex items-center gap-4 pt-4">
@@ -124,8 +124,8 @@ export default function PortfolioPage() {
         </section>
 
         {/* About Me Section */}
-        <section id="about" className="py-24">
-          <SectionTitle label="INTRODUCTION" title="About Me" />
+        <section id="sobre-mí" className="py-24">
+          <SectionTitle label="INTRODUCCIÓN" title="Sobre Mí" />
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="w-full aspect-square bg-card rounded-2xl p-6">
               <Image
@@ -139,23 +139,23 @@ export default function PortfolioPage() {
             </div>
             <div className="space-y-6">
               <p className="text-muted-foreground leading-relaxed">
-                I'm a self-taught developer with a passion for building beautiful and functional websites. 
-                I have a strong background in both frontend and backend development, and I'm always looking for new challenges to tackle. 
-                I love learning new technologies and I'm a firm believer in the power of continuous learning.
+                Soy un desarrollador autodidacta con una pasión por construir sitios web hermosos y funcionales. 
+                Tengo una sólida experiencia tanto en desarrollo frontend como backend, y siempre estoy buscando nuevos desafíos que abordar. 
+                Me encanta aprender nuevas tecnologías y creo firmemente en el poder del aprendizaje continuo.
               </p>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><span className="font-semibold text-foreground">Name:</span> Raul Pacheco</div>
+                <div><span className="font-semibold text-foreground">Nombre:</span> Raul Pacheco</div>
                 <div><span className="font-semibold text-foreground">Email:</span> contact@raulpacheco.dev</div>
-                <div><span className="font-semibold text-foreground">Location:</span> San Francisco, CA</div>
-                <div><span className="font-semibold text-foreground">Availability:</span> Open to work</div>
+                <div><span className="font-semibold text-foreground">Ubicación:</span> San Francisco, CA</div>
+                <div><span className="font-semibold text-foreground">Disponibilidad:</span> Abierto a trabajar</div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Skills Section */}
-        <section id="skills" className="py-24">
-          <SectionTitle label="MY ABILITIES" title="My Skills" />
+        <section id="habilidades" className="py-24">
+          <SectionTitle label="MIS CAPACIDADES" title="Mis Habilidades" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {skills.map((skill) => (
               <Card key={skill.name} className="p-6 bg-card/80 backdrop-blur-sm border-border/50">
@@ -167,8 +167,8 @@ export default function PortfolioPage() {
         </section>
 
         {/* Projects Section */}
-        <section id="projects" className="py-24">
-          <SectionTitle label="MY PORTFOLIO" title="Featured Projects" />
+        <section id="proyectos" className="py-24">
+          <SectionTitle label="MI PORTAFOLIO" title="Proyectos Destacados" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
               <Card key={project.title} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group">
@@ -191,7 +191,7 @@ export default function PortfolioPage() {
                       ))}
                     </div>
                   <Button variant="outline" className="w-full mt-4 bg-transparent border-primary/50 hover:bg-primary/10 text-primary group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground group-hover:border-transparent transition-all">
-                    View Project <ArrowRight className="ml-2 h-4 w-4" />
+                    Ver Proyecto <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardContent>
               </Card>
@@ -200,8 +200,8 @@ export default function PortfolioPage() {
         </section>
 
         {/* Work Experience Section */}
-        <section id="experience" className="py-24">
-          <SectionTitle label="CAREER PATH" title="Work Experience" />
+        <section id="experiencia" className="py-24">
+          <SectionTitle label="TRAYECTORIA PROFESIONAL" title="Experiencia Laboral" />
           <div className="relative">
             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border -translate-x-1/2 hidden md:block"></div>
             {experiences.map((exp, index) => (
@@ -221,11 +221,11 @@ export default function PortfolioPage() {
         </section>
 
         {/* Contact Section */}
-        <section id="contact" className="py-24">
-          <SectionTitle label="GET IN TOUCH" title="Contact Me" />
+        <section id="contacto" className="py-24">
+          <SectionTitle label="PONTE EN CONTACTO" title="Contáctame" />
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-8">
-              <h3 className="text-2xl font-bold">Contact Information</h3>
+              <h3 className="text-2xl font-bold">Información de Contacto</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Mail className="w-6 h-6 text-primary" /></div>
@@ -237,19 +237,19 @@ export default function PortfolioPage() {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Phone className="w-6 h-6 text-primary" /></div>
                   <div>
-                    <p className="text-muted-foreground">Phone</p>
+                    <p className="text-muted-foreground">Teléfono</p>
                     <a href="tel:+11234567890" className="font-semibold hover:text-primary">+1 123 456 7890</a>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><MapPin className="w-6 h-6 text-primary" /></div>
                   <div>
-                    <p className="text-muted-foreground">Address</p>
+                    <p className="text-muted-foreground">Dirección</p>
                     <p className="font-semibold">San Francisco, CA</p>
                   </div>
                 </div>
               </div>
-              <h3 className="text-2xl font-bold pt-8">Contact On</h3>
+              <h3 className="text-2xl font-bold pt-8">Contacto en Redes</h3>
               <div className="flex items-center gap-4">
                 {socialLinks.map((link, index) => (
                     <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-lg bg-card flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
@@ -259,13 +259,13 @@ export default function PortfolioPage() {
               </div>
             </div>
             <Card className="p-8 bg-card/80 backdrop-blur-sm border-border/50">
-              <h3 className="text-2xl font-bold mb-6">Send Me a Message</h3>
+              <h3 className="text-2xl font-bold mb-6">Envíame un Mensaje</h3>
               <form className="space-y-4">
-                <Input type="text" placeholder="Your Name" className="bg-background/50 border-border/80 h-12"/>
-                <Input type="email" placeholder="Your Email" className="bg-background/50 border-border/80 h-12"/>
-                <Textarea placeholder="Your Message" rows={5} className="bg-background/50 border-border/80"/>
+                <Input type="text" placeholder="Tu Nombre" className="bg-background/50 border-border/80 h-12"/>
+                <Input type="email" placeholder="Tu Email" className="bg-background/50 border-border/80 h-12"/>
+                <Textarea placeholder="Tu Mensaje" rows={5} className="bg-background/50 border-border/80"/>
                 <Button type="submit" size="lg" className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold">
-                  Send Message <Send className="ml-2 h-4 w-4" />
+                  Enviar Mensaje <Send className="ml-2 h-4 w-4" />
                 </Button>
               </form>
             </Card>
@@ -275,7 +275,7 @@ export default function PortfolioPage() {
 
       <footer className="border-t border-border/50">
           <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">&copy; 2024 Raul Pacheco. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">&copy; 2024 Raul Pacheco. Todos los derechos reservados.</p>
              <div className="flex items-center gap-4">
               {socialLinks.map((link, index) => (
                 <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">

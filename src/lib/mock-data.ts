@@ -9,19 +9,19 @@ export const mockData: { [key: string]: any[] } = {
     { id: "user-3", uid: "user-3", email: "charlie@example.com", name: "Charlie Brown", role: "Viewer", createdAt: "2024-03-10", disabled: true },
   ],
   posts: [
-    { id: "post-1", title: "Getting Started with Next.js", status: "Published", authorId: "user-1", publishedAt: "2024-05-10", content: "A detailed guide on setting up a new Next.js project." },
-    { id: "post-2", title: "Advanced Tailwind CSS", status: "Draft", authorId: "user-2", publishedAt: null, content: "Discover advanced techniques for styling with Tailwind CSS." },
-    { id: "post-3", title: "Firebase Authentication Deep Dive", status: "Published", authorId: "user-1", publishedAt: "2024-04-22", content: "Learn how to implement secure authentication with Firebase." },
+    { id: "post-1", title: "Primeros Pasos con Next.js", status: "Publicado", authorId: "user-1", publishedAt: "2024-05-10", content: "Una guía detallada sobre cómo configurar un nuevo proyecto de Next.js." },
+    { id: "post-2", title: "Tailwind CSS Avanzado", status: "Borrador", authorId: "user-2", publishedAt: null, content: "Descubre técnicas avanzadas para estilizar con Tailwind CSS." },
+    { id: "post-3", title: "Inmersión Profunda en Firebase Authentication", status: "Publicado", authorId: "user-1", publishedAt: "2024-04-22", content: "Aprende a implementar autenticación segura con Firebase." },
   ],
   products: [
-    { id: "prod-1", name: "Wireless Mouse", price: 25.99, stock: 150, category: "Electronics", imageUrl: "https://placehold.co/600x400.png" },
-    { id: "prod-2", name: "Mechanical Keyboard", price: 89.99, stock: 75, category: "Electronics", imageUrl: "https://placehold.co/600x400.png" },
-    { id: "prod-3", name: "Coffee Mug", price: 12.50, stock: 300, category: "Kitchenware", imageUrl: "https://placehold.co/600x400.png" },
+    { id: "prod-1", name: "Ratón Inalámbrico", price: 25.99, stock: 150, category: "Electrónica", imageUrl: "https://placehold.co/600x400.png" },
+    { id: "prod-2", name: "Teclado Mecánico", price: 89.99, stock: 75, category: "Electrónica", imageUrl: "https://placehold.co/600x400.png" },
+    { id: "prod-3", name: "Taza de Café", price: 12.50, stock: 300, category: "Cocina", imageUrl: "https://placehold.co/600x400.png" },
   ],
   orders: [
-    { id: "order-1", customerId: "user-2", amount: 115.98, status: "Shipped", date: "2024-05-18" },
-    { id: "order-2", customerId: "user-3", amount: 12.50, status: "Processing", date: "2024-05-20" },
-    { id: "order-3", customerId: "user-2", amount: 25.99, status: "Delivered", date: "2024-05-15" },
+    { id: "order-1", customerId: "user-2", amount: 115.98, status: "Enviado", date: "2024-05-18" },
+    { id: "order-2", customerId: "user-3", amount: 12.50, status: "Procesando", date: "2024-05-20" },
+    { id: "order-3", customerId: "user-2", amount: 25.99, status: "Entregado", date: "2024-05-15" },
   ],
 };
 
@@ -51,7 +51,7 @@ export function getCollectionData(collectionId: string) {
 
 export async function getCollectionDocuments(collectionId: string) {
   if (!isFirebaseLive()) {
-      console.warn(`Firebase not live. Returning mock data for collection: ${collectionId}`);
+      console.warn(`Firebase no está en modo real. Devolviendo datos de ejemplo para la colección: ${collectionId}`);
       return mockData[collectionId] || [];
   }
 
@@ -63,20 +63,20 @@ export async function getCollectionDocuments(collectionId: string) {
       }
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-      console.error(`Error fetching documents for collection "${collectionId}":`, error);
+      console.error(`Error al obtener documentos para la colección "${collectionId}":`, error);
       return mockData[collectionId] || [];
   }
 }
 
 export async function getCollectionSchema(collectionId: string): Promise<{ definition: string; icon: string | null }> {
     if (!isFirebaseLive()) {
-        console.warn(`Firebase not live. Returning mock schema for collection: ${collectionId}`);
+        console.warn(`Firebase no está en modo real. Devolviendo esquema de ejemplo para la colección: ${collectionId}`);
         const mock = mockSchemas[collectionId];
         if (mock) {
             return { definition: mock.definition, icon: mock.icon };
         }
         return { 
-            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // App is in demo mode. This is a default schema for '${collectionId}'.\n});`,
+            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // La aplicación está en modo demo. Este es un esquema por defecto para '${collectionId}'.\n});`,
             icon: null 
         };
     }
@@ -92,13 +92,13 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
           const snapshot = await collectionRef.limit(1).get();
           
           if (snapshot.empty) {
-              definition = "z.object({\n  // Collection is empty or does not exist. Cannot infer schema.\n});";
+              definition = "z.object({\n  // La colección está vacía o no existe. No se puede inferir el esquema.\n});";
           } else {
               const firstItem = snapshot.docs[0].data();
               const getZodType = (value: any): string => {
                   const type = typeof value;
                   if (type === 'string') {
-                      if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Invalid email address" })';
+                      if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Dirección de correo inválida" })';
                       if (!isNaN(Date.parse(value))) return 'z.string().datetime()';
                       return 'z.string()';
                   }
@@ -119,21 +119,21 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
       return { definition, icon };
   
     } catch (error) {
-      console.error(`Error fetching collection schema for "${collectionId}":`, error);
-      const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // An error occurred while fetching the schema.\n  // Check server logs and Firebase configuration for details.\n});`;
+      console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, error);
+      const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n  // Revisa los logs del servidor y la configuración de Firebase para más detalles.\n});`;
       return { definition, icon: null };
     }
   }
 
 async function fetchCollection(collectionName: string, limit: number) {
-    if (!firestoreAdmin) throw new Error("Firestore not initialized");
+    if (!firestoreAdmin) throw new Error("Firestore no inicializado");
     const snapshot = await firestoreAdmin.collection(collectionName).limit(limit).get();
     if (snapshot.empty) return [];
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function getPublicStorageImages(limit: number) {
-    if (!storageAdmin) throw new Error("Storage not initialized");
+    if (!storageAdmin) throw new Error("Almacenamiento no inicializado");
 
     const bucket = storageAdmin.bucket();
     const [files] = await bucket.getFiles({ maxResults: limit * 2 });
@@ -158,7 +158,7 @@ async function getPublicStorageImages(limit: number) {
 
 export async function fetchPublicData() {
     if (!isFirebaseLive()) {
-        console.warn("Firebase not live. Returning mock data for public page.");
+        console.warn("Firebase no está en modo real. Devolviendo datos de ejemplo para la página pública.");
         return {
             products: mockData.products.slice(0, 3),
             posts: mockData.posts.slice(0, 2),
@@ -179,7 +179,7 @@ export async function fetchPublicData() {
         ]);
         return { products, posts, galleryImages };
     } catch (error) {
-        console.error("Error fetching public data from Firebase:", error);
+        console.error("Error al obtener datos públicos de Firebase:", error);
         return {
             products: [],
             posts: [],

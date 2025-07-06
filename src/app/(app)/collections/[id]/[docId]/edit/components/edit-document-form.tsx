@@ -21,7 +21,7 @@ function SubmitButton() {
     return (
         <Button type="submit" disabled={pending}>
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            Guardar Cambios
         </Button>
     );
 }
@@ -34,7 +34,7 @@ export function EditDocumentForm({ collectionId, document }: { collectionId: str
     useEffect(() => {
         if (state.message) {
             toast({
-                title: state.success ? "Success" : "Error",
+                title: state.success ? "Éxito" : "Error",
                 description: state.message,
                 variant: state.success ? "default" : "destructive",
             });
@@ -63,7 +63,7 @@ export function EditDocumentForm({ collectionId, document }: { collectionId: str
              return (
                 <div key={field} className="grid gap-2">
                     <Label htmlFor={fieldId}>{title}</Label>
-                    <Textarea id={fieldId} name={field} placeholder={`Enter ${title}`} defaultValue={value} />
+                    <Textarea id={fieldId} name={field} placeholder={`Introduce ${title}`} defaultValue={value} />
                 </div>
             )
         }
@@ -76,7 +76,7 @@ export function EditDocumentForm({ collectionId, document }: { collectionId: str
         return (
             <div key={field} className="grid gap-2">
                 <Label htmlFor={fieldId}>{title}</Label>
-                <Input id={fieldId} name={field} placeholder={`Enter ${title}`} defaultValue={defaultValue} type={inputType} />
+                <Input id={fieldId} name={field} placeholder={`Introduce ${title}`} defaultValue={defaultValue} type={inputType} />
             </div>
         )
     }

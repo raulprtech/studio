@@ -32,6 +32,20 @@ export function AppHeader() {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
 
+  const breadcrumbNameMap: { [key: string]: string } = {
+    dashboard: 'Panel',
+    collections: 'Colecciones',
+    authentication: 'Autenticación',
+    storage: 'Almacenamiento',
+    settings: 'Configuración',
+    new: 'Nuevo',
+    edit: 'Editar',
+  };
+
+  const getBreadcrumbName = (segment: string) => {
+    return breadcrumbNameMap[segment] || toTitleCase(segment);
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <SidebarTrigger className="md:hidden" />
@@ -39,22 +53,23 @@ export function AppHeader() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">Panel</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           {segments.map((segment, index) => {
              if (segment === "dashboard") return null;
             const href = `/${segments.slice(0, index + 1).join('/')}`;
             const isLast = index === segments.length - 1;
+            const displayName = getBreadcrumbName(segment);
             return (
               <React.Fragment key={href}>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   {isLast ? (
-                    <BreadcrumbPage>{toTitleCase(segment)}</BreadcrumbPage>
+                    <BreadcrumbPage>{displayName}</BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink asChild>
-                      <Link href={href}>{toTitleCase(segment)}</Link>
+                      <Link href={href}>{displayName}</Link>
                     </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
@@ -75,20 +90,20 @@ export function AppHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Perfil</span>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
+              <span>Cerrar Sesión</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

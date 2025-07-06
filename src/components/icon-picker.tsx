@@ -71,19 +71,19 @@ export function IconPicker({ value, onChange, defaultValue, className }: IconPic
               <span className="truncate">{selectedValue}</span>
             </>
           ) : (
-            "Select an icon"
+            "Seleccionar un icono"
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[300px]">
         <Command>
           <CommandInput 
-            placeholder="Search for an icon..."
+            placeholder="Buscar un icono..."
             value={search}
             onValueChange={setSearch}
           />
           <CommandList>
-            <CommandEmpty>No icons found.</CommandEmpty>
+            <CommandEmpty>No se encontraron iconos.</CommandEmpty>
             <CommandGroup>
               {filteredIcons.slice(0, 100).map((iconName) => (
                 <CommandItem
