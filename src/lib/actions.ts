@@ -11,6 +11,7 @@ import admin from 'firebase-admin';
 import { mockData } from "./mock-data";
 import { isFirebaseLive } from "./mode";
 import { cookies } from "next/headers";
+import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
 
 export async function setAppModeAction(mode: 'live' | 'demo') {
   cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
@@ -437,5 +438,20 @@ export async function uploadFileAction(formData: FormData, folder: string) {
     } catch (error) {
         console.error("Error al subir el archivo:", error);
         return { success: false, error: `No se pudo subir el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}` };
+    }
+}
+
+export async function getAnalyticsAdviceAction(analyticsData: AnalyticsAdviceInput) {
+    try {
+        const result = await generateAnalyticsAdvice(analyticsData);
+        return {
+            advice: result.advice,
+            error: null,
+        };
+    } catch (error) {
+        return {
+            advice: null,
+            error: `Ocurrió un error al generar el consejo: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        };
     }
 }

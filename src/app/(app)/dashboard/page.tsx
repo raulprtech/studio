@@ -17,14 +17,17 @@ import {
   import { Users, UserPlus, Activity } from "lucide-react"
   import { UserChart } from "./components/user-chart";
   import { getAnalyticsData } from "@/lib/analytics";
+import { AiAdviceButton } from "./components/ai-advice-button";
   
   export default async function DashboardPage() {
-    const { summary, userChartData, topPages } = await getAnalyticsData();
+    const analyticsData = await getAnalyticsData();
+    const { summary, userChartData, topPages } = analyticsData;
     
     return (
       <div className="flex flex-col gap-6">
         <div className="flex items-center">
           <h1 className="flex-1 text-2xl font-semibold">Panel de Control</h1>
+          <AiAdviceButton analyticsData={analyticsData} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
