@@ -30,6 +30,16 @@ export default function LoginPage() {
     event.preventDefault();
     setIsLoading(true);
 
+    if (!auth) {
+      toast({
+          title: "Configuración Incompleta",
+          description: "Firebase no está configurado del lado del cliente. Revisa las variables de entorno.",
+          variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await userCredential.user.getIdToken();

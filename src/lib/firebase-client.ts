@@ -1,5 +1,5 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,8 +10,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
+// Initialize Firebase only if the API key is provided
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+
+if (firebaseConfig.apiKey) {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    auth = getAuth(app);
+} else {
+    // This warning will appear in the browser's developer console.
+    console.warn("La configuración de Firebase del cliente no está completa. El SDK de cliente de Firebase no se ha inicializado. Asegúrate de que las variables de entorno NEXT_PUBLIC_FIREBASE_* estén configuradas en tu archivo .env.local.");
+}
+
 
 export { app, auth };
