@@ -89,7 +89,9 @@ export default function CollectionsPage() {
                         <DropdownMenuItem asChild>
                            <Link href={`/collections/${collection.name}`}>View</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Edit Schema</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/collections/${collection.name}/edit`}>Edit Schema</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

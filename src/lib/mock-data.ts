@@ -25,3 +25,29 @@ export const mockData: { [key: string]: any[] } = {
 export function getCollectionData(collectionId: string) {
     return mockData[collectionId] || [];
 }
+
+function getZodType(value: any): string {
+    const type = typeof value;
+    if (type === 'string') {
+        if (value.includes('@')) return 'z.string().email()';
+        return 'z.string()';
+    }
+    if (type === 'number') return 'z.number()';
+    if (type === 'boolean') return 'z.boolean()';
+    if (value === null) return 'z.any().nullable()';
+    return 'z.any()';
+}
+
+export function getCollectionSchema(collectionId: string): string {
+    const data = getCollectionData(collectionId);
+    if (!data || data.length === 0) {
+        return "z.object({\n  // No data found to infer schema.\n});";
+    }
+
+    const firstItem = data[0];
+    const schemaFields = Object.entries(firstItem)
+        .map(([key, value]) => `  ${key}: ${getZodType(value)}`)
+        .join(',\n');
+    
+    return `z.object({\n${schemaFields}\n})`;
+}
