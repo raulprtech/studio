@@ -22,7 +22,7 @@ const IdeaSchema = z.object({
     description: z.string().describe('Una breve descripción (1-2 frases) de la idea y por qué es relevante.'),
 });
 
-export const CollectionIdeasOutputSchema = z.object({
+const CollectionIdeasOutputSchema = z.object({
     ideas: z.array(IdeaSchema).describe('Una lista de 5 nuevas y creativas ideas relevantes para la colección.'),
 });
 export type CollectionIdeasOutput = z.infer<typeof CollectionIdeasOutputSchema>;
