@@ -3,7 +3,7 @@
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { z } from "zod";
-import { firestoreAdmin } from "./firebase-admin";
+import { firestoreAdmin, isFirebaseAdminInitialized } from "./firebase-admin";
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
@@ -61,6 +61,14 @@ const updateSchemaSchema = z.object({
 });
 
 export async function updateSchemaAction(prevState: any, formData: FormData) {
+  if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+    return {
+        errors: null,
+        message: "Action failed: Firebase is not configured on the server. Please check your .env.local file.",
+        success: false,
+    };
+  }
+
   const validatedFields = updateSchemaSchema.safeParse({
     collectionId: formData.get('collectionId'),
     schemaDefinition: formData.get('schemaDefinition'),

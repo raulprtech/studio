@@ -1,4 +1,4 @@
-import { firestoreAdmin } from './firebase-admin';
+import { firestoreAdmin, isFirebaseAdminInitialized } from './firebase-admin';
 
 export const mockData: { [key: string]: any[] } = {
   users: [
@@ -21,7 +21,15 @@ export const mockData: { [key: string]: any[] } = {
     { id: "order-2", customerId: "user-3", amount: 12.50, status: "Processing", date: "2024-05-20" },
     { id: "order-3", customerId: "user-2", amount: 25.99, status: "Delivered", date: "2024-05-15" },
   ],
-}
+};
+
+const mockSchemas: { [key: string]: string } = {
+    users: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  email: z.string().email(),\n  name: z.string(),\n  role: z.string(),\n  createdAt: z.string(),\n});`,
+    posts: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.string().nullable(),\n});`,
+    products: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  name: z.string(),\n  price: z.number(),\n  stock: z.number(),\n  category: z.string(),\n});`,
+    orders: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  customerId: z.string(),\n  amount: z.number(),\n  status: z.string(),\n  date: z.string(),\n});`
+};
+
 
 export function getCollectionData(collectionId: string) {
     // This function still returns mock data. 
@@ -32,6 +40,11 @@ export function getCollectionData(collectionId: string) {
 // This function now fetches a saved schema from Firestore.
 // If not found, it falls back to inferring from the first document in the live collection.
 export async function getCollectionSchema(collectionId: string): Promise<string> {
+    if (!isFirebaseAdminInitialized || !firestoreAdmin) {
+        console.warn(`Firebase not initialized. Returning mock schema for collection: ${collectionId}`);
+        return mockSchemas[collectionId] || `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Firebase is not configured. This is a default schema for '${collectionId}'.\n});`;
+    }
+
     try {
       const schemaDoc = await firestoreAdmin.collection('_schemas').doc(collectionId).get();
   
