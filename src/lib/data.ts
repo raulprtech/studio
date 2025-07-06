@@ -103,12 +103,16 @@ export async function getStorageFiles() {
               .filter(file => !file.name.endsWith('/'))
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
+                const [signedUrl] = await file.getSignedUrl({
+                    action: 'read',
+                    expires: '03-09-2491' // A far-future date
+                });
                 return {
                     name: file.name,
                     type: metadata.contentType || 'application/octet-stream',
                     size: formatBytes(Number(metadata.size)),
                     date: metadata.updated,
-                    url: file.publicUrl(),
+                    url: signedUrl,
                     hint: "file icon"
                 };
             })

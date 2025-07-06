@@ -720,10 +720,13 @@ export async function uploadFileAction(formData: FormData, folder: string) {
             metadata: { contentType: file.type },
         });
 
-        // Make the file public to get a stable URL
-        await fileUpload.makePublic();
+        // Use Signed URLs for secure, temporary access.
+        const [signedUrl] = await fileUpload.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491' // A far-future date.
+        });
         
-        return { success: true, url: fileUpload.publicUrl() };
+        return { success: true, url: signedUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
