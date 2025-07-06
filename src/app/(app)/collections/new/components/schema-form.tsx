@@ -12,6 +12,7 @@ import { createCollectionAction, getSchemaSuggestionAction } from "@/lib/actions
 import { Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { IconPicker } from "@/components/icon-picker";
 
 function CreateCollectionSubmitButton() {
     const { pending } = useFormStatus();
@@ -28,6 +29,7 @@ export function SchemaForm() {
     const { toast } = useToast();
     const [dataDescription, setDataDescription] = useState("");
     const [schema, setSchema] = useState("");
+    const [icon, setIcon] = useState("Package");
     const [isGenerating, startTransition] = useTransition();
 
     const initialState = { message: null, errors: {}, success: false, redirectUrl: null };
@@ -93,10 +95,15 @@ export function SchemaForm() {
                             {state.errors?.collectionName && <p className="text-sm font-medium text-destructive">{state.errors.collectionName[0]}</p>}
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="collection-icon">Icon Name (from Lucide)</Label>
-                            <Input id="collection-icon" name="icon" placeholder="e.g., Package, Users, FileText" />
+                            <Label htmlFor="collection-icon">Icon</Label>
+                            <IconPicker
+                                value={icon}
+                                onChange={setIcon}
+                                defaultValue="Package"
+                            />
+                            <input type="hidden" name="icon" value={icon} />
                             <p className="text-xs text-muted-foreground">
-                                Find icons at <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">lucide.dev/icons</a>. Use PascalCase names.
+                                Select a visual icon for your collection.
                             </p>
                             {state.errors?.icon && <p className="text-sm font-medium text-destructive">{state.errors.icon[0]}</p>}
                         </div>

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { updateSchemaAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
+import { IconPicker } from "@/components/icon-picker";
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -59,16 +60,15 @@ export function EditSchemaForm({ collectionId, initialSchema, initialIcon }: { c
                     <Input id="collection-name" name="collectionId" value={collectionId} readOnly />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="collection-icon">Icon Name (from Lucide)</Label>
-                    <Input
-                        id="collection-icon"
-                        name="icon"
+                    <Label htmlFor="collection-icon">Icon</Label>
+                     <IconPicker
                         value={icon}
-                        onChange={(e) => setIcon(e.target.value)}
-                        placeholder="e.g., Package, Users, FileText"
+                        onChange={setIcon}
+                        defaultValue={initialIcon || "Package"}
                     />
+                    <input type="hidden" name="icon" value={icon} />
                     <p className="text-xs text-muted-foreground">
-                        Use PascalCase names from <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">lucide.dev/icons</a>.
+                        Change the visual icon for your collection.
                     </p>
                 </div>
             </div>
