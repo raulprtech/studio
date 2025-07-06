@@ -3,6 +3,7 @@
 
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
+import { writingAssistant } from "@/ai/flows/writing-assistant";
 import { z } from "zod";
 import { authAdmin, firestoreAdmin } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
@@ -329,38 +330,68 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
         
         const dataToUpdate: { [key: string]: any } = {};
         
-        for (const key in originalData) {
-            if (Object.prototype.hasOwnProperty.call(originalData, key)) {
-                if (formData.has(key)) {
-                    const formValue = formData.get(key) as string;
-                    const originalValue = originalData[key];
+        // This handles fields that might not be in the form but are in the original document
+        const allKeys = new Set([...Object.keys(originalData), ...Array.from(formData.keys())]);
 
-                    if (typeof originalValue === 'number') {
-                        dataToUpdate[key] = Number(formValue);
-                    } else if (typeof originalValue === 'boolean') {
-                        dataToUpdate[key] = formValue === 'on'; // HTML checkbox sends 'on' when checked
-                    } else if (originalValue && typeof originalValue.toDate === 'function') { // Firestore Timestamp
-                        dataToUpdate[key] = admin.firestore.Timestamp.fromDate(new Date(formValue));
-                    } else if (originalValue instanceof Date) {
-                         dataToUpdate[key] = new Date(formValue);
-                    }
-                    else {
-                        dataToUpdate[key] = formValue;
-                    }
-                } else if (typeof originalData[key] === 'boolean') {
-                    // If a checkbox is not in form data, it was unchecked.
-                     dataToUpdate[key] = false;
+        allKeys.forEach(key => {
+             if (key === 'collectionId' || key === 'documentId') return;
+
+            const formValue = formData.get(key) as string | null;
+            const originalValue = originalData[key];
+
+             if (formData.has(key)) {
+                if (typeof originalValue === 'number') {
+                    dataToUpdate[key] = Number(formValue);
+                } else if (typeof originalValue === 'boolean') {
+                    dataToUpdate[key] = formValue === 'on'; // HTML checkbox sends 'on' when checked
+                } else if (originalValue && typeof originalValue.toDate === 'function') { // Firestore Timestamp
+                    dataToUpdate[key] = formValue ? admin.firestore.Timestamp.fromDate(new Date(formValue)) : null;
+                } else if (originalValue instanceof Date) {
+                     dataToUpdate[key] = formValue ? new Date(formValue) : null;
                 }
+                else {
+                    dataToUpdate[key] = formValue;
+                }
+            } else if (typeof originalValue === 'boolean') {
+                // If a checkbox is not in form data, it was unchecked.
+                 dataToUpdate[key] = false;
             }
-        }
+        });
         
         await docRef.update(dataToUpdate);
 
         revalidatePath(`/collections/${collectionId}`);
         revalidatePath(`/collections/${collectionId}/${documentId}/edit`);
+        revalidatePath(`/collections/posts/edit/${documentId}`); // Also revalidate custom editor
         return { message: `Document '${documentId}' updated successfully.`, success: true };
 
     } catch (error) {
         return { message: `Failed to update document: ${error instanceof Error ? error.message : 'Unknown error'}`, success: false };
     }
 }
+
+const writingAssistantSchema = z.object({
+    topic: z.string().min(5),
+    currentContent: z.string().optional(),
+  });
+  
+  export async function writingAssistantAction(input: { topic: string, currentContent?: string }) {
+      const validatedFields = writingAssistantSchema.safeParse(input);
+  
+      if (!validatedFields.success) {
+          return {
+              error: "Validation failed: " + validatedFields.error.flatten().fieldErrors.topic?.join(', '),
+              draft: null,
+          };
+      }
+      
+      try {
+          const result = await writingAssistant(validatedFields.data);
+          return { draft: result.draft, error: null };
+      } catch (error) {
+          return {
+              draft: null,
+              error: `An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          };
+      }
+  }

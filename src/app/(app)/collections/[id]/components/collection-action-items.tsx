@@ -24,9 +24,14 @@ type DocumentActionProps = {
 }
 
 export function EditDocumentMenuItem({ collectionId, documentId }: DocumentActionProps) {
+    // Custom editor for 'posts' collection
+    const editHref = collectionId === 'posts'
+        ? `/collections/posts/edit/${documentId}`
+        : `/collections/${collectionId}/${documentId}/edit`;
+
     return (
         <DropdownMenuItem asChild>
-            <Link href={`/collections/${collectionId}/${documentId}/edit`}>Edit</Link>
+            <Link href={editHref}>Edit</Link>
         </DropdownMenuItem>
     )
 }
@@ -37,7 +42,7 @@ export function DuplicateDocumentMenuItem({ collectionId, documentId }: Document
 
     const handleDuplicate = () => {
         startTransition(async () => {
-            const result = await duplicateDocumentAction(collectionId, documentId);
+            const result = await duplicateDocumentaction(collectionId, documentId);
             toast({
                 title: result.success ? "Success" : "Error",
                 description: result.message,
