@@ -720,13 +720,14 @@ export async function uploadFileAction(formData: FormData, folder: string) {
             metadata: { contentType: file.type },
         });
 
-        // Make the file public to get a stable, public URL
-        await fileUpload.makePublic();
-        
-        // Construct the public URL manually for immediate availability
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+        // Generate a long-lived signed URL to access the file, as it might be private.
+        // This is more robust than assuming public access.
+        const [signedUrl] = await fileUpload.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2100', // Set a far-future expiration date
+        });
 
-        return { success: true, url: publicUrl };
+        return { success: true, url: signedUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
