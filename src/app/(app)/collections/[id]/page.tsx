@@ -46,6 +46,12 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
 
   const brainstormDisabledCollections = ['users'];
   const isBrainstormEnabled = canEdit && !brainstormDisabledCollections.includes(collectionId);
+  
+  const newDocumentHref = collectionId === 'posts'
+    ? `/collections/posts/new`
+    : collectionId === 'projects'
+    ? `/collections/projects/new`
+    : `/collections/${collectionId}/new`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,7 +65,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
             <AiSummaryButton collectionName={collectionId} />
             {canEdit && (
               <Button asChild>
-                <Link href={`/collections/${collectionId}/new`}>
+                <Link href={newDocumentHref}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   {buttonText}
                 </Link>

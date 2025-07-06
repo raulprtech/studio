@@ -45,7 +45,7 @@ export function EditDocumentForm({ collectionId, document }: { collectionId: str
         const fieldId = `${collectionId}-${field}`;
         const title = toTitleCase(field);
 
-        if (field === 'id') return null;
+        if (field === 'id' || field === 'createdAt' || field === 'updatedAt') return null;
 
         if (typeof value === 'boolean') {
             return (
@@ -64,6 +64,15 @@ export function EditDocumentForm({ collectionId, document }: { collectionId: str
                 <div key={field} className="grid gap-2">
                     <Label htmlFor={fieldId}>{title}</Label>
                     <Textarea id={fieldId} name={field} placeholder={`Introduce ${title}`} defaultValue={value} />
+                </div>
+            )
+        }
+
+        if (Array.isArray(value)) {
+             return (
+                <div key={field} className="grid gap-2">
+                    <Label htmlFor={fieldId}>{title} (separado por comas)</Label>
+                    <Textarea id={fieldId} name={field} placeholder={`Introduce ${title}`} defaultValue={value.join(', ')} />
                 </div>
             )
         }

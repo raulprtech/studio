@@ -1,66 +1,106 @@
 "use client";
 
+import { useEffect, useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getCollectionData } from "@/lib/mock-data-client";
+import { useToast } from "@/hooks/use-toast";
+import { createDocumentAction } from "@/lib/actions";
+import { Loader2 } from "lucide-react";
+
+type Field = {
+  name: string;
+  type: string;
+};
 
 function toTitleCase(str: string) {
-    return str.replace(/([A-Z])/g, ' $1').replace(/^./, function(str) { return str.toUpperCase(); })
+    if (!str) return '';
+    return str.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
 }
 
-export function DocumentForm({ collectionId }: { collectionId: string }) {
-    const data = getCollectionData(collectionId);
-    const fields = data.length > 0 ? Object.keys(data[0]) : [];
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Crear Documento
+        </Button>
+    );
+}
 
-    const renderField = (field: string, value: any) => {
-        const fieldId = `${collectionId}-${field}`;
-        const title = toTitleCase(field);
+export function NewDocumentForm({ collectionId, fields }: { collectionId: string, fields: Field[] }) {
+    const router = useRouter();
+    const { toast } = useToast();
+    const initialState = { message: null, success: false, errors: null as any, redirectUrl: null };
+    const [state, dispatch] = useActionState(createDocumentAction, initialState);
 
-        if (field === 'id') return null;
+    useEffect(() => {
+        if (state.success && state.redirectUrl) {
+            toast({
+                title: "¡Éxito!",
+                description: state.message,
+            });
+            router.push(state.redirectUrl);
+        } else if (!state.success && state.message) {
+            toast({
+                title: "Error",
+                description: state.message,
+                variant: "destructive",
+            });
+        }
+    }, [state, router, toast]);
 
-        if (typeof value === 'boolean') {
+    const renderField = (field: Field) => {
+        const fieldId = `${collectionId}-${field.name}`;
+        const title = toTitleCase(field.name);
+
+        if (field.type === 'ZodBoolean') {
             return (
-                <div key={field} className="flex items-center space-x-2 pt-2">
-                    <Checkbox id={fieldId} name={field} />
+                <div key={field.name} className="flex items-center space-x-2 pt-2">
+                    <Checkbox id={fieldId} name={field.name} />
                     <Label htmlFor={fieldId} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         {title}
                     </Label>
+                     {state.errors?.[field.name] && <p className="text-sm font-medium text-destructive">{state.errors[field.name][0]}</p>}
                 </div>
-            )
+            );
         }
         
-        if (typeof value === 'string' && value.length > 100) {
+        // A simple heuristic for textarea vs input
+        const isTextarea = field.name.toLowerCase().includes('description') || field.name.toLowerCase().includes('content');
+
+        if (isTextarea) {
              return (
-                <div key={field} className="grid gap-2">
+                <div key={field.name} className="grid gap-2">
                     <Label htmlFor={fieldId}>{title}</Label>
-                    <Textarea id={fieldId} name={field} placeholder={`Introduce ${title}`} />
+                    <Textarea id={fieldId} name={field.name} placeholder={`Introduce ${title}`} />
+                    {state.errors?.[field.name] && <p className="text-sm font-medium text-destructive">{state.errors[field.name][0]}</p>}
                 </div>
-            )
+            );
         }
 
-        return (
-            <div key={field} className="grid gap-2">
-                <Label htmlFor={fieldId}>{title}</Label>
-                <Input id={fieldId} name={field} placeholder={`Introduce ${title}`} defaultValue={value} type={typeof value === 'number' ? 'number' : 'text'} />
-            </div>
-        )
-    }
+        const inputType = field.type === 'ZodNumber' ? 'number' : (field.type === 'ZodDate' ? 'datetime-local' : 'text');
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        // Here you would handle form submission, e.g., send data to a server
-        alert("¡Formulario enviado! (Funcionalidad en desarrollo)");
+        return (
+            <div key={field.name} className="grid gap-2">
+                <Label htmlFor={fieldId}>{title}</Label>
+                <Input id={fieldId} name={field.name} placeholder={`Introduce ${title}`} type={inputType} />
+                {state.errors?.[field.name] && <p className="text-sm font-medium text-destructive">{state.errors[field.name][0]}</p>}
+            </div>
+        );
     }
 
     return (
-        <form onSubmit={handleSubmit} className="grid gap-6">
-            {data.length > 0 && fields.map(field => renderField(field, data[0][field]))}
+        <form action={dispatch} className="grid gap-6">
+            <input type="hidden" name="collectionId" value={collectionId} />
+            {fields.map(field => renderField(field))}
             <div className="flex justify-end">
-                <Button type="submit">Guardar Documento</Button>
+                <SubmitButton />
             </div>
         </form>
-    )
+    );
 }

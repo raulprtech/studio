@@ -4,7 +4,7 @@
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { writingAssistant, type WritingAssistantInput } from "@/ai/flows/writing-assistant";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { authAdmin, firestoreAdmin, storageAdmin, isFirebaseConfigured } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
@@ -13,12 +13,47 @@ import { cookies } from "next/headers";
 import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
 import { getMode } from "./mode";
 import { generateCollectionIdeas } from "@/ai/flows/generate-collection-ideas";
+import { getCollectionSchema } from "./mock-data";
 
+
+// #region Mode Actions
 export async function setAppModeAction(mode: 'live' | 'demo') {
   cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
   revalidatePath('/', 'layout');
   return { success: true, message: `Modo cambiado a ${mode}` };
 }
+// #endregion
+
+// #region AI Helper Actions
+
+async function getZodSchemaFromString(collectionId: string): Promise<z.ZodObject<any, any, any> | null> {
+    if (getMode() !== 'live' || !isFirebaseConfigured) return null;
+    try {
+        const { definition } = await getCollectionSchema(collectionId);
+        if (!definition) return null;
+        
+        let schemaString = definition;
+        const match = definition.match(/z\.object\({[\s\S]*?}\)/);
+        if (match) {
+            schemaString = match[0];
+        } else if (!definition.trim().startsWith('z.object')) {
+            console.error(`La definición del esquema para '${collectionId}' no parece ser un objeto de Zod válido.`);
+            return null;
+        }
+
+        // IMPORTANT: Using new Function() can be risky if the schema string is not trusted.
+        // In this app, schemas are editable only by admins, so the risk is contained.
+        const schema = new Function('z', `return ${schemaString}`)(z);
+        if (schema && typeof schema.parse === 'function') {
+            return schema;
+        }
+        return null;
+    } catch (e) {
+        console.error(`Falló al analizar el esquema para la colección '${collectionId}':`, String(e));
+        return null;
+    }
+}
+
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
@@ -69,6 +104,111 @@ export async function getCollectionSummaryAction(collectionName: string) {
     };
   }
 }
+
+export async function getAnalyticsAdviceAction(analyticsData: AnalyticsAdviceInput) {
+    try {
+        const result = await generateAnalyticsAdvice(analyticsData);
+        return {
+            advice: result.advice,
+            error: null,
+        };
+    } catch (error) {
+        return {
+            advice: null,
+            error: `Ocurrió un error al generar el consejo: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        };
+    }
+}
+
+
+export async function getCollectionIdeasAction(collectionName: string) {
+  const useLive = getMode() === 'live' && isFirebaseConfigured;
+  let documents: any[];
+
+  try {
+    if (useLive) {
+      const snapshot = await firestoreAdmin!.collection(collectionName).limit(5).get();
+      documents = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    } else {
+      documents = (mockData[collectionName] || []).slice(0, 5);
+    }
+
+    if (documents.length === 0) {
+        return { ideas: null, error: "No hay documentos en esta colección para generar ideas." };
+    }
+    
+    // To keep the prompt clean and focused, we'll only send a few key fields.
+    const relevantKeys = ['title', 'name', 'description', 'category', 'tags', 'topic'];
+    const sampleData = documents.map(doc => {
+      let sampleDoc: {[key: string]: any} = {};
+      for (const key of relevantKeys) {
+        if(doc[key]) {
+            sampleDoc[key] = doc[key];
+        }
+      }
+      // If no 'relevant' keys were found, create a sample from any non-object/array fields.
+      if (Object.keys(sampleDoc).length === 0) {
+        Object.keys(doc).forEach(key => {
+            if (typeof doc[key] !== 'object' && key !== 'id') {
+                sampleDoc[key] = doc[key];
+            }
+        })
+      }
+      return sampleDoc;
+    });
+
+    const result = await generateCollectionIdeas({
+        collectionName,
+        documentsJson: JSON.stringify(sampleData.filter(d => Object.keys(d).length > 0), null, 2),
+    });
+
+    return {
+        ideas: result.ideas,
+        error: null,
+    };
+  } catch (error) {
+    console.error("Error generating collection ideas:", String(error));
+    return {
+        ideas: null,
+        error: `Ocurrió un error al generar ideas: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+    };
+  }
+}
+
+const writingAssistantSchema = z.object({
+    action: z.enum(['generate', 'paraphrase', 'summarize', 'expand', 'changeTone']),
+    topic: z.string().optional(),
+    currentContent: z.string().optional(),
+    selectedText: z.string().optional(),
+    tone: z.enum(['Professional', 'Casual', 'Humorous']).optional(),
+  });
+  
+  export async function writingAssistantAction(input: WritingAssistantInput) {
+      const validatedFields = writingAssistantSchema.safeParse(input);
+  
+      if (!validatedFields.success) {
+          const errors = validatedFields.error.flatten().fieldErrors;
+          const errorMessage = Object.values(errors).flat().join(', ');
+          return {
+              error: "Validación fallida: " + errorMessage,
+              draft: null,
+          };
+      }
+      
+      try {
+          const result = await writingAssistant(validatedFields.data);
+          return { draft: result.draft, error: null };
+      } catch (error) {
+          return {
+              draft: null,
+              error: `Ocurrió un error: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+          };
+      }
+  }
+
+// #endregion
+
+// #region Schema and Collection Actions
 
 const updateSchemaSchema = z.object({
   collectionId: z.string(),
@@ -189,8 +329,29 @@ export async function createCollectionAction(prevState: any, formData: FormData)
   }
 }
 
+export async function getSchemaFieldsAction(collectionId: string): Promise<{ fields: { name: string; type: string }[] | null; error: string | null }> {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
+        return { fields: null, error: "La generación de formularios solo está disponible en modo real." };
+    }
+    try {
+        const schema = await getZodSchemaFromString(collectionId);
+        if (!schema) {
+            return { fields: null, error: `No se pudo encontrar o analizar un esquema válido para la colección '${collectionId}'. Asegúrate de que existe en la colección '_schemas' y tiene un formato correcto.` };
+        }
+        const fields = Object.entries(schema.shape).map(([name, zodType]) => ({
+            name,
+            type: (zodType as any)._def.typeName as string,
+        }));
+        return { fields, error: null };
+    } catch (error) {
+        return { fields: null, error: `Ocurrió un error al procesar el esquema: ${String(error)}` };
+    }
+}
 
-// User Management Actions
+
+// #endregion
+
+// #region User Management Actions
 const createUserSchema = z.object({
   email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
@@ -301,47 +462,88 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
         return { message: `No se pudo actualizar el estado del usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
     }
 }
+// #endregion
 
-// Document Management Actions
+// #region Document Management Actions
 
 export async function createDocumentAction(prevState: any, formData: FormData) {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false, redirectUrl: null };
+        return { message: "Acción fallida: La aplicación está en modo demo.", success: false, redirectUrl: null, errors: null };
     }
 
     const collectionId = formData.get('collectionId') as string;
     if (!collectionId) {
-        return { message: "Se requiere el ID de la colección.", success: false, redirectUrl: null };
+        return { message: "Se requiere el ID de la colección.", success: false, redirectUrl: null, errors: null };
     }
 
-    const dataToCreate: { [key: string]: any } = {};
-    for (const [key, value] of formData.entries()) {
-        if (key === 'collectionId' || key.startsWith('$ACTION_ID')) continue;
-        if (key === 'tags' || key === 'gallery') {
-            dataToCreate[key] = (value as string) ? (value as string).split(',').map(item => item.trim()).filter(Boolean) : [];
-        } else if (key === 'publishedAt' && value) {
-            dataToCreate[key] = admin.firestore.Timestamp.fromDate(new Date(value as string));
+    const schema = await getZodSchemaFromString(collectionId);
+    
+    // Fallback for collections without a schema (e.g., legacy or unmanaged)
+    if (!schema) {
+        const dataToCreate: { [key: string]: any } = {};
+        for (const [key, value] of formData.entries()) {
+            if (key !== 'collectionId' && !key.startsWith('$ACTION_ID')) {
+                dataToCreate[key] = value;
+            }
         }
-        else {
-            dataToCreate[key] = value;
+        dataToCreate.createdAt = admin.firestore.Timestamp.now();
+        dataToCreate.updatedAt = admin.firestore.Timestamp.now();
+
+        try {
+            const docRef = await firestoreAdmin!.collection(collectionId).add(dataToCreate);
+            revalidatePath(`/collections/${collectionId}`);
+            return {
+                success: true,
+                message: `Documento creado con éxito en '${collectionId}' (sin validación de esquema).`,
+                redirectUrl: `/collections/${collectionId}/${docRef.id}/edit`,
+                errors: null,
+            };
+        } catch (error) {
+             return { message: `No se pudo crear el documento (sin esquema): ${String(error)}`, success: false, redirectUrl: null, errors: null };
         }
     }
-    
-    dataToCreate.createdAt = admin.firestore.Timestamp.now();
-    dataToCreate.updatedAt = admin.firestore.Timestamp.now();
+
+    const rawData: { [key: string]: any } = {};
+    formData.forEach((value, key) => {
+        if (key !== 'collectionId' && !key.startsWith('$ACTION_ID')) {
+            rawData[key] = value;
+        }
+    });
+
+    Object.keys(schema.shape).forEach(key => {
+        const fieldDef = schema.shape[key]._def;
+        if (fieldDef.typeName === 'ZodBoolean') {
+            rawData[key] = formData.has(key) && formData.get(key) === 'on';
+        } else if (fieldDef.typeName === 'ZodArray') {
+            if (typeof rawData[key] === 'string') {
+                rawData[key] = rawData[key] ? rawData[key].split(',').map((item: string) => item.trim()).filter(Boolean) : [];
+            }
+        }
+    });
 
     try {
+        // Use safeParse to get detailed error messages
+        const parsed = schema.safeParse(rawData);
+        if (!parsed.success) {
+            return {
+                message: "Falló la validación. Revisa los campos.",
+                success: false,
+                errors: parsed.error.flatten().fieldErrors,
+                redirectUrl: null,
+            };
+        }
+
+        const dataToCreate = {
+            ...parsed.data,
+            createdAt: admin.firestore.Timestamp.now(),
+            updatedAt: admin.firestore.Timestamp.now(),
+        };
+
         const docRef = await firestoreAdmin!.collection(collectionId).add(dataToCreate);
         
         revalidatePath(`/collections/${collectionId}`);
-        if(collectionId === 'projects') {
-             revalidatePath('/proyectos');
-             revalidatePath('/');
-        }
-        if(collectionId === 'posts') {
-            revalidatePath('/blog');
-            revalidatePath('/');
-        }
+        if(collectionId === 'projects') { revalidatePath('/proyectos'); revalidatePath('/'); }
+        if(collectionId === 'posts') { revalidatePath('/blog'); revalidatePath('/'); }
 
         return {
             success: true,
@@ -350,14 +552,19 @@ export async function createDocumentAction(prevState: any, formData: FormData) {
             errors: null,
         };
     } catch (error) {
+        if (error instanceof ZodError) {
+             return { message: "Error de validación de Zod.", success: false, errors: error.flatten().fieldErrors, redirectUrl: null };
+        }
         console.error("Error al crear el documento:", String(error));
         return { 
-            message: `No se pudo crear el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, 
+            message: `No se pudo crear el documento: ${String(error)}`, 
             success: false,
-            redirectUrl: null 
+            redirectUrl: null,
+            errors: null
         };
     }
 }
+
 
 export async function duplicateDocumentAction(collectionId: string, documentId: string) {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
@@ -410,7 +617,7 @@ export async function getDocumentAction(collectionId: string, documentId: string
         }
         return { data: { id: docSnap.id, ...docSnap.data() }, error: null };
     } catch (error) {
-        return { data: null, error: `No se pudo obtener el documento: ${error instanceof Error ? error.message : 'Error desconocido'}` };
+        return { data: null, error: `No se pudo obtener el documento: ${String(error)}` };
     }
 }
 
@@ -439,7 +646,7 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
         const allKeys = new Set([...Object.keys(originalData), ...Array.from(formData.keys())]);
 
         allKeys.forEach(key => {
-             if (key === 'collectionId' || key === 'documentId') return;
+             if (key === 'collectionId' || key === 'documentId' || key.startsWith('$ACTION_ID')) return;
 
             const formValue = formData.get(key) as string | null;
             const originalValue = originalData[key];
@@ -473,46 +680,19 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
         revalidatePath(`/collections/${collectionId}/${documentId}/edit`);
         revalidatePath(`/collections/posts/edit/${documentId}`);
         revalidatePath('/blog'); // Revalidate blog index page
+        revalidatePath(`/blog/${documentId}`);
         revalidatePath('/proyectos'); // Revalidate projects index page
         revalidatePath(`/proyectos/${documentId}`); // Revalidate project detail page
+        revalidatePath('/'); // Revalidate homepage
         return { message: `Documento '${documentId}' actualizado con éxito.`, success: true };
 
     } catch (error) {
-        return { message: `No se pudo actualizar el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
+        return { message: `No se pudo actualizar el documento: ${String(error)}`, success: false };
     }
 }
+// #endregion
 
-const writingAssistantSchema = z.object({
-    action: z.enum(['generate', 'paraphrase', 'summarize', 'expand', 'changeTone']),
-    topic: z.string().optional(),
-    currentContent: z.string().optional(),
-    selectedText: z.string().optional(),
-    tone: z.enum(['Professional', 'Casual', 'Humorous']).optional(),
-  });
-  
-  export async function writingAssistantAction(input: WritingAssistantInput) {
-      const validatedFields = writingAssistantSchema.safeParse(input);
-  
-      if (!validatedFields.success) {
-          const errors = validatedFields.error.flatten().fieldErrors;
-          const errorMessage = Object.values(errors).flat().join(', ');
-          return {
-              error: "Validación fallida: " + errorMessage,
-              draft: null,
-          };
-      }
-      
-      try {
-          const result = await writingAssistant(validatedFields.data);
-          return { draft: result.draft, error: null };
-      } catch (error) {
-          return {
-              draft: null,
-              error: `Ocurrió un error: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-          };
-      }
-  }
-
+// #region Storage Actions
 export async function uploadFileAction(formData: FormData, folder: string) {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
         const isCover = folder === 'covers';
@@ -546,76 +726,7 @@ export async function uploadFileAction(formData: FormData, folder: string) {
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
-        return { success: false, error: `No se pudo subir el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}` };
+        return { success: false, error: `No se pudo subir el archivo: ${String(error)}` };
     }
 }
-
-export async function getAnalyticsAdviceAction(analyticsData: AnalyticsAdviceInput) {
-    try {
-        const result = await generateAnalyticsAdvice(analyticsData);
-        return {
-            advice: result.advice,
-            error: null,
-        };
-    } catch (error) {
-        return {
-            advice: null,
-            error: `Ocurrió un error al generar el consejo: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        };
-    }
-}
-
-
-export async function getCollectionIdeasAction(collectionName: string) {
-  const useLive = getMode() === 'live' && isFirebaseConfigured;
-  let documents: any[];
-
-  try {
-    if (useLive) {
-      const snapshot = await firestoreAdmin!.collection(collectionName).limit(5).get();
-      documents = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    } else {
-      documents = (mockData[collectionName] || []).slice(0, 5);
-    }
-
-    if (documents.length === 0) {
-        return { ideas: null, error: "No hay documentos en esta colección para generar ideas." };
-    }
-    
-    // To keep the prompt clean and focused, we'll only send a few key fields.
-    const relevantKeys = ['title', 'name', 'description', 'category', 'tags', 'topic'];
-    const sampleData = documents.map(doc => {
-      let sampleDoc: {[key: string]: any} = {};
-      for (const key of relevantKeys) {
-        if(doc[key]) {
-            sampleDoc[key] = doc[key];
-        }
-      }
-      // If no 'relevant' keys were found, create a sample from any non-object/array fields.
-      if (Object.keys(sampleDoc).length === 0) {
-        Object.keys(doc).forEach(key => {
-            if (typeof doc[key] !== 'object' && key !== 'id') {
-                sampleDoc[key] = doc[key];
-            }
-        })
-      }
-      return sampleDoc;
-    });
-
-    const result = await generateCollectionIdeas({
-        collectionName,
-        documentsJson: JSON.stringify(sampleData.filter(d => Object.keys(d).length > 0), null, 2),
-    });
-
-    return {
-        ideas: result.ideas,
-        error: null,
-    };
-  } catch (error) {
-    console.error("Error generating collection ideas:", String(error));
-    return {
-        ideas: null,
-        error: `Ocurrió un error al generar ideas: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-    };
-  }
-}
+// #endregion
