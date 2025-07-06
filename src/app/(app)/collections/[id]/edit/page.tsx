@@ -11,7 +11,7 @@ import { getCollectionSchema } from "@/lib/mock-data"
 export default async function EditCollectionSchemaPage({ params }: { params: { id: string } }) {
     const collectionId = params.id;
     // This function now fetches data from Firestore, so we await its result.
-    const initialSchema = await getCollectionSchema(collectionId);
+    const { definition: initialSchema, icon: initialIcon } = await getCollectionSchema(collectionId);
     
     return (
         <div className="flex flex-col gap-6">
@@ -25,7 +25,7 @@ export default async function EditCollectionSchemaPage({ params }: { params: { i
                 </CardHeader>
                 <CardContent>
                     {/* The fetched schema is passed as a prop to the form component */}
-                    <EditSchemaForm collectionId={collectionId} initialSchema={initialSchema} />
+                    <EditSchemaForm collectionId={collectionId} initialSchema={initialSchema} initialIcon={initialIcon} />
                 </CardContent>
             </Card>
         </div>

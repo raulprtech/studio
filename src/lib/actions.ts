@@ -70,6 +70,7 @@ export async function getCollectionSummaryAction(collectionName: string) {
 const updateSchemaSchema = z.object({
   collectionId: z.string(),
   schemaDefinition: z.string().min(1, { message: "Schema cannot be empty." }),
+  icon: z.string().optional(),
 });
 
 export async function updateSchemaAction(prevState: any, formData: FormData) {
@@ -84,6 +85,7 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   const validatedFields = updateSchemaSchema.safeParse({
     collectionId: formData.get('collectionId'),
     schemaDefinition: formData.get('schemaDefinition'),
+    icon: formData.get('icon'),
   });
 
   if (!validatedFields.success) {
@@ -94,14 +96,18 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
     };
   }
 
-  const { collectionId, schemaDefinition } = validatedFields.data;
+  const { collectionId, schemaDefinition, icon } = validatedFields.data;
 
   try {
     const schemaDocRef = firestoreAdmin!.collection('_schemas').doc(collectionId);
     await schemaDocRef.set({
       definition: schemaDefinition,
+      icon: icon || null,
       updatedAt: new Date(),
-    });
+    }, { merge: true });
+
+    revalidatePath('/collections');
+    revalidatePath(`/collections/${collectionId}/edit`);
 
     return {
       errors: null,
@@ -113,6 +119,68 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
     return {
       errors: null,
       message: `Failed to update schema in Firestore. Please check server logs and Firebase configuration.`,
+      success: false,
+    };
+  }
+}
+
+const createCollectionSchema = z.object({
+  collectionName: z.string().min(1, 'Collection name is required.').regex(/^[a-zA-Z0-9_-]+$/, 'Collection name can only contain letters, numbers, underscores, and hyphens.'),
+  schemaDefinition: z.string().min(1, 'Schema definition is required.'),
+  icon: z.string().optional(),
+});
+
+export async function createCollectionAction(prevState: any, formData: FormData) {
+  if (!isFirebaseLive()) {
+    return {
+        message: "Action failed: App is in demo mode. Switch to live mode to create collections.",
+        success: false,
+    };
+  }
+
+  const validatedFields = createCollectionSchema.safeParse({
+    collectionName: formData.get('collectionName'),
+    schemaDefinition: formData.get('schemaDefinition'),
+    icon: formData.get('icon'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Validation failed. Please check the fields.',
+      success: false,
+    };
+  }
+
+  const { collectionName, schemaDefinition, icon } = validatedFields.data;
+
+  try {
+    const schemaDocRef = firestoreAdmin!.collection('_schemas').doc(collectionName);
+    const doc = await schemaDocRef.get();
+    if (doc.exists) {
+        return { message: `Collection '${collectionName}' already exists.`, success: false };
+    }
+
+    await schemaDocRef.set({
+      definition: schemaDefinition,
+      icon: icon || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    revalidatePath('/collections');
+    revalidatePath(`/collections/${collectionName}`);
+
+    return {
+        success: true,
+        message: `Collection '${collectionName}' created successfully.`,
+        redirectUrl: `/collections/${collectionName}`,
+        errors: null,
+    };
+  } catch (error) {
+    console.error("Error creating collection in Firestore:", error);
+    return {
+      message: `Failed to create collection. Please check server logs and Firebase configuration.`,
       success: false,
     };
   }

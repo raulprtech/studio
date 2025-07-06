@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { getCollections } from "@/lib/data"
 import { PinCollectionMenuItem } from "./components/pin-collection-menu-item"
 import { PinStatusIcon } from "./components/pin-status-icon"
+import { DynamicIcon } from "@/components/dynamic-icon"
 
 export default async function CollectionsPage() {
   const collections = await getCollections();
@@ -65,8 +66,9 @@ export default async function CollectionsPage() {
               {collections.map((collection) => (
                 <TableRow key={collection.name}>
                   <TableCell className="font-medium">
-                    <div className="flex items-center">
-                      <Link href={`/collections/${collection.name}`} className="hover:underline">
+                    <div className="flex items-center gap-3">
+                      <DynamicIcon name={collection.icon} className="h-5 w-5 text-muted-foreground" />
+                      <Link href={`/collections/${collection.name}`} className="hover:underline font-semibold">
                         {collection.name}
                       </Link>
                       <PinStatusIcon collectionName={collection.name} />

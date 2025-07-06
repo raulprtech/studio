@@ -31,11 +31,13 @@ import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePinnedCollections } from '@/hooks/use-pinned-collections';
+import { DynamicIcon } from '@/components/dynamic-icon';
 
 type UserRole = 'Admin' | 'Editor' | 'Viewer';
 
 type Collection = {
   name: string;
+  icon?: string | null;
 }
 
 export function AppLayoutClient({ children, modeSwitch, collections }: { children: React.ReactNode, modeSwitch: React.ReactNode, collections: Collection[] }) {
@@ -94,7 +96,7 @@ export function AppLayoutClient({ children, modeSwitch, collections }: { childre
                                 tooltip={collection.name}
                             >
                                 <Link href={`/collections/${collection.name}`}>
-                                    <Bookmark className="h-4 w-4" />
+                                    <DynamicIcon name={collection.icon} className="h-4 w-4" />
                                     <span>{collection.name}</span>
                                 </Link>
                             </SidebarMenuButton>

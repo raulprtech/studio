@@ -25,11 +25,23 @@ export const mockData: { [key: string]: any[] } = {
   ],
 };
 
-const mockSchemas: { [key: string]: string } = {
-    users: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  email: z.string().email(),\n  name: z.string(),\n  role: z.string(),\n  createdAt: z.string(),\n});`,
-    posts: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.string().nullable(),\n});`,
-    products: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  name: z.string(),\n  price: z.number(),\n  stock: z.number(),\n  category: z.string(),\n});`,
-    orders: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  customerId: z.string(),\n  amount: z.number(),\n  status: z.string(),\n  date: z.string(),\n});`
+export const mockSchemas: { [key: string]: { definition: string; icon: string | null } } = {
+    users: {
+        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  email: z.string().email(),\n  name: z.string(),\n  role: z.string(),\n  createdAt: z.string(),\n});`,
+        icon: 'Users'
+    },
+    posts: {
+        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.string().nullable(),\n});`,
+        icon: 'FileText'
+    },
+    products: {
+        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  name: z.string(),\n  price: z.number(),\n  stock: z.number(),\n  category: z.string(),\n});`,
+        icon: 'Package'
+    },
+    orders: {
+        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  customerId: z.string(),\n  amount: z.number(),\n  status: z.string(),\n  date: z.string(),\n});`,
+        icon: 'ShoppingCart'
+    }
 };
 
 
@@ -56,51 +68,60 @@ export async function getCollectionDocuments(collectionId: string) {
   }
 }
 
-export async function getCollectionSchema(collectionId: string): Promise<string> {
+export async function getCollectionSchema(collectionId: string): Promise<{ definition: string; icon: string | null }> {
     if (!isFirebaseLive()) {
         console.warn(`Firebase not live. Returning mock schema for collection: ${collectionId}`);
-        return mockSchemas[collectionId] || `import { z } from 'zod';\n\nexport const schema = z.object({\n  // App is in demo mode. This is a default schema for '${collectionId}'.\n});`;
+        const mock = mockSchemas[collectionId];
+        if (mock) {
+            return { definition: mock.definition, icon: mock.icon };
+        }
+        return { 
+            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // App is in demo mode. This is a default schema for '${collectionId}'.\n});`,
+            icon: null 
+        };
     }
 
     try {
       const schemaDoc = await firestoreAdmin!.collection('_schemas').doc(collectionId).get();
+      const data = schemaDoc.data();
+      let definition = data?.definition;
+      const icon = data?.icon || null;
   
-      if (schemaDoc.exists && schemaDoc.data()?.definition) {
-          return schemaDoc.data()?.definition;
-      }
-  
-      const collectionRef = firestoreAdmin!.collection(collectionId);
-      const snapshot = await collectionRef.limit(1).get();
-      
-      if (snapshot.empty) {
-          return "z.object({\n  // Collection is empty or does not exist. Cannot infer schema.\n});";
-      }
-  
-      const firstItem = snapshot.docs[0].data();
-      
-      const getZodType = (value: any): string => {
-          const type = typeof value;
-          if (type === 'string') {
-              if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Invalid email address" })';
-              if (value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(\.\d{3})?Z$/) || !isNaN(Date.parse(value))) return 'z.string().datetime()';
-              return 'z.string()';
+      if (!definition) {
+          const collectionRef = firestoreAdmin!.collection(collectionId);
+          const snapshot = await collectionRef.limit(1).get();
+          
+          if (snapshot.empty) {
+              definition = "z.object({\n  // Collection is empty or does not exist. Cannot infer schema.\n});";
+          } else {
+              const firstItem = snapshot.docs[0].data();
+              const getZodType = (value: any): string => {
+                  const type = typeof value;
+                  if (type === 'string') {
+                      if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Invalid email address" })';
+                      if (!isNaN(Date.parse(value))) return 'z.string().datetime()';
+                      return 'z.string()';
+                  }
+                  if (type === 'number') return 'z.number()';
+                  if (type === 'boolean') return 'z.boolean()';
+                  if (value === null) return 'z.any().nullable()';
+                  if (value && typeof value.toDate === 'function') return 'z.date()';
+                  return 'z.any()';
+              }
+              const schemaFields = Object.entries(firstItem)
+                  .map(([key, value]) => `  ${key}: ${getZodType(value)}`)
+                  .join(',\n');
+              
+              definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n${schemaFields}\n});`;
           }
-          if (type === 'number') return 'z.number()';
-          if (type === 'boolean') return 'z.boolean()';
-          if (value === null) return 'z.any().nullable()';
-          if (value && typeof value.toDate === 'function') return 'z.date()';
-          return 'z.any()';
       }
-  
-      const schemaFields = Object.entries(firstItem)
-          .map(([key, value]) => `  ${key}: ${getZodType(value)}`)
-          .join(',\n');
-      
-      return `import { z } from 'zod';\n\nexport const schema = z.object({\n${schemaFields}\n});`;
+
+      return { definition, icon };
   
     } catch (error) {
       console.error(`Error fetching collection schema for "${collectionId}":`, error);
-      return `import { z } from 'zod';\n\nexport const schema = z.object({\n  // An error occurred while fetching the schema.\n  // Check server logs and Firebase configuration for details.\n});`;
+      const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // An error occurred while fetching the schema.\n  // Check server logs and Firebase configuration for details.\n});`;
+      return { definition, icon: null };
     }
   }
 

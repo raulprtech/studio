@@ -20,9 +20,10 @@ function SubmitButton() {
     );
 }
 
-export function EditSchemaForm({ collectionId, initialSchema }: { collectionId: string, initialSchema: string }) {
+export function EditSchemaForm({ collectionId, initialSchema, initialIcon }: { collectionId: string, initialSchema: string, initialIcon: string | null }) {
     const { toast } = useToast();
     const [schema, setSchema] = useState(initialSchema);
+    const [icon, setIcon] = useState(initialIcon || "");
 
     const initialState = { message: null, errors: null, success: false };
     const [state, dispatch] = useActionState(updateSchemaAction, initialState);
@@ -52,9 +53,24 @@ export function EditSchemaForm({ collectionId, initialSchema }: { collectionId: 
 
     return (
         <form action={dispatch} className="grid gap-6">
-             <div className="grid gap-2">
-                <Label htmlFor="collection-name">Collection Name</Label>
-                <Input id="collection-name" name="collectionId" value={collectionId} readOnly />
+            <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="collection-name">Collection Name</Label>
+                    <Input id="collection-name" name="collectionId" value={collectionId} readOnly />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="collection-icon">Icon Name (from Lucide)</Label>
+                    <Input
+                        id="collection-icon"
+                        name="icon"
+                        value={icon}
+                        onChange={(e) => setIcon(e.target.value)}
+                        placeholder="e.g., Package, Users, FileText"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Use PascalCase names from <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">lucide.dev/icons</a>.
+                    </p>
+                </div>
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="schema-definition">Schema Definition (Zod)</Label>
