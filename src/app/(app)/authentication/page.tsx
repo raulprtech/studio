@@ -48,11 +48,11 @@ export default async function AuthenticationPage() {
     } catch (error) {
         console.error("Error fetching users from Firebase Auth:", error);
         // Fallback to mock data on error
-        users = mockData.users.map(u => ({...u, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png'}));
+        users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png'}));
     }
   } else {
     // Fallback to mock data if Firebase isn't set up
-    users = mockData.users.map(u => ({...u, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png'}));
+    users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png'}));
   }
 
   const isAdmin = currentUser.role === 'Admin';
