@@ -10,6 +10,8 @@ import { Github, Twitter, Linkedin, Dribbble, ArrowRight, Mail, Phone, MapPin, D
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
 import { mockData } from "@/lib/mock-data";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 // Helper component for section titles
 const SectionTitle = ({ label, title }: { label: string; title: string }) => (
@@ -30,6 +32,22 @@ const GridPattern = () => (
     </div>
 )
 
+// Helper function to get an excerpt from markdown
+function getExcerpt(markdownText: string, length = 150) {
+  if (!markdownText) return '';
+  const plainText = markdownText
+    .replace(/!\[.*?\]\(.*?\)/g, '') // Remove images
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links, keep text
+    .replace(/#{1,6}\s/g, '') // Remove headers
+    .replace(/[*_`~>]+/g, '') // Remove markdown symbols
+    .replace(/\s\s+/g, ' '); // Normalize spaces
+  
+  if (plainText.length <= length) {
+    return plainText;
+  }
+  return plainText.substring(0, length).trim() + '...';
+}
+
 export default function PortfolioPage() {
   const skills = [
     { name: "JavaScript", level: 90 }, { name: "TypeScript", level: 85 },
@@ -41,6 +59,11 @@ export default function PortfolioPage() {
   ];
 
   const projects = mockData.projects.slice(0, 3);
+  
+  const posts = mockData.posts
+    .filter(p => p.status === 'Publicado' && p.publishedAt)
+    .sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime())
+    .slice(0, 3);
 
   const experiences = [
     { role: "Desarrollador Frontend Senior", company: "Tech Innovators Inc.", date: "2021 - Presente", description: "Liderando el desarrollo de una nueva plataforma para clientes usando Next.js y TypeScript, con foco en rendimiento y escalabilidad." },
@@ -180,6 +203,46 @@ export default function PortfolioPage() {
             <Button asChild size="lg" variant="outline">
               <Link href="/proyectos">
                 Ver Más Proyectos <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+        
+        {/* Blog Section */}
+        <section id="blog" className="py-24">
+          <SectionTitle label="DESDE MI BLOG" title="Artículos Recientes" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {posts.map((post) => (
+              <Link href={`/blog/${post.id}`} key={post.id} className="group">
+                <Card className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+                  <CardHeader className="p-0">
+                    <Image
+                      src={post.coverImageUrl || "https://placehold.co/600x400.png"}
+                      alt={post.title}
+                      width={600}
+                      height={400}
+                      className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+                      data-ai-hint="blog post cover"
+                    />
+                  </CardHeader>
+                  <CardContent className="p-6 flex flex-col flex-grow">
+                    {post.category && <p className="text-primary text-sm font-medium mb-2">{post.category}</p>}
+                    <h2 className="text-xl font-bold group-hover:text-primary transition-colors">{post.title}</h2>
+                    <p className="text-muted-foreground text-sm flex-grow my-3">{getExcerpt(post.content || '', 120)}</p>
+                    {post.publishedAt && (
+                    <time dateTime={new Date(post.publishedAt).toISOString()} className="text-sm text-muted-foreground mt-auto">
+                      {format(new Date(post.publishedAt), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                    </time>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-12 text-center">
+            <Button asChild size="lg" variant="outline">
+              <Link href="/blog">
+                Ver Más Artículos <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
