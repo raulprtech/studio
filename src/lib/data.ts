@@ -1,4 +1,5 @@
 
+
 import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
@@ -47,7 +48,7 @@ export async function getCollections() {
                 if (result.status === 'fulfilled') {
                     return result.value;
                 } else {
-                    console.error(`Error al obtener datos para la colección ${collectionIds[index]}:`, result.reason);
+                    console.error(`Error al obtener datos para la colección ${collectionIds[index]}:`, String(result.reason));
                     return null;
                 }
             })
@@ -56,7 +57,7 @@ export async function getCollections() {
         return successfulCollections;
 
     } catch (error) {
-        console.error("Error al listar las colecciones de Firebase:", error);
+        console.error("Error al listar las colecciones de Firebase:", String(error));
         return [];
     }
 }
