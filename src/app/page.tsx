@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Github, Twitter, Linkedin, Dribbble, ArrowRight, Mail, Phone, MapPin, Download, Send } from "lucide-react";
+import { PublicHeader } from "@/components/public-header";
+import { PublicFooter } from "@/components/public-footer";
 
 // Helper component for section titles
 const SectionTitle = ({ label, title }: { label: string; title: string }) => (
@@ -66,29 +69,7 @@ export default function PortfolioPage() {
         <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-accent/20 blur-[150px]"></div>
       </div>
       
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
-        <div className="bg-background/70 backdrop-blur-md rounded-full p-2 flex items-center justify-between shadow-lg border border-border/20">
-            <div className="flex items-center gap-2">
-                <Link href="/" className="flex items-center gap-2 pl-4 pr-2">
-                    <span className="font-bold text-xl">
-                        <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Raul</span>Pacheco
-                    </span>
-                </Link>
-                <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
-                    {["Sobre mí", "Habilidades", "Proyectos", "Experiencia", "Contacto"].map((item) => (
-                    <Link key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="hover:text-foreground transition-colors px-3 py-2 rounded-full">
-                        {item}
-                    </Link>
-                    ))}
-                </nav>
-            </div>
-            <div className="pr-2">
-                <Button asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold rounded-full hover:shadow-lg hover:shadow-primary/40 transition-shadow">
-                    <a href="#">CV</a>
-                </Button>
-            </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="container mx-auto px-4 pt-32">
         {/* Hero Section */}
@@ -273,18 +254,7 @@ export default function PortfolioPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border/50">
-          <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">&copy; 2024 Raul Pacheco. Todos los derechos reservados.</p>
-             <div className="flex items-center gap-4">
-              {socialLinks.map((link, index) => (
-                <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                  <link.icon className="h-5 w-5" />
-                </Link>
-              ))}
-            </div>
-          </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
