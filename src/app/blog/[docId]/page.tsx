@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { type Metadata } from 'next';
+import { ShareButtons } from '../components/share-buttons';
 
 type Props = {
   params: { docId: string }
@@ -98,6 +99,8 @@ export default async function BlogPostPage({ params }: Props) {
           {post.content || ''}
         </ReactMarkdown>
       </div>
+
+      <ShareButtons title={post.title} />
     </article>
   );
 }
