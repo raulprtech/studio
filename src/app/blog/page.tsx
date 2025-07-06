@@ -83,33 +83,25 @@ export default async function BlogIndexPage({
         <p className="text-muted-foreground mt-2">Explorando el mundo del código, el diseño y la tecnología.</p>
       </div>
 
-      <div className="mb-12 max-w-5xl mx-auto p-4 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl">
-        <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div>
-            <label htmlFor="search-input" className="block text-sm font-medium text-muted-foreground mb-2">Buscar</label>
+      <div className="mb-12 max-w-3xl mx-auto p-4 bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl">
+        <form className="flex flex-col sm:flex-row items-center gap-4">
             <Input
-              id="search-input"
               name="q"
               type="search"
               placeholder="Buscar posts..."
               defaultValue={query}
-              className="bg-background/50 border-border/80 h-10"
+              className="bg-background/50 border-border/80 h-10 w-full sm:flex-1"
             />
-          </div>
-          <div>
-            <label htmlFor="category-select" className="block text-sm font-medium text-muted-foreground mb-2">Categoría</label>
             <select
-              id="category-select"
               name="category"
               defaultValue={category}
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full sm:w-auto sm:min-w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">Todas las categorías</option>
               {uniqueCategories.map((cat, index) => <option key={index} value={cat}>{cat}</option>)}
             </select>
-          </div>
-          <Button type="submit" className="w-full">Filtrar</Button>
-          <Button variant="outline" asChild className="w-full">
+          <Button type="submit" className="w-full sm:w-auto">Filtrar</Button>
+          <Button variant="outline" asChild className="w-full sm:w-auto">
             <Link href="/blog">Limpiar</Link>
           </Button>
         </form>
