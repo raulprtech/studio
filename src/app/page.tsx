@@ -66,29 +66,33 @@ export default function PortfolioPage() {
         <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-accent/20 blur-[150px]"></div>
       </div>
       
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-background/70 backdrop-blur-md rounded-full p-2 flex items-center gap-2 shadow-lg border border-border/20">
-            <Link href="/" className="flex items-center gap-2 pl-4 pr-2">
-                <span className="font-bold text-xl">
-                    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Alex</span>Chen
-                </span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
-                {["About", "Skills", "Projects", "Experience", "Contact"].map((item) => (
-                <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="hover:text-foreground transition-colors px-3 py-2 rounded-full">
-                    {item}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4">
+        <div className="bg-background/70 backdrop-blur-md rounded-full p-2 flex items-center justify-between shadow-lg border border-border/20">
+            <div className="flex items-center gap-2">
+                <Link href="/" className="flex items-center gap-2 pl-4 pr-2">
+                    <span className="font-bold text-xl">
+                        <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Alex</span>Chen
+                    </span>
                 </Link>
-                ))}
-            </nav>
-            <Button asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold rounded-full hover:shadow-lg hover:shadow-primary/40 transition-shadow">
-                <a href="#">Resume</a>
-            </Button>
+                <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
+                    {["About", "Skills", "Projects", "Experience", "Contact"].map((item) => (
+                    <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="hover:text-foreground transition-colors px-3 py-2 rounded-full">
+                        {item}
+                    </Link>
+                    ))}
+                </nav>
+            </div>
+            <div className="pr-2">
+                <Button asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold rounded-full hover:shadow-lg hover:shadow-primary/40 transition-shadow">
+                    <a href="#">Resume</a>
+                </Button>
+            </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 pt-16">
+      <main className="container mx-auto px-4 pt-32">
         {/* Hero Section */}
-        <section id="hero" className="relative flex items-center min-h-[calc(100vh-4rem)] py-20">
+        <section id="hero" className="relative flex items-center min-h-[calc(100vh-8rem)] py-20">
           <div className="relative z-10 space-y-6">
             <span className="text-primary font-semibold">Full Stack Developer</span>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
