@@ -12,6 +12,7 @@ import { mockData } from "./mock-data-client";
 import { cookies } from "next/headers";
 import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
 import { getMode } from "./mode";
+import { generateCollectionIdeas } from "@/ai/flows/generate-collection-ideas";
 
 export async function setAppModeAction(mode: 'live' | 'demo') {
   cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
@@ -513,4 +514,59 @@ export async function getAnalyticsAdviceAction(analyticsData: AnalyticsAdviceInp
             error: `Ocurrió un error al generar el consejo: ${error instanceof Error ? error.message : 'Error desconocido'}`,
         };
     }
+}
+
+
+export async function getCollectionIdeasAction(collectionName: string) {
+  const useLive = getMode() === 'live' && isFirebaseConfigured;
+  let documents: any[];
+
+  try {
+    if (useLive) {
+      const snapshot = await firestoreAdmin!.collection(collectionName).limit(5).get();
+      documents = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    } else {
+      documents = (mockData[collectionName] || []).slice(0, 5);
+    }
+
+    if (documents.length === 0) {
+        return { ideas: null, error: "No hay documentos en esta colección para generar ideas." };
+    }
+    
+    // To keep the prompt clean and focused, we'll only send a few key fields.
+    const relevantKeys = ['title', 'name', 'description', 'category', 'tags', 'topic'];
+    const sampleData = documents.map(doc => {
+      let sampleDoc: {[key: string]: any} = {};
+      for (const key of relevantKeys) {
+        if(doc[key]) {
+            sampleDoc[key] = doc[key];
+        }
+      }
+      // If no 'relevant' keys were found, create a sample from any non-object/array fields.
+      if (Object.keys(sampleDoc).length === 0) {
+        Object.keys(doc).forEach(key => {
+            if (typeof doc[key] !== 'object' && key !== 'id') {
+                sampleDoc[key] = doc[key];
+            }
+        })
+      }
+      return sampleDoc;
+    });
+
+    const result = await generateCollectionIdeas({
+        collectionName,
+        documentsJson: JSON.stringify(sampleData.filter(d => Object.keys(d).length > 0), null, 2),
+    });
+
+    return {
+        ideas: result.ideas,
+        error: null,
+    };
+  } catch (error) {
+    console.error("Error generating collection ideas:", error);
+    return {
+        ideas: null,
+        error: `Ocurrió un error al generar ideas: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+    };
+  }
 }

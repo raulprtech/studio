@@ -28,6 +28,7 @@ import { AiSummaryButton } from "./components/ai-summary-button"
 import { getCollectionDocuments } from "@/lib/mock-data"
 import { getCurrentUser } from "@/lib/auth"
 import { DeleteDocumentMenuItem, DuplicateDocumentMenuItem, EditDocumentMenuItem } from "./components/collection-action-items"
+import { AiBrainstormButton } from "./components/ai-brainstorm-button"
 
 function toSingularTitleCase(str: string) {
     const singular = str.endsWith('s') ? str.slice(0, -1) : str;
@@ -43,6 +44,9 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
   const currentUser = await getCurrentUser();
   const canEdit = currentUser.role === 'Admin' || currentUser.role === 'Editor';
 
+  const brainstormDisabledCollections = ['users'];
+  const isBrainstormEnabled = canEdit && !brainstormDisabledCollections.includes(collectionId);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start">
@@ -51,6 +55,7 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
           <p className="text-sm text-muted-foreground">Gestiona los documentos en la colección '{collectionId}'.</p>
         </div>
         <div className="flex items-center gap-2">
+            {isBrainstormEnabled && <AiBrainstormButton collectionName={collectionId} />}
             <AiSummaryButton collectionName={collectionId} />
             {canEdit && (
               <Button asChild>
