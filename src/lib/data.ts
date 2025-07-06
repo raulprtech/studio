@@ -103,16 +103,15 @@ export async function getStorageFiles() {
               .filter(file => !file.name.endsWith('/'))
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
-                const [signedUrl] = await file.getSignedUrl({
-                    action: 'read',
-                    expires: '03-09-2491' // A far-future date
-                });
+                // This uses the public URL. Assumes the file has been made public.
+                const publicUrl = file.publicUrl();
+
                 return {
                     name: file.name,
                     type: metadata.contentType || 'application/octet-stream',
                     size: formatBytes(Number(metadata.size)),
                     date: metadata.updated,
-                    url: signedUrl,
+                    url: publicUrl,
                     hint: "file icon"
                 };
             })
@@ -120,7 +119,7 @@ export async function getStorageFiles() {
         return fileDetails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     } catch (error) {
-        console.error("Error al obtener archivos de Storage:", String(error));
+        console.error("Error crítico al obtener archivos de Storage. Revisa los permisos de tu cuenta de servicio y la configuración del bucket.", String(error));
         // Return mock data on error to prevent page crash
         return mockData.storage || [];
     }
