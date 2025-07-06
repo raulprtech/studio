@@ -106,9 +106,16 @@ export default function LoginPage() {
         const idToken = await result.user.getIdToken();
         await handleAuthSuccess(idToken);
     } catch (error: any) {
+        let errorMessage = error.message || "No se pudo iniciar sesión con Google.";
+        if (error.code === 'auth/popup-closed-by-user') {
+            errorMessage = "El inicio de sesión fue cancelado.";
+        } else if (error.code === 'auth/account-exists-with-different-credential') {
+            errorMessage = "Ya existe una cuenta con este correo electrónico pero con un método de inicio de sesión diferente.";
+        }
+        
         toast({
             title: "Error de Inicio de Sesión con Google",
-            description: error.message || "No se pudo iniciar sesión con Google.",
+            description: errorMessage,
             variant: "destructive",
         });
     } finally {
