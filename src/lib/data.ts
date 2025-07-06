@@ -4,6 +4,34 @@ import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-a
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
 
+async function ensureDefaultSchemas() {
+    if (!firestoreAdmin) return;
+    
+    const schemasToEnsure = ['posts', 'projects'];
+    const schemasCollection = firestoreAdmin.collection('_schemas');
+
+    for (const collectionName of schemasToEnsure) {
+        const schemaDocRef = schemasCollection.doc(collectionName);
+        const docSnap = await schemaDocRef.get();
+
+        if (!docSnap.exists) {
+            console.log(`Schema for '${collectionName}' not found in Firestore. Preloading...`);
+            const mockSchema = mockSchemas[collectionName];
+            if (mockSchema) {
+                await schemaDocRef.set({
+                    definition: mockSchema.definition,
+                    icon: mockSchema.icon || null,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
+                console.log(`Successfully preloaded schema for '${collectionName}'.`);
+            } else {
+                console.warn(`Could not find a mock schema for '${collectionName}' to preload.`);
+            }
+        }
+    }
+}
+
 export async function getCollections() {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
         console.warn(`Firebase no está en modo real. Devolviendo colecciones de ejemplo.`);
@@ -17,6 +45,9 @@ export async function getCollections() {
     }
 
     try {
+        // Ensure that the default schemas for 'posts' and 'projects' exist.
+        await ensureDefaultSchemas();
+
         const collectionRefs = await firestoreAdmin!.listCollections();
         const collectionIds = collectionRefs
             .map(col => col.id)
