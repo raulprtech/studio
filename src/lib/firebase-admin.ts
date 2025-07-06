@@ -1,9 +1,11 @@
 import admin from 'firebase-admin';
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
+import type { Storage } from 'firebase-admin/storage';
 
 let firestoreAdmin: Firestore | undefined;
 let authAdmin: Auth | undefined;
+let storageAdmin: Storage | undefined;
 let isFirebaseAdminInitialized = false;
 
 // This check ensures this doesn't run on every hot-reload in development.
@@ -20,6 +22,7 @@ if (!admin.apps.length) {
         try {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
             });
             isFirebaseAdminInitialized = true;
             console.log('Firebase Admin SDK initialized successfully.');
@@ -38,6 +41,7 @@ if (!admin.apps.length) {
 if (isFirebaseAdminInitialized) {
     firestoreAdmin = admin.firestore();
     authAdmin = admin.auth();
+    storageAdmin = admin.storage();
 }
 
-export { firestoreAdmin, authAdmin, isFirebaseAdminInitialized };
+export { firestoreAdmin, authAdmin, storageAdmin, isFirebaseAdminInitialized };
