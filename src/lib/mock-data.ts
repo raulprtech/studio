@@ -9,9 +9,9 @@ export const mockData: { [key: string]: any[] } = {
     { id: "user-3", uid: "user-3", email: "charlie@example.com", name: "Charlie Brown", role: "Viewer", createdAt: "2024-03-10", disabled: true },
   ],
   posts: [
-    { id: "post-1", title: "Primeros Pasos con Next.js", status: "Publicado", authorId: "user-1", publishedAt: "2024-05-10", content: "Una guía detallada sobre cómo configurar un nuevo proyecto de Next.js." },
-    { id: "post-2", title: "Tailwind CSS Avanzado", status: "Borrador", authorId: "user-2", publishedAt: null, content: "Descubre técnicas avanzadas para estilizar con Tailwind CSS." },
-    { id: "post-3", title: "Inmersión Profunda en Firebase Authentication", status: "Publicado", authorId: "user-1", publishedAt: "2024-04-22", content: "Aprende a implementar autenticación segura con Firebase." },
+    { id: "post-1", title: "Primeros Pasos con Next.js", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-05-10"), content: "Una guía detallada sobre cómo configurar un nuevo proyecto de Next.js.", coverImageUrl: "https://placehold.co/1200x630.png" },
+    { id: "post-2", title: "Tailwind CSS Avanzado", status: "Borrador", authorId: "user-2", publishedAt: null, content: "Descubre técnicas avanzadas para estilizar con Tailwind CSS.", coverImageUrl: "https://placehold.co/1200x630.png" },
+    { id: "post-3", title: "Inmersión Profunda en Firebase Authentication", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-04-22"), content: "Aprende a implementar autenticación segura con Firebase.", coverImageUrl: "https://placehold.co/1200x630.png" },
   ],
   products: [
     { id: "prod-1", name: "Ratón Inalámbrico", price: 25.99, stock: 150, category: "Electrónica", imageUrl: "https://placehold.co/600x400.png" },
@@ -19,9 +19,9 @@ export const mockData: { [key: string]: any[] } = {
     { id: "prod-3", name: "Taza de Café", price: 12.50, stock: 300, category: "Cocina", imageUrl: "https://placehold.co/600x400.png" },
   ],
   orders: [
-    { id: "order-1", customerId: "user-2", amount: 115.98, status: "Enviado", date: "2024-05-18" },
-    { id: "order-2", customerId: "user-3", amount: 12.50, status: "Procesando", date: "2024-05-20" },
-    { id: "order-3", customerId: "user-2", amount: 25.99, status: "Entregado", date: "2024-05-15" },
+    { id: "order-1", customerId: "user-2", amount: 115.98, status: "Enviado", date: new Date("2024-05-18") },
+    { id: "order-2", customerId: "user-3", amount: 12.50, status: "Procesando", date: new Date("2024-05-20") },
+    { id: "order-3", customerId: "user-2", amount: 25.99, status: "Entregado", date: new Date("2024-05-15") },
   ],
 };
 
@@ -31,7 +31,7 @@ export const mockSchemas: { [key: string]: { definition: string; icon: string | 
         icon: 'Users'
     },
     posts: {
-        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.string().nullable(),\n});`,
+        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.date().nullable(),\n  content: z.string().optional(),\n  coverImageUrl: z.string().url().optional(),\n});`,
         icon: 'FileText'
     },
     products: {

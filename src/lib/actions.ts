@@ -5,7 +5,7 @@ import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion"
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { writingAssistant, type WritingAssistantInput } from "@/ai/flows/writing-assistant";
 import { z } from "zod";
-import { authAdmin, firestoreAdmin } from "./firebase-admin";
+import { authAdmin, firestoreAdmin, storageAdmin } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
 import { mockData } from "./mock-data";
@@ -400,3 +400,40 @@ const writingAssistantSchema = z.object({
           };
       }
   }
+
+export async function uploadFileAction(formData: FormData, folder: string) {
+    if (!isFirebaseLive()) {
+        const isCover = folder === 'covers';
+        const placeholderUrl = isCover ? 'https://placehold.co/1200x630.png' : 'https://placehold.co/800x600.png';
+        return { success: true, url: placeholderUrl };
+    }
+
+    if (!storageAdmin) {
+        return { success: false, error: "El almacenamiento de Firebase no está configurado." };
+    }
+
+    const file = formData.get('file') as File | null;
+    if (!file) {
+        return { success: false, error: "No se encontró ningún archivo." };
+    }
+
+    try {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const filename = `${folder}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+        
+        const bucket = storageAdmin.bucket();
+        const fileUpload = bucket.file(filename);
+
+        await fileUpload.save(buffer, {
+            metadata: { contentType: file.type },
+        });
+
+        await fileUpload.makePublic();
+        
+        return { success: true, url: fileUpload.publicUrl() };
+
+    } catch (error) {
+        console.error("Error al subir el archivo:", error);
+        return { success: false, error: `No se pudo subir el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}` };
+    }
+}
