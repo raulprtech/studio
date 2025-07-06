@@ -83,15 +83,15 @@ export default async function BlogIndexPage({
         <p className="text-muted-foreground mt-2">Explorando el mundo del código, el diseño y la tecnología.</p>
       </div>
 
-      <div className="mb-12 p-6 bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg">
-        <form className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div className="lg:col-span-2">
+      <div className="mb-12 max-w-5xl mx-auto p-4 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl">
+        <form className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div>
             <label htmlFor="search-input" className="block text-sm font-medium text-muted-foreground mb-2">Buscar</label>
             <Input
               id="search-input"
               name="q"
               type="search"
-              placeholder="Buscar por título, contenido o etiqueta..."
+              placeholder="Buscar posts..."
               defaultValue={query}
               className="bg-background/50 border-border/80 h-10"
             />
@@ -108,12 +108,10 @@ export default async function BlogIndexPage({
               {uniqueCategories.map((cat, index) => <option key={index} value={cat}>{cat}</option>)}
             </select>
           </div>
-          <div className="flex gap-2">
-            <Button type="submit" className="w-full">Filtrar</Button>
-            <Button variant="ghost" asChild className="w-full">
-              <Link href="/blog">Limpiar</Link>
-            </Button>
-          </div>
+          <Button type="submit" className="w-full">Filtrar</Button>
+          <Button variant="outline" asChild className="w-full">
+            <Link href="/blog">Limpiar</Link>
+          </Button>
         </form>
       </div>
 
