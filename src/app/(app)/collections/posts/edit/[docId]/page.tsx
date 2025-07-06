@@ -7,7 +7,7 @@ import {
   } from "@/components/ui/card"
 import { getDocumentAction } from "@/lib/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { PostEditor } from "./components/post-editor"
+import { PostEditor } from "../components/post-editor"
   
 export default async function EditPostPage({ params }: { params: { docId: string } }) {
     const { docId } = params;
