@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useActionState } from "react";
+import { useEffect, useState, useTransition, useActionState, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentAction, writingAssistantAction } from "@/lib/actions";
-import { Loader2, Wand2, Eye, Pencil } from "lucide-react";
+import { Loader2, Wand2, Eye, Pencil, Sparkles, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
     Select,
@@ -26,8 +26,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+type AiAction = 'generate' | 'paraphrase' | 'summarize' | 'expand' | 'changeTone';
+type Tone = 'Professional' | 'Casual' | 'Humorous';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -39,7 +51,7 @@ function SubmitButton() {
     );
 }
 
-function AiWriter({ onDraftReceived, currentContent }: { onDraftReceived: (draft: string) => void, currentContent: string }) {
+function AiGenerateTool({ onDraftReceived }: { onDraftReceived: (draft: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
     const [topic, setTopic] = useState("");
     const [isGenerating, startTransition] = useTransition();
@@ -52,7 +64,7 @@ function AiWriter({ onDraftReceived, currentContent }: { onDraftReceived: (draft
         }
 
         startTransition(async () => {
-            const result = await writingAssistantAction({ topic, currentContent });
+            const result = await writingAssistantAction({ action: 'generate', topic });
             if (result.error) {
                 toast({ title: "AI Error", description: result.error, variant: "destructive" });
             } else if (result.draft) {
@@ -101,6 +113,34 @@ function AiWriter({ onDraftReceived, currentContent }: { onDraftReceived: (draft
     );
 }
 
+function AiEditTools({ onTextEdited, selectedText, isGenerating, onActionStart }: { onTextEdited: (newText: string) => void, selectedText: string, isGenerating: boolean, onActionStart: (action: AiAction, tone?: Tone) => void }) {
+    
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={!selectedText || isGenerating}>
+                     {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    AI Tools
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onActionStart('paraphrase')}>Paraphrase</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onActionStart('summarize')}>Summarize</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onActionStart('expand')}>Expand</DropdownMenuItem>
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>Change Tone</DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Professional')}>Professional</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Casual')}>Casual</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onActionStart('changeTone', 'Humorous')}>Humorous</DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                </DropdownMenuSub>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 
 export function PostEditor({ collectionId, document }: { collectionId: string, document: any }) {
     const { toast } = useToast();
@@ -110,6 +150,12 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
     // State for the editor content and view mode
     const [content, setContent] = useState(document.content || "");
     const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+    const [isGenerating, startTransition] = useTransition();
+
+    // State for text selection
+    const [selectedText, setSelectedText] = useState("");
+    const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
+    const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (state.message) {
@@ -122,8 +168,46 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
     }, [state, toast]);
     
     const handleDraftReceived = (draft: string) => {
-        setContent(prev => `${prev}\n\n${draft}`);
-    }
+        setContent(prev => `${prev}${prev ? '\n\n' : ''}${draft}`);
+    };
+
+    const handleSelectionChange = () => {
+        const textarea = textAreaRef.current;
+        if (textarea) {
+            const { selectionStart, selectionEnd } = textarea;
+            if (selectionStart !== selectionEnd) {
+                setSelectedText(textarea.value.substring(selectionStart, selectionEnd));
+                setSelectionRange({ start: selectionStart, end: selectionEnd });
+            } else {
+                setSelectedText("");
+                setSelectionRange(null);
+            }
+        }
+    };
+
+    const handleAiToolAction = (action: AiAction, tone?: Tone) => {
+        if (!selectedText || !selectionRange) return;
+
+        startTransition(async () => {
+            const result = await writingAssistantAction({
+                action,
+                selectedText,
+                tone,
+                currentContent: content,
+            });
+
+            if (result.draft) {
+                const newContent = content.substring(0, selectionRange.start) + result.draft + content.substring(selectionRange.end);
+                setContent(newContent);
+                setSelectedText("");
+                setSelectionRange(null);
+                const actionVerb = action === 'changeTone' ? `changed tone to ${tone}` : `${action}d`;
+                toast({ title: "Content updated!", description: `The selected text has been ${actionVerb}.` });
+            } else if (result.error) {
+                toast({ title: "AI Error", description: result.error, variant: "destructive" });
+            }
+        });
+    };
 
     return (
         <form action={dispatch}>
@@ -142,7 +226,13 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                 <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
                                     <Label htmlFor="content" className="text-xs text-muted-foreground">Content (Markdown Supported)</Label>
                                     <div className="flex items-center gap-2">
-                                        <AiWriter onDraftReceived={handleDraftReceived} currentContent={content} />
+                                        <AiGenerateTool onDraftReceived={handleDraftReceived} />
+                                        <AiEditTools 
+                                            selectedText={selectedText}
+                                            isGenerating={isGenerating}
+                                            onActionStart={handleAiToolAction}
+                                            onTextEdited={() => {}}
+                                        />
                                         <Button type="button" variant="outline" size="sm" onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}>
                                             {viewMode === 'edit' ? <Eye className="mr-2 h-4 w-4" /> : <Pencil className="mr-2 h-4 w-4" />}
                                             {viewMode === 'edit' ? 'Preview' : 'Edit'}
@@ -153,9 +243,11 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                     <Textarea 
                                         id="content" 
                                         name="content" 
+                                        ref={textAreaRef}
                                         placeholder="Write your post here..." 
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
+                                        onSelect={handleSelectionChange}
                                         rows={20}
                                         className="font-mono !text-sm"
                                     />

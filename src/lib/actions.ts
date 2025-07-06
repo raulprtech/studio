@@ -3,7 +3,7 @@
 
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
 import { generateSummary } from "@/ai/flows/generate-summary";
-import { writingAssistant } from "@/ai/flows/writing-assistant";
+import { writingAssistant, type WritingAssistantInput } from "@/ai/flows/writing-assistant";
 import { z } from "zod";
 import { authAdmin, firestoreAdmin } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
@@ -371,16 +371,21 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
 }
 
 const writingAssistantSchema = z.object({
-    topic: z.string().min(5),
+    action: z.enum(['generate', 'paraphrase', 'summarize', 'expand', 'changeTone']),
+    topic: z.string().optional(),
     currentContent: z.string().optional(),
+    selectedText: z.string().optional(),
+    tone: z.enum(['Professional', 'Casual', 'Humorous']).optional(),
   });
   
-  export async function writingAssistantAction(input: { topic: string, currentContent?: string }) {
+  export async function writingAssistantAction(input: WritingAssistantInput) {
       const validatedFields = writingAssistantSchema.safeParse(input);
   
       if (!validatedFields.success) {
+          const errors = validatedFields.error.flatten().fieldErrors;
+          const errorMessage = Object.values(errors).flat().join(', ');
           return {
-              error: "Validation failed: " + validatedFields.error.flatten().fieldErrors.topic?.join(', '),
+              error: "Validation failed: " + errorMessage,
               draft: null,
           };
       }
