@@ -103,17 +103,12 @@ export async function getStorageFiles() {
               .filter(file => !file.name.endsWith('/'))
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
-                // Use a signed URL for robust access, even for private files
-                const [signedUrl] = await file.getSignedUrl({
-                    action: 'read',
-                    expires: '03-09-2491' // A very far-future date
-                });
                 return {
                     name: file.name,
                     type: metadata.contentType || 'application/octet-stream',
                     size: formatBytes(Number(metadata.size)),
                     date: metadata.updated,
-                    url: signedUrl,
+                    url: file.publicUrl(),
                     hint: "file icon"
                 };
             })
