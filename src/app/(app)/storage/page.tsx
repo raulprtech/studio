@@ -1,7 +1,6 @@
 
 import Image from "next/image"
-import dynamic from "next/dynamic"
-import { MoreVertical, FileText, FileImage, FileAudio, Upload } from "lucide-react"
+import { MoreVertical, FileText, FileImage, FileAudio } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,16 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getCurrentUser } from "@/lib/auth"
 import { getStorageFiles } from "@/lib/data"
-
-const UploadFileButton = dynamic(() => import('./components/upload-file-button').then(mod => mod.UploadFileButton), {
-  ssr: false,
-  loading: () => (
-    <Button disabled>
-      <Upload className="mr-2 h-4 w-4" />
-      Subir Archivo
-    </Button>
-  )
-})
+import { StorageActions } from "./components/storage-actions"
 
 function FileIcon({ fileType }: { fileType: string }) {
   if (fileType.startsWith("image/")) {
@@ -49,7 +39,7 @@ export default async function StoragePage() {
       <div className="flex items-center">
         <h1 className="flex-1 text-2xl font-semibold">Almacenamiento</h1>
         {canEdit && (
-            <UploadFileButton />
+            <StorageActions />
         )}
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
