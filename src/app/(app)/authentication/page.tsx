@@ -59,8 +59,8 @@ export default async function AuthenticationPage() {
         disabled: user.disabled,
       }));
     } catch (error) {
-        console.warn("Advertencia al obtener usuarios de Firebase Auth (se usarán datos de ejemplo):", String(error));
-        users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
+        console.error("Error al obtener usuarios de Firebase Auth:", String(error));
+        users = [];
     }
   } else {
     users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));

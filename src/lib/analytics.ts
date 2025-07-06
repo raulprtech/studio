@@ -28,6 +28,12 @@ const mockAnalyticsData = {
     ]
 };
 
+const emptyAnalyticsData = {
+    summary: { totalUsers: '0', activeUsers: '0', newUsers: '0', sessions: '0' },
+    userChartData: [],
+    topPages: []
+};
+
 function isAnalyticsLive(): boolean {
     const isAnalyticsEnvConfigured = !!process.env.GOOGLE_ANALYTICS_PROPERTY_ID && isFirebaseConfigured;
     return getMode() === 'live' && isAnalyticsEnvConfigured;
@@ -51,8 +57,8 @@ export async function getAnalyticsData() {
         });
     } catch (error) {
         console.error('Error de inicialización del cliente de la API de Google Analytics Data:', String(error));
-        console.warn("Devolviendo datos de ejemplo debido a un error de inicialización del cliente de Analytics.");
-        return mockAnalyticsData;
+        console.warn("Devolviendo datos vacíos debido a un error de inicialización del cliente de Analytics.");
+        return emptyAnalyticsData;
     }
     
     try {
@@ -117,7 +123,7 @@ export async function getAnalyticsData() {
 
     } catch (error) {
         console.error("Error al obtener datos de Google Analytics:", String(error));
-        console.warn("Devolviendo datos de ejemplo debido a un error de la API de Analytics.");
-        return mockAnalyticsData;
+        console.warn("Devolviendo datos vacíos debido a un error de la API de Analytics.");
+        return emptyAnalyticsData;
     }
 }
