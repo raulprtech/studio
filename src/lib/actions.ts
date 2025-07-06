@@ -723,7 +723,10 @@ export async function uploadFileAction(formData: FormData, folder: string) {
         // Make the file public to get a stable, public URL
         await fileUpload.makePublic();
         
-        return { success: true, url: fileUpload.publicUrl() };
+        // Construct the public URL manually for immediate availability
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+        return { success: true, url: publicUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));

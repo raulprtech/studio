@@ -104,18 +104,16 @@ export async function getStorageFiles() {
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
                 
-                // Use a signed URL for secure, temporary access
-                const [signedUrl] = await file.getSignedUrl({
-                  action: 'read',
-                  expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-                });
+                // Construct the public URL directly.
+                // This assumes files are made public on upload.
+                const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
 
                 return {
                     name: file.name,
                     type: metadata.contentType || 'application/octet-stream',
                     size: formatBytes(Number(metadata.size)),
                     date: metadata.updated,
-                    url: signedUrl,
+                    url: publicUrl,
                     hint: "file icon"
                 };
             })
