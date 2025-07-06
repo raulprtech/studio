@@ -41,7 +41,7 @@ function isAnalyticsLive(): boolean {
 
 export async function getAnalyticsData() {
     if (!isAnalyticsLive()) {
-        console.warn("Analytics no está en modo real. Devolviendo datos de ejemplo.");
+        // Not in live mode, return mock data
         return mockAnalyticsData;
     }
 
@@ -122,7 +122,30 @@ export async function getAnalyticsData() {
         return { summary, userChartData, topPages };
 
     } catch (error) {
-        console.error("Error al obtener datos de Google Analytics:", String(error));
+        const errorMessage = String(error);
+        // This is a configuration error on the user's side, not a code bug.
+        // We provide a helpful warning instead of a generic error.
+        if (errorMessage.includes('PERMISSION_DENIED') && errorMessage.includes('analyticsdata.googleapis.com')) {
+             console.warn(`
+********************************************************************************
+** ADVERTENCIA DE CONFIGURACIÓN DE GOOGLE ANALYTICS **
+********************************************************************************
+La API de Google Analytics Data no está habilitada para tu proyecto o no tienes
+los permisos necesarios.
+
+Para solucionarlo, por favor:
+1. Asegúrate de que estás usando la cuenta de servicio correcta.
+2. Habilita la "Google Analytics Data API" en tu proyecto de Google Cloud en el
+   siguiente enlace:
+   ${errorMessage.substring(errorMessage.indexOf('https://'))}
+3. Si la acabas de habilitar, espera unos minutos para que los cambios se propaguen.
+
+La aplicación continuará funcionando con datos de análisis vacíos en modo real.
+********************************************************************************
+            `);
+        } else {
+            console.error("Error al obtener datos de Google Analytics:", errorMessage);
+        }
         console.warn("Devolviendo datos vacíos debido a un error de la API de Analytics.");
         return emptyAnalyticsData;
     }
