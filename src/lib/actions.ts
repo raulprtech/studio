@@ -6,6 +6,7 @@ import { z } from "zod";
 import { authAdmin, firestoreAdmin, isFirebaseAdminInitialized } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
+import { mockData } from "./mock-data";
 
 const schemaSuggestionSchema = z.object({
   dataDescription: z.string().min(10, {
