@@ -14,37 +14,17 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { Users, UserPlus, Activity, TestTube2 } from "lucide-react"
+  import { Users, UserPlus, Activity } from "lucide-react"
   import { UserChart } from "./components/user-chart";
   import { getAnalyticsData } from "@/lib/analytics";
-  import { cookies } from "next/headers";
-  import { ModeSwitch } from "./components/mode-switch";
-  import { isFirebaseConfigured } from "@/lib/firebase-admin";
   
   export default async function DashboardPage() {
     const { summary, userChartData, topPages } = await getAnalyticsData();
-    const mode = cookies().get('app-mode')?.value === 'live' ? 'live' : 'demo';
-    const liveModeAvailable = isFirebaseConfigured;
     
     return (
       <div className="flex flex-col gap-6">
         <div className="flex items-center">
           <h1 className="flex-1 text-2xl font-semibold">Dashboard</h1>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="lg:col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Application Mode</CardTitle>
-                    <TestTube2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <ModeSwitch initialMode={mode} isConfigured={liveModeAvailable} />
-                    <p className="text-xs text-muted-foreground pt-2">
-                        {liveModeAvailable ? "Toggle between live and demo data." : "Firebase not configured. Only demo mode is available."}
-                    </p>
-                </CardContent>
-            </Card>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
