@@ -66,20 +66,22 @@ export default function PortfolioPage() {
         <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-accent/20 blur-[150px]"></div>
       </div>
       
-      <header className="fixed top-0 left-0 w-full z-50 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">SKA</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm">
-            {["About", "Skills", "Projects", "Experience", "Contact"].map((item) => (
-              <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="hover:text-primary transition-colors">
-                {item}
-              </Link>
-            ))}
-          </nav>
-           <Button asChild className="hidden md:flex">
-                <Link href="/dashboard">Admin Panel</Link>
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-background/70 backdrop-blur-md rounded-full p-2 flex items-center gap-2 shadow-lg border border-border/20">
+            <Link href="/" className="flex items-center gap-2 pl-4 pr-2">
+                <span className="font-bold text-xl">
+                    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Alex</span>Chen
+                </span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
+                {["About", "Skills", "Projects", "Experience", "Contact"].map((item) => (
+                <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="hover:text-foreground transition-colors px-3 py-2 rounded-full">
+                    {item}
+                </Link>
+                ))}
+            </nav>
+            <Button asChild className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold rounded-full hover:shadow-lg hover:shadow-primary/40 transition-shadow">
+                <a href="#">Resume</a>
             </Button>
         </div>
       </header>
@@ -90,9 +92,9 @@ export default function PortfolioPage() {
           <div className="relative z-10 space-y-6">
             <span className="text-primary font-semibold">Full Stack Developer</span>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
-              Hi, I'm <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Shine Kyaw</span>
+              Hi, I'm <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Alex</span>
               <br />
-              Kyaw Aung
+              Chen
             </h1>
             <p className="max-w-lg text-muted-foreground">
               I'm a passionate developer creating modern and responsive web applications.
@@ -126,7 +128,7 @@ export default function PortfolioPage() {
                 src="https://placehold.co/600x600.png"
                 width={600}
                 height={600}
-                alt="Shine Kyaw Kyaw Aung"
+                alt="Alex Chen"
                 className="rounded-lg object-cover w-full h-full"
                 data-ai-hint="portrait man"
               />
@@ -138,9 +140,9 @@ export default function PortfolioPage() {
                 I love learning new technologies and I'm a firm believer in the power of continuous learning.
               </p>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><span className="font-semibold text-foreground">Name:</span> Shine K. K. Aung</div>
-                <div><span className="font-semibold text-foreground">Email:</span> contact@shineaung.dev</div>
-                <div><span className="font-semibold text-foreground">Location:</span> Yangon, Myanmar</div>
+                <div><span className="font-semibold text-foreground">Name:</span> Alex Chen</div>
+                <div><span className="font-semibold text-foreground">Email:</span> contact@alexchen.dev</div>
+                <div><span className="font-semibold text-foreground">Location:</span> San Francisco, CA</div>
                 <div><span className="font-semibold text-foreground">Availability:</span> Open to work</div>
               </div>
             </div>
@@ -225,21 +227,21 @@ export default function PortfolioPage() {
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Mail className="w-6 h-6 text-primary" /></div>
                   <div>
                     <p className="text-muted-foreground">Email</p>
-                    <a href="mailto:contact@shineaung.dev" className="font-semibold hover:text-primary">contact@shineaung.dev</a>
+                    <a href="mailto:contact@alexchen.dev" className="font-semibold hover:text-primary">contact@alexchen.dev</a>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Phone className="w-6 h-6 text-primary" /></div>
                   <div>
                     <p className="text-muted-foreground">Phone</p>
-                    <a href="tel:+95912345678" className="font-semibold hover:text-primary">+95 9 123 456 789</a>
+                    <a href="tel:+11234567890" className="font-semibold hover:text-primary">+1 123 456 7890</a>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><MapPin className="w-6 h-6 text-primary" /></div>
                   <div>
                     <p className="text-muted-foreground">Address</p>
-                    <p className="font-semibold">Yangon, Myanmar</p>
+                    <p className="font-semibold">San Francisco, CA</p>
                   </div>
                 </div>
               </div>
@@ -269,7 +271,7 @@ export default function PortfolioPage() {
 
       <footer className="border-t border-border/50">
           <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">&copy; 2024 Shine Kyaw Kyaw Aung. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">&copy; 2024 Alex Chen. All rights reserved.</p>
              <div className="flex items-center gap-4">
               {socialLinks.map((link, index) => (
                 <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
