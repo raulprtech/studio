@@ -13,18 +13,13 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { Users, Database, Folder, Activity } from "lucide-react"
+  import { Users, UserPlus, Activity } from "lucide-react"
   import { UserChart } from "./components/user-chart";
+  import { getAnalyticsData } from "@/lib/analytics";
   
-  const recentActivities = [
-    { id: 1, user: "admin@example.com", action: "Created collection 'posts'", timestamp: "2 hours ago", type: "CREATE" },
-    { id: 2, user: "editor@example.com", action: "Updated document 'post-1'", timestamp: "3 hours ago", type: "UPDATE" },
-    { id: 3, user: "system", action: "User 'new-user@example.com' signed up", timestamp: "5 hours ago", type: "AUTH" },
-    { id: 4, user: "admin@example.com", action: "Deleted file 'old-logo.png'", timestamp: "1 day ago", type: "DELETE" },
-    { id: 5, user: "editor@example.com", action: "Added document 'post-2'", timestamp: "2 days ago", type: "CREATE" },
-  ]
-  
-  export default function DashboardPage() {
+  export default async function DashboardPage() {
+    const { summary, userChartData, topPages } = await getAnalyticsData();
+    
     return (
       <div className="flex flex-col gap-6">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
@@ -35,72 +30,71 @@ import {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,234</div>
-              <p className="text-xs text-muted-foreground">+5.2% from last month</p>
+              <div className="text-2xl font-bold">{summary.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">Last 28 days</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-              <Database className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">New Users</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">15,678</div>
-              <p className="text-xs text-muted-foreground">+12.1% from last month</p>
+              <div className="text-2xl font-bold">{summary.newUsers}</div>
+              <p className="text-xs text-muted-foreground">Last 28 days</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
-              <Folder className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">2.5 GB</div>
-              <p className="text-xs text-muted-foreground">/ 10 GB</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+              <CardTitle className="text-sm font-medium">Sessions</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+57</div>
-              <p className="text-xs text-muted-foreground">Users online</p>
+              <div className="text-2xl font-bold">{summary.sessions}</div>
+              <p className="text-xs text-muted-foreground">Last 28 days</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{summary.activeUsers}</div>
+              <p className="text-xs text-muted-foreground">Last 28 days</p>
             </CardContent>
           </Card>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="lg:col-span-4">
             <CardHeader>
-              <CardTitle>New Users Overview</CardTitle>
-              <CardDescription>A look at new user sign-ups over the last 6 months.</CardDescription>
+              <CardTitle>Users Overview</CardTitle>
+              <CardDescription>Total users over the last 6 months.</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-               <UserChart />
+               <UserChart data={userChartData} />
             </CardContent>
           </Card>
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>A log of the most recent actions in your project.</CardDescription>
+              <CardTitle>Top Pages by Views</CardTitle>
+              <CardDescription>Your most viewed pages in the last 28 days.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Time</TableHead>
+                    <TableHead>Page</TableHead>
+                    <TableHead className="text-right">Views</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentActivities.map((activity) => (
-                    <TableRow key={activity.id}>
+                  {topPages.map((page) => (
+                    <TableRow key={page.page}>
                       <TableCell>
-                        <div className="font-medium">{activity.action}</div>
-                        <div className="text-sm text-muted-foreground">{activity.user}</div>
+                        <div className="font-medium truncate">{page.page}</div>
                       </TableCell>
-                      <TableCell>{activity.timestamp}</TableCell>
+                      <TableCell className="text-right">{page.views}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

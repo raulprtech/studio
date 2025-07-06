@@ -2,28 +2,28 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const chartData = [
-    { name: 'Jan', users: 400 },
-    { name: 'Feb', users: 300 },
-    { name: 'Mar', users: 500 },
-    { name: 'Apr', users: 200 },
-    { name: 'May', users: 800 },
-    { name: 'Jun', users: 700 },
-];
+type UserChartProps = {
+    data: {
+        date: string;
+        users: number;
+    }[];
+}
 
-export function UserChart() {
+export function UserChart({ data }: UserChartProps) {
     return (
         <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
+            <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value.toLocaleString()}`} />
                 <Tooltip
                     contentStyle={{
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: 'var(--radius)',
                     }}
+                    formatter={(value: number) => [value.toLocaleString(), 'Users']}
+                    labelFormatter={(label: string) => `Month: ${label}`}
                 />
                 <Bar dataKey="users" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
             </BarChart>
