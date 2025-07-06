@@ -5,13 +5,13 @@ import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion"
 import { generateSummary } from "@/ai/flows/generate-summary";
 import { writingAssistant, type WritingAssistantInput } from "@/ai/flows/writing-assistant";
 import { z } from "zod";
-import { authAdmin, firestoreAdmin, storageAdmin } from "./firebase-admin";
+import { authAdmin, firestoreAdmin, storageAdmin, isFirebaseConfigured } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
-import { mockData } from "./mock-data";
-import { isFirebaseLive } from "./mode";
+import { mockData } from "./mock-data-client";
 import { cookies } from "next/headers";
 import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
+import { getMode } from "./mode";
 
 export async function setAppModeAction(mode: 'live' | 'demo') {
   cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
@@ -76,7 +76,7 @@ const updateSchemaSchema = z.object({
 });
 
 export async function updateSchemaAction(prevState: any, formData: FormData) {
-  if (!isFirebaseLive()) {
+  if (getMode() !== 'live' || !isFirebaseConfigured) {
     return {
         errors: null,
         message: "Acción fallida: La aplicación está en modo demo. Cambia a modo real para guardar en Firestore.",
@@ -133,7 +133,7 @@ const createCollectionSchema = z.object({
 });
 
 export async function createCollectionAction(prevState: any, formData: FormData) {
-  if (!isFirebaseLive()) {
+  if (getMode() !== 'live' || !isFirebaseConfigured) {
     return {
         message: "Acción fallida: La aplicación está en modo demo. Cambia a modo real para crear colecciones.",
         success: false,
@@ -197,7 +197,7 @@ const updateUserRoleSchema = z.object({
 });
 
 export async function updateUserRoleAction(prevState: any, formData: FormData) {
-  if (!isFirebaseLive()) {
+  if (getMode() !== 'live' || !isFirebaseConfigured) {
     return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
   }
 
@@ -226,7 +226,7 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
 }
 
 export async function sendPasswordResetAction(email: string) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
@@ -239,7 +239,7 @@ export async function sendPasswordResetAction(email: string) {
 
 
 export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
@@ -255,7 +255,7 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
 // Document Management Actions
 
 export async function duplicateDocumentAction(collectionId: string, documentId: string) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
@@ -274,7 +274,7 @@ export async function duplicateDocumentAction(collectionId: string, documentId: 
 }
 
 export async function deleteDocumentAction(collectionId: string, documentId: string) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
     try {
@@ -287,7 +287,7 @@ export async function deleteDocumentAction(collectionId: string, documentId: str
 }
 
 export async function getDocumentAction(collectionId: string, documentId: string) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         console.warn("Firebase no está en modo real. Devolviendo datos de ejemplo para getDocumentAction.");
         const collectionData = mockData[collectionId] || [];
         const document = collectionData.find(doc => doc.id === documentId);
@@ -310,7 +310,7 @@ export async function getDocumentAction(collectionId: string, documentId: string
 }
 
 export async function updateDocumentAction(prevState: any, formData: FormData) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
     }
 
@@ -405,7 +405,7 @@ const writingAssistantSchema = z.object({
   }
 
 export async function uploadFileAction(formData: FormData, folder: string) {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         const isCover = folder === 'covers';
         const placeholderUrl = isCover ? 'https://placehold.co/1200x630.png' : 'https://placehold.co/800x600.png';
         return { success: true, url: placeholderUrl };

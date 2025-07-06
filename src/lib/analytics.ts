@@ -1,6 +1,7 @@
 
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { isAnalyticsLive } from './mode';
+import { getMode } from './mode';
+import { isFirebaseConfigured } from './firebase-admin';
 
 // MOCK DATA for when analytics is not configured
 const mockAnalyticsData = {
@@ -26,6 +27,11 @@ const mockAnalyticsData = {
         { page: '/contacto', views: '1.876' },
     ]
 };
+
+function isAnalyticsLive(): boolean {
+    const isAnalyticsEnvConfigured = !!process.env.GOOGLE_ANALYTICS_PROPERTY_ID && isFirebaseConfigured;
+    return getMode() === 'live' && isAnalyticsEnvConfigured;
+}
 
 export async function getAnalyticsData() {
     if (!isAnalyticsLive()) {

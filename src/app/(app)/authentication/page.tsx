@@ -29,15 +29,15 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getCurrentUser } from "@/lib/auth"
-import { authAdmin } from "@/lib/firebase-admin"
-import { mockData } from "@/lib/mock-data"
+import { authAdmin, isFirebaseConfigured } from "@/lib/firebase-admin"
+import { mockData } from "@/lib/mock-data-client"
 import { EditRoleMenuItem, SendPasswordResetMenuItem, ToggleUserStatusMenuItem } from "./components/user-action-items"
-import { isFirebaseLive } from "@/lib/mode"
+import { getMode } from "@/lib/mode"
 
 export default async function AuthenticationPage() {
   const currentUser = await getCurrentUser();
   let users: any[] = [];
-  const useLive = isFirebaseLive();
+  const useLive = getMode() === 'live' && isFirebaseConfigured;
 
   const roleDisplayMap: { [key: string]: string } = {
     Admin: 'Administrador',

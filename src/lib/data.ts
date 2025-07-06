@@ -1,9 +1,10 @@
-import { firestoreAdmin } from './firebase-admin';
-import { isFirebaseLive } from './mode';
-import { mockData, mockSchemas } from './mock-data';
+
+import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
+import { getMode } from './mode';
+import { mockData, mockSchemas } from './mock-data-client';
 
 export async function getCollections() {
-    if (!isFirebaseLive()) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         console.warn(`Firebase no está en modo real. Devolviendo colecciones de ejemplo.`);
         return Object.keys(mockData).map(name => ({
             name,
