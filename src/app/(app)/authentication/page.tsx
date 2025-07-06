@@ -59,7 +59,7 @@ export default async function AuthenticationPage() {
         disabled: user.disabled,
       }));
     } catch (error) {
-        console.error("Error al obtener usuarios de Firebase Auth:", error);
+        console.error("Error al obtener usuarios de Firebase Auth:", String(error));
         users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
     }
   } else {
