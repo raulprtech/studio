@@ -72,7 +72,13 @@ export default async function BlogIndexPage({
   );
 
   const createPageURL = (pageNumber: number | string) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
+    if (query) {
+      params.set('q', query);
+    }
+    if (category) {
+      params.set('category', category);
+    }
     params.set('page', pageNumber.toString());
     return `/blog?${params.toString()}`;
   };
