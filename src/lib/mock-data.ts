@@ -1,9 +1,46 @@
 
+
 import { firestoreAdmin, storageAdmin, isFirebaseConfigured } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
+import admin from 'firebase-admin';
+
+async function preloadCollection(collectionId: string) {
+    if (!firestoreAdmin) return;
+    const mockCollectionData = mockData[collectionId];
+    if (!mockCollectionData || mockCollectionData.length === 0) {
+        console.log(`No hay datos de ejemplo para precargar en la colección '${collectionId}'.`);
+        return;
+    }
+
+    console.log(`La colección '${collectionId}' está vacía. Precargando ${mockCollectionData.length} documentos de ejemplo...`);
+    const collectionRef = firestoreAdmin.collection(collectionId);
+    const batch = firestoreAdmin.batch();
+
+    mockCollectionData.forEach(doc => {
+        const docRef = collectionRef.doc(doc.id);
+        const dataToSet: { [key: string]: any } = { ...doc };
+        delete dataToSet.id;
+
+        // Convert date objects to Timestamps
+        Object.keys(dataToSet).forEach(key => {
+            const value = dataToSet[key];
+            if (value instanceof Date) {
+                dataToSet[key] = admin.firestore.Timestamp.fromDate(value);
+            }
+        });
+
+        batch.set(docRef, dataToSet);
+    });
+
+    await batch.commit();
+    console.log(`Precarga completada para la colección '${collectionId}'.`);
+}
+
 
 export async function getCollectionDocuments(collectionId: string) {
+  const collectionsToPreload = ['posts', 'projects'];
+
   if (getMode() !== 'live' || !isFirebaseConfigured) {
       console.warn(`Firebase no está en modo real. Devolviendo datos de ejemplo para la colección: ${collectionId}`);
       return mockData[collectionId] || [];
@@ -11,7 +48,14 @@ export async function getCollectionDocuments(collectionId: string) {
 
   try {
       const collectionRef = firestoreAdmin!.collection(collectionId);
-      const snapshot = await collectionRef.get();
+      let snapshot = await collectionRef.get();
+      
+      if (snapshot.empty && collectionsToPreload.includes(collectionId)) {
+          await preloadCollection(collectionId);
+          // Re-fetch after preloading
+          snapshot = await collectionRef.get();
+      }
+
       if (snapshot.empty) {
           return [];
       }
