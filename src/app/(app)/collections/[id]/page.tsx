@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { PlusCircle, File, MoreHorizontal } from "lucide-react"
+import { PlusCircle, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -26,33 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AiSummaryButton } from "./components/ai-summary-button"
-
-const mockData: { [key: string]: any[] } = {
-  users: [
-    { id: "user-1", email: "alice@example.com", name: "Alice Johnson", role: "Admin", createdAt: "2024-01-15" },
-    { id: "user-2", email: "bob@example.com", name: "Bob Williams", role: "Editor", createdAt: "2024-02-20" },
-    { id: "user-3", email: "charlie@example.com", name: "Charlie Brown", role: "Viewer", createdAt: "2024-03-10" },
-  ],
-  posts: [
-    { id: "post-1", title: "Getting Started with Next.js", status: "Published", authorId: "user-1", publishedAt: "2024-05-10" },
-    { id: "post-2", title: "Advanced Tailwind CSS", status: "Draft", authorId: "user-2", publishedAt: null },
-    { id: "post-3", title: "Firebase Authentication Deep Dive", status: "Published", authorId: "user-1", publishedAt: "2024-04-22" },
-  ],
-  products: [
-    { id: "prod-1", name: "Wireless Mouse", price: 25.99, stock: 150, category: "Electronics" },
-    { id: "prod-2", name: "Mechanical Keyboard", price: 89.99, stock: 75, category: "Electronics" },
-    { id: "prod-3", name: "Coffee Mug", price: 12.50, stock: 300, category: "Kitchenware" },
-  ],
-  orders: [
-    { id: "order-1", customerId: "user-2", amount: 115.98, status: "Shipped", date: "2024-05-18" },
-    { id: "order-2", customerId: "user-3", amount: 12.50, status: "Processing", date: "2024-05-20" },
-    { id: "order-3", customerId: "user-2", amount: 25.99, status: "Delivered", date: "2024-05-15" },
-  ],
-}
-
-function getCollectionData(collectionId: string) {
-    return mockData[collectionId] || [];
-}
+import { getCollectionData } from "@/lib/mock-data"
 
 export default function SingleCollectionPage({ params }: { params: { id: string } }) {
   const collectionId = params.id;
@@ -68,9 +42,11 @@ export default function SingleCollectionPage({ params }: { params: { id: string 
         </div>
         <div className="flex items-center gap-2">
             <AiSummaryButton collectionName={collectionId} />
-            <Button>
+            <Button asChild>
+              <Link href={`/collections/${collectionId}/new`}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Document
+              </Link>
             </Button>
         </div>
       </div>
