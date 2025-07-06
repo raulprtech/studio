@@ -71,7 +71,7 @@ export default function PortfolioPage() {
             <div className="flex items-center gap-2">
                 <Link href="/" className="flex items-center gap-2 pl-4 pr-2">
                     <span className="font-bold text-xl">
-                        <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Alex</span>Chen
+                        <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Raul</span>Pacheco
                     </span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
@@ -96,9 +96,9 @@ export default function PortfolioPage() {
           <div className="relative z-10 space-y-6">
             <span className="text-primary font-semibold">Full Stack Developer</span>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
-              Hi, I'm <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Alex</span>
+              Hi, I'm <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Raul</span>
               <br />
-              Chen
+              Pacheco
             </h1>
             <p className="max-w-lg text-muted-foreground">
               I'm a passionate developer creating modern and responsive web applications.
@@ -132,7 +132,7 @@ export default function PortfolioPage() {
                 src="https://placehold.co/600x600.png"
                 width={600}
                 height={600}
-                alt="Alex Chen"
+                alt="Raul Pacheco"
                 className="rounded-lg object-cover w-full h-full"
                 data-ai-hint="portrait man"
               />
@@ -144,8 +144,8 @@ export default function PortfolioPage() {
                 I love learning new technologies and I'm a firm believer in the power of continuous learning.
               </p>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><span className="font-semibold text-foreground">Name:</span> Alex Chen</div>
-                <div><span className="font-semibold text-foreground">Email:</span> contact@alexchen.dev</div>
+                <div><span className="font-semibold text-foreground">Name:</span> Raul Pacheco</div>
+                <div><span className="font-semibold text-foreground">Email:</span> contact@raulpacheco.dev</div>
                 <div><span className="font-semibold text-foreground">Location:</span> San Francisco, CA</div>
                 <div><span className="font-semibold text-foreground">Availability:</span> Open to work</div>
               </div>
@@ -231,7 +231,7 @@ export default function PortfolioPage() {
                   <div className="w-12 h-12 rounded-lg bg-card flex items-center justify-center"><Mail className="w-6 h-6 text-primary" /></div>
                   <div>
                     <p className="text-muted-foreground">Email</p>
-                    <a href="mailto:contact@alexchen.dev" className="font-semibold hover:text-primary">contact@alexchen.dev</a>
+                    <a href="mailto:contact@raulpacheco.dev" className="font-semibold hover:text-primary">contact@raulpacheco.dev</a>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -275,7 +275,7 @@ export default function PortfolioPage() {
 
       <footer className="border-t border-border/50">
           <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">&copy; 2024 Alex Chen. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">&copy; 2024 Raul Pacheco. All rights reserved.</p>
              <div className="flex items-center gap-4">
               {socialLinks.map((link, index) => (
                 <Link key={index} href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
