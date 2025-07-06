@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +33,13 @@ type FileActionProps = {
 };
 
 export function FileActionItems({ file }: FileActionProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(file.url);
@@ -51,6 +56,15 @@ export function FileActionItems({ file }: FileActionProps) {
       });
     });
   };
+
+  if (!isMounted) {
+    return (
+        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" disabled>
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Abrir menú de archivo</span>
+        </Button>
+    );
+  }
 
   return (
     <AlertDialog>

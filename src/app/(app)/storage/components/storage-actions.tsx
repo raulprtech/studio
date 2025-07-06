@@ -18,14 +18,14 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadFileAction } from "@/lib/actions";
 
 export function StorageActions() {
-  const [isClient, setIsClient] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, startUploading] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    setIsClient(true);
+    setIsMounted(true);
   }, []);
   
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +47,7 @@ export function StorageActions() {
     });
   };
 
-  if (!isClient) {
+  if (!isMounted) {
     return (
       <Button disabled>
         <Upload className="mr-2 h-4 w-4" />
