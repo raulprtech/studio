@@ -9,9 +9,16 @@ export const mockData: { [key: string]: any[] } = {
     { id: "user-3", uid: "user-3", email: "charlie@example.com", name: "Charlie Brown", role: "Viewer", createdAt: "2024-03-10", disabled: true },
   ],
   posts: [
-    { id: "post-1", title: "Primeros Pasos con Next.js", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-05-10"), content: "Una guía detallada sobre cómo configurar un nuevo proyecto de Next.js.", coverImageUrl: "https://placehold.co/1200x630.png" },
-    { id: "post-2", title: "Tailwind CSS Avanzado", status: "Borrador", authorId: "user-2", publishedAt: null, content: "Descubre técnicas avanzadas para estilizar con Tailwind CSS.", coverImageUrl: "https://placehold.co/1200x630.png" },
-    { id: "post-3", title: "Inmersión Profunda en Firebase Authentication", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-04-22"), content: "Aprende a implementar autenticación segura con Firebase.", coverImageUrl: "https://placehold.co/1200x630.png" },
+    { id: "post-1", title: "Primeros Pasos con Next.js", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-05-10"), content: "Una guía detallada sobre cómo configurar un nuevo proyecto de Next.js.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Desarrollo Web", tags: ["Next.js", "React", "JavaScript"] },
+    { id: "post-2", title: "Tailwind CSS Avanzado", status: "Borrador", authorId: "user-2", publishedAt: null, content: "Descubre técnicas avanzadas para estilizar con Tailwind CSS.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Diseño Web", tags: ["CSS", "UI/UX", "Tailwind"] },
+    { id: "post-3", title: "Inmersión Profunda en Firebase Authentication", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-04-22"), content: "Aprende a implementar autenticación segura con Firebase. Es una herramienta poderosa.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Tecnología", tags: ["Firebase", "Auth", "Seguridad"] },
+    { id: "post-4", title: "Gestión de Estado en React", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-03-15"), content: "Explorando diferentes soluciones para la gestión de estado en React: Context, Redux, y Zustand.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Desarrollo Web", tags: ["React", "State Management", "Zustand"] },
+    { id: "post-5", title: "Optimización de Rendimiento en Next.js", status: "Publicado", authorId: "user-2", publishedAt: new Date("2024-02-28"), content: "Técnicas para hacer que tus aplicaciones Next.js sean increíblemente rápidas.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Desarrollo Web", tags: ["Next.js", "Performance", "Web Vitals"] },
+    { id: "post-6", title: "Introducción a Firestore", status: "Publicado", authorId: "user-1", publishedAt: new Date("2024-01-30"), content: "Una guía para principiantes sobre la base de datos NoSQL de Firebase, Firestore.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Tecnología", tags: ["Firebase", "Firestore", "Base de datos"] },
+    { id: "post-7", title: "Creando Componentes Reutilizables", status: "Publicado", authorId: "user-2", publishedAt: new Date("2023-12-20"), content: "Principios de diseño y buenas prácticas para crear componentes de UI robustos y reutilizables.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Diseño Web", tags: ["React", "Diseño de Componentes", "UI"] },
+    { id: "post-8", title: "Desplegando una App en Vercel", status: "Publicado", authorId: "user-1", publishedAt: new Date("2023-11-10"), content: "Un tutorial paso a paso para desplegar tu aplicación Next.js en Vercel.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Desarrollo Web", tags: ["Next.js", "Vercel", "DevOps"] },
+    { id: "post-9", title: "Seguridad en Aplicaciones Web", status: "Publicado", authorId: "user-2", publishedAt: new Date("2023-10-05"), content: "Conceptos fundamentales de seguridad que todo desarrollador web debe conocer.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Tecnología", tags: ["Seguridad", "OWASP", "Web"] },
+    { id: "post-10", title: "El Ecosistema de TypeScript", status: "Publicado", authorId: "user-1", publishedAt: new Date("2023-09-01"), content: "Un vistazo al ecosistema de TypeScript y por qué deberías usarlo.", coverImageUrl: "https://placehold.co/1200x630.png", category: "Desarrollo Web", tags: ["TypeScript", "JavaScript", "Static Typing"] },
   ],
   products: [
     { id: "prod-1", name: "Ratón Inalámbrico", price: 25.99, stock: 150, category: "Electrónica", imageUrl: "https://placehold.co/600x400.png" },
@@ -31,7 +38,7 @@ export const mockSchemas: { [key: string]: { definition: string; icon: string | 
         icon: 'Users'
     },
     posts: {
-        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.date().nullable(),\n  content: z.string().optional(),\n  coverImageUrl: z.string().url().optional(),\n});`,
+        definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  id: z.string(),\n  title: z.string(),\n  status: z.string(),\n  authorId: z.string(),\n  publishedAt: z.date().nullable(),\n  content: z.string().optional(),\n  coverImageUrl: z.string().url().optional(),\n  category: z.string().optional(),\n  tags: z.array(z.string()).optional(),\n});`,
         icon: 'FileText'
     },
     products: {

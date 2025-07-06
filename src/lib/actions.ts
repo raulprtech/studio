@@ -330,7 +330,6 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
         
         const dataToUpdate: { [key: string]: any } = {};
         
-        // This handles fields that might not be in the form but are in the original document
         const allKeys = new Set([...Object.keys(originalData), ...Array.from(formData.keys())]);
 
         allKeys.forEach(key => {
@@ -340,11 +339,14 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
             const originalValue = originalData[key];
 
              if (formData.has(key)) {
-                if (typeof originalValue === 'number') {
+                if (Array.isArray(originalValue) && typeof formValue === 'string') {
+                    // Handle comma-separated strings into an array of strings
+                    dataToUpdate[key] = formValue ? formValue.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+                } else if (typeof originalValue === 'number') {
                     dataToUpdate[key] = Number(formValue);
                 } else if (typeof originalValue === 'boolean') {
-                    dataToUpdate[key] = formValue === 'on'; // HTML checkbox sends 'on' when checked
-                } else if (originalValue && typeof originalValue.toDate === 'function') { // Firestore Timestamp
+                    dataToUpdate[key] = formValue === 'on';
+                } else if (originalValue && typeof originalValue.toDate === 'function') {
                     dataToUpdate[key] = formValue ? admin.firestore.Timestamp.fromDate(new Date(formValue)) : null;
                 } else if (originalValue instanceof Date) {
                      dataToUpdate[key] = formValue ? new Date(formValue) : null;
@@ -353,7 +355,6 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
                     dataToUpdate[key] = formValue;
                 }
             } else if (typeof originalValue === 'boolean') {
-                // If a checkbox is not in form data, it was unchecked.
                  dataToUpdate[key] = false;
             }
         });
@@ -362,7 +363,8 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
 
         revalidatePath(`/collections/${collectionId}`);
         revalidatePath(`/collections/${collectionId}/${documentId}/edit`);
-        revalidatePath(`/collections/posts/edit/${documentId}`); // Also revalidate custom editor
+        revalidatePath(`/collections/posts/edit/${documentId}`);
+        revalidatePath('/blog'); // Revalidate blog index page
         return { message: `Documento '${documentId}' actualizado con éxito.`, success: true };
 
     } catch (error) {

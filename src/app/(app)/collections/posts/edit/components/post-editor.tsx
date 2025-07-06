@@ -98,7 +98,11 @@ function ImageUploadDialog({ open, onOpenChange, onImageUploaded }: { open: bool
 
 function EditorToolbar({ editorRef, applyFormat, insertText, onAiAction, isAiGenerating, selectedText }: { editorRef: RefObject<HTMLTextAreaElement>, applyFormat: (format: string) => void, insertText: (text: string) => void, onAiAction: (action: AiAction, tone?: Tone) => void, isAiGenerating: boolean, selectedText: string }) {
     
+    const [isImageUploadOpen, setIsImageUploadOpen] = useState(false);
+
     return (
+        <>
+        <ImageUploadDialog open={isImageUploadOpen} onOpenChange={setIsImageUploadOpen} onImageUploaded={(url) => insertText(`\n![imagen](${url})\n`)} />
         <div className="flex items-center gap-1 p-2 border-b flex-wrap bg-muted rounded-t-md">
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -111,10 +115,11 @@ function EditorToolbar({ editorRef, applyFormat, insertText, onAiAction, isAiGen
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant="ghost" size="icon" onClick={() => applyFormat('bold')} title="Negrita"><Bold /></Button>
-            <Button variant="ghost" size="icon" onClick={() => applyFormat('italic')} title="Cursiva"><Italic /></Button>
-            <Button variant="ghost" size="icon" onClick={() => applyFormat('strikethrough')} title="Tachado"><Strikethrough /></Button>
-            <Button variant="ghost" size="icon" onClick={() => applyFormat('code')} title="Código"><Code /></Button>
+            <Button variant="ghost" size="icon" onClick={() => applyFormat('bold')} title="Negrita"><Bold className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => applyFormat('italic')} title="Cursiva"><Italic className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => applyFormat('strikethrough')} title="Tachado"><Strikethrough className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => applyFormat('code')} title="Código"><Code className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setIsImageUploadOpen(true)} title="Insertar Imagen"><ImageIcon className="h-4 w-4" /></Button>
             
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -135,6 +140,7 @@ function EditorToolbar({ editorRef, applyFormat, insertText, onAiAction, isAiGen
 
             <AiTools selectedText={selectedText} isGenerating={isAiGenerating} onActionStart={onAiAction} />
         </div>
+        </>
     );
 }
 
@@ -197,9 +203,6 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
     const [selectedText, setSelectedText] = useState("");
     const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
-    const [isImageUploadOpen, setIsImageUploadOpen] = useState(false);
-
 
     useEffect(() => {
         if (state.message) {
@@ -335,7 +338,6 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
 
     return (
         <form action={dispatch}>
-            <ImageUploadDialog open={isImageUploadOpen} onOpenChange={setIsImageUploadOpen} onImageUploaded={(url) => insertText(`\n![imagen](${url})\n`)} />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
@@ -399,6 +401,14 @@ export function PostEditor({ collectionId, document }: { collectionId: string, d
                                 {isUploading && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="animate-spin h-3 w-3" /> Subiendo...</p>}
                              </div>
                             
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">Categoría</Label>
+                                <Input id="category" name="category" placeholder="Ej. Desarrollo Web" defaultValue={document.category} />
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="tags">Etiquetas (separadas por coma)</Label>
+                                <Input id="tags" name="tags" placeholder="Ej. React, Next.js, Firebase" defaultValue={document.tags?.join(', ') || ''} />
+                            </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="status">Estado</Label>
                                 <Select name="status" defaultValue={document.status}>
