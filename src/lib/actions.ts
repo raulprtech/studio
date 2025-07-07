@@ -258,10 +258,11 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
       success: true,
     };
   } catch (error) {
-    console.error("Error al actualizar el esquema en Firestore:", String(error));
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error al actualizar el esquema en Firestore:", errorMessage);
     return {
       errors: null,
-      message: `No se pudo actualizar el esquema en Firestore. Por favor, revisa los logs del servidor y la configuración de Firebase.`,
+      message: `No se pudo actualizar el esquema en Firestore: ${errorMessage}`,
       success: false,
     };
   }
@@ -321,9 +322,10 @@ export async function createCollectionAction(prevState: any, formData: FormData)
         errors: null,
     };
   } catch (error) {
-    console.error("Error al crear la colección en Firestore:", String(error));
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error al crear la colección en Firestore:", errorMessage);
     return {
-      message: `No se pudo crear la colección. Por favor, revisa los logs del servidor y la configuración de Firebase.`,
+      message: `No se pudo crear la colección: ${errorMessage}`,
       success: false,
     };
   }
@@ -720,14 +722,13 @@ export async function uploadFileAction(formData: FormData, folder: string) {
             metadata: { contentType: file.type },
         });
 
-        // Generate a long-lived signed URL to access the file, as it might be private.
-        // This is more robust than assuming public access.
-        const [signedUrl] = await fileUpload.getSignedUrl({
-            action: 'read',
-            expires: '01-01-2100', // Set a far-future expiration date
-        });
+        // Make the file public to get a stable, permanent URL.
+        await fileUpload.makePublic();
 
-        return { success: true, url: signedUrl };
+        // Construct the public URL.
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+        return { success: true, url: publicUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
