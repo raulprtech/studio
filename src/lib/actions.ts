@@ -273,27 +273,32 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   }
 }
 
-/**
- * Ensures the Firestore database is initialized by checking for any document.
- * If no documents exist, it creates a placeholder document to activate the database.
- */
 async function ensureFirestoreInitialized() {
     if (!firestoreAdmin) return;
+    
+    const initDocRef = firestoreAdmin.collection('_internal_init').doc('init_check');
+
     try {
-        // Attempt to write a placeholder document to initialize the DB.
-        // This is a more robust way to handle the "5 NOT_FOUND" error on new projects.
-        const placeholderRef = firestoreAdmin.collection('_internal').doc('init');
-        await placeholderRef.set({ initializedAt: new Date() });
-    } catch (e) {
-        // The first write might fail if the DB isn't ready. A second attempt is often successful.
-        try {
-            const placeholderRef = firestoreAdmin.collection('_internal').doc('init');
-            await placeholderRef.set({ initializedAt: new Date() });
-            console.log("Firestore inicializado con un documento de marcador de posición tras el error inicial.");
-        } catch (initError) {
-             console.error("No se pudo inicializar Firestore:", String(initError));
-             // Throw the error to be caught by the calling action
-             throw initError;
+        await initDocRef.get();
+    } catch (error: any) {
+        if (error.code === 5) { // 5 is the gRPC code for NOT_FOUND
+            console.log("Database not found, attempting to initialize by writing a document...");
+            try {
+                // First write attempt to "wake up" the database
+                await initDocRef.set({ initializedAt: admin.firestore.FieldValue.serverTimestamp() });
+                console.log("Initial write sent, re-checking status...");
+                // Allow a brief moment for the initialization to propagate
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Second write attempt, which should now succeed
+                await initDocRef.set({ initializedAt: admin.firestore.FieldValue.serverTimestamp() });
+                console.log("Firestore database initialized successfully.");
+            } catch (initError) {
+                console.error("Failed to initialize Firestore database after initial attempt:", String(initError));
+                throw new Error("Could not initialize Firestore database. Please ensure it is enabled in your Firebase project.");
+            }
+        } else {
+            // Re-throw other errors
+            throw error;
         }
     }
 }
@@ -756,14 +761,13 @@ export async function uploadFileAction(formData: FormData, folder: string) {
             metadata: { contentType: file.type },
         });
 
-        // Use a long-lived signed URL instead of making the file public.
-        // Valid until the year 2100.
-        const [signedUrl] = await fileUpload.getSignedUrl({
-            action: 'read',
-            expires: '01-01-2100',
-        });
+        // Make the file public to get a stable, permanent URL
+        await fileUpload.makePublic();
 
-        return { success: true, url: signedUrl };
+        // Construct the public URL
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+        return { success: true, url: publicUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
