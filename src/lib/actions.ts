@@ -268,6 +268,36 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   }
 }
 
+/**
+ * Ensures the Firestore database is initialized by checking for any document.
+ * If no documents exist, it creates a placeholder document to activate the database.
+ */
+async function ensureFirestoreInitialized() {
+    if (!firestoreAdmin) return;
+    try {
+        const collections = await firestoreAdmin.listCollections();
+        if (collections.length > 0) {
+            // Firestore is active
+            return;
+        }
+        // If no collections, try to create a placeholder to initialize the DB.
+        const placeholderRef = firestoreAdmin.collection('_internal').doc('init');
+        await placeholderRef.set({ initializedAt: new Date() });
+        console.log("Firestore inicializado con un documento de marcador de posición.");
+    } catch (e) {
+        // This catch block handles cases where the DB doesn't exist yet.
+        // By writing a document, we trigger its creation.
+        try {
+            const placeholderRef = firestoreAdmin.collection('_internal').doc('init');
+            await placeholderRef.set({ initializedAt: new Date() });
+            console.log("Firestore inicializado con un documento de marcador de posición tras el error inicial.");
+        } catch (initError) {
+             console.error("No se pudo inicializar Firestore:", String(initError));
+        }
+    }
+}
+
+
 const createCollectionSchema = z.object({
   collectionName: z.string().min(1, 'El nombre de la colección es obligatorio.').regex(/^[a-zA-Z0-9_-]+$/, 'El nombre de la colección solo puede contener letras, números, guiones bajos y guiones.'),
   schemaDefinition: z.string().min(1, 'La definición del esquema es obligatoria.'),
@@ -275,9 +305,9 @@ const createCollectionSchema = z.object({
 });
 
 export async function createCollectionAction(prevState: any, formData: FormData) {
-  if (getMode() !== 'live' || !isFirebaseConfigured) {
+  if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
     return {
-        message: "Acción fallida: La aplicación está en modo demo. Cambia a modo real para crear colecciones.",
+        message: "Acción fallida: La aplicación está en modo demo o Firebase no está configurado.",
         success: false,
     };
   }
@@ -299,7 +329,10 @@ export async function createCollectionAction(prevState: any, formData: FormData)
   const { collectionName, schemaDefinition, icon } = validatedFields.data;
 
   try {
-    const schemaDocRef = firestoreAdmin!.collection('_schemas').doc(collectionName);
+    // Ensure the database is ready before proceeding
+    await ensureFirestoreInitialized();
+
+    const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
     const doc = await schemaDocRef.get();
     if (doc.exists) {
         return { message: `La colección '${collectionName}' ya existe.`, success: false };
@@ -722,13 +755,14 @@ export async function uploadFileAction(formData: FormData, folder: string) {
             metadata: { contentType: file.type },
         });
 
-        // Make the file public to get a stable, permanent URL.
-        await fileUpload.makePublic();
+        // Use a long-lived signed URL instead of making the file public.
+        // Valid until the year 2100.
+        const [signedUrl] = await fileUpload.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2100',
+        });
 
-        // Construct the public URL.
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
-
-        return { success: true, url: publicUrl };
+        return { success: true, url: signedUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
