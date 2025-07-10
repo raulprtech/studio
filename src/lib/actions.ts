@@ -32,11 +32,16 @@ async function getZodSchemaFromString(collectionId: string): Promise<z.ZodObject
         const { definition } = await getCollectionSchema(collectionId);
         if (!definition) return null;
         
-        let schemaString = definition;
+        // This regex is safer than using new Function on the whole file content.
         const match = definition.match(/z\.object\({[\s\S]*?}\)/);
-        if (match) {
+        let schemaString: string;
+        
+        if (match?.[0]) {
             schemaString = match[0];
-        } else if (!definition.trim().startsWith('z.object')) {
+        } else if (definition.trim().startsWith('z.object')) {
+            // Fallback for schemas that are just the object definition.
+            schemaString = definition;
+        } else {
             console.error(`La definición del esquema para '${collectionId}' no parece ser un objeto de Zod válido.`);
             return null;
         }
@@ -275,24 +280,20 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
 async function ensureFirestoreInitialized() {
     if (!firestoreAdmin) return;
     try {
-        const collections = await firestoreAdmin.listCollections();
-        if (collections.length > 0) {
-            // Firestore is active
-            return;
-        }
-        // If no collections, try to create a placeholder to initialize the DB.
+        // Attempt to write a placeholder document to initialize the DB.
+        // This is a more robust way to handle the "5 NOT_FOUND" error on new projects.
         const placeholderRef = firestoreAdmin.collection('_internal').doc('init');
         await placeholderRef.set({ initializedAt: new Date() });
-        console.log("Firestore inicializado con un documento de marcador de posición.");
     } catch (e) {
-        // This catch block handles cases where the DB doesn't exist yet.
-        // By writing a document, we trigger its creation.
+        // The first write might fail if the DB isn't ready. A second attempt is often successful.
         try {
             const placeholderRef = firestoreAdmin.collection('_internal').doc('init');
             await placeholderRef.set({ initializedAt: new Date() });
             console.log("Firestore inicializado con un documento de marcador de posición tras el error inicial.");
         } catch (initError) {
              console.error("No se pudo inicializar Firestore:", String(initError));
+             // Throw the error to be caught by the calling action
+             throw initError;
         }
     }
 }
