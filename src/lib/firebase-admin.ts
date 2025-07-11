@@ -34,6 +34,9 @@ if (!admin.apps.length && hasCredentials) {
 const isFirebaseConfigured = admin.apps.length > 0 && hasCredentials;
 
 if (isFirebaseConfigured) {
+    // Explicitly connect to the 'blog' database if it's not the default one.
+    // The check for '(default)' is a safeguard for standard configurations.
+    const dbId = process.env.FIREBASE_DATABASE_ID || 'blog';
     firestoreAdmin = admin.firestore();
     authAdmin = admin.auth();
     storageAdmin = admin.storage();
