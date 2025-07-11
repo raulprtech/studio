@@ -33,8 +33,6 @@ if (!admin.apps.length && hasCredentials) {
 const isFirebaseConfigured = admin.apps.length > 0 && hasCredentials;
 
 if (isFirebaseConfigured) {
-    // This will connect to the default database in the project.
-    // If you created a named database (e.g., 'blog'), ensure it's the default or specify its ID.
     firestoreAdmin = admin.firestore();
     authAdmin = admin.auth();
     storageAdmin = admin.storage();

@@ -1,20 +1,58 @@
 
-import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
+import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
+import admin from 'firebase-admin';
 
-async function ensureDefaultSchemas() {
+async function preloadCollection(collectionId: string) {
+    if (!firestoreAdmin) return;
+    const mockCollectionData = mockData[collectionId];
+    if (!mockCollectionData || mockCollectionData.length === 0) {
+        console.log(`No mock data to preload for collection '${collectionId}'.`);
+        return;
+    }
+
+    console.log(`Preloading ${mockCollectionData.length} mock documents for collection '${collectionId}'...`);
+    const collectionRef = firestoreAdmin.collection(collectionId);
+    const batch = firestoreAdmin.batch();
+
+    mockCollectionData.forEach(doc => {
+        const docRef = collectionRef.doc(doc.id);
+        const dataToSet: { [key: string]: any } = { ...doc };
+        delete dataToSet.id;
+
+        // Convert date objects to Timestamps
+        Object.keys(dataToSet).forEach(key => {
+            const value = dataToSet[key];
+            if (value instanceof Date) {
+                dataToSet[key] = admin.firestore.Timestamp.fromDate(value);
+            }
+        });
+
+        batch.set(docRef, dataToSet);
+    });
+
+    await batch.commit();
+    console.log(`Preloading complete for collection '${collectionId}'.`);
+}
+
+
+async function ensureDefaultSchemasAndData() {
     if (!firestoreAdmin) return;
     
     const schemasToEnsure = ['posts', 'projects'];
-    const schemasCollection = firestoreAdmin.collection('_schemas');
 
     for (const collectionName of schemasToEnsure) {
-        const schemaDocRef = schemasCollection.doc(collectionName);
-        const docSnap = await schemaDocRef.get();
+        const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
+        const dataCollectionRef = firestoreAdmin.collection(collectionName);
+        
+        const [schemaSnap, dataSnap] = await Promise.all([
+            schemaDocRef.get(),
+            dataCollectionRef.limit(1).get()
+        ]);
 
-        if (!docSnap.exists) {
-            console.log(`Schema for '${collectionName}' not found in Firestore. Preloading...`);
+        if (!schemaSnap.exists) {
+            console.log(`Schema for '${collectionName}' not found. Preloading...`);
             const mockSchema = mockSchemas[collectionName];
             if (mockSchema) {
                 await schemaDocRef.set({
@@ -23,14 +61,16 @@ async function ensureDefaultSchemas() {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 });
-                await preloadCollection(collectionName);
-                console.log(`Successfully preloaded schema and data for '${collectionName}'.`);
-            } else {
-                console.warn(`Could not find a mock schema for '${collectionName}' to preload.`);
             }
+        }
+        
+        if (dataSnap.empty) {
+            console.log(`Collection '${collectionName}' is empty. Preloading data...`);
+             await preloadCollection(collectionName);
         }
     }
 }
+
 
 export async function getCollections() {
     if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
@@ -45,12 +85,17 @@ export async function getCollections() {
     }
 
     try {
-        await ensureDefaultSchemas();
+        await ensureDefaultSchemasAndData();
 
         const collectionRefs = await firestoreAdmin.listCollections();
         const collectionIds = collectionRefs
             .map(col => col.id)
             .filter(name => !name.startsWith('_'));
+
+        if (collectionIds.length === 0) {
+             console.warn("No user-defined collections found in Firestore after ensuring defaults.");
+             return [];
+        }
 
         const promises = collectionIds.map(async (name) => {
             const [schemaDoc, countSnapshot] = await Promise.all([
@@ -71,28 +116,12 @@ export async function getCollections() {
             };
         });
 
-        const results = await Promise.allSettled(promises);
-        
-        const successfulCollections = results
-            .map((result, index) => {
-                if (result.status === 'fulfilled') {
-                    return result.value;
-                } else {
-                    console.error(`Error fetching data for collection ${collectionIds[index]}:`, String(result.reason));
-                    return null;
-                }
-            })
-            .filter((c): c is NonNullable<Awaited<ReturnType<typeof promises[number]>>> => c !== null);
-
-        return successfulCollections;
+        const results = await Promise.all(promises);
+        return results;
 
     } catch (error) {
-        const errorMessage = String(error);
-        if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('Could not load the default credentials')) {
-            console.warn(`Warning: Could not connect to Firestore. Has the database been created in your Firebase project, and are your service account credentials correct? The app will continue with an empty collection list. Original error: ${errorMessage}`);
-        } else {
-            console.error("Error listing Firebase collections:", errorMessage);
-        }
+        console.error("Error fetching Firebase collections:", String(error));
+        // Return an empty array on error to prevent the page from crashing.
         return [];
     }
 }
@@ -112,9 +141,14 @@ function formatBytes(bytes: number, decimals = 2) {
 
 
 export async function getStorageFiles() {
-    if (getMode() !== 'live' || !isFirebaseConfigured || !storageAdmin) {
+    if (getMode() !== 'live' || !isFirebaseConfigured) {
         console.warn(`Storage is not in live mode. Returning mock files.`);
         return mockData.storage || [];
+    }
+    
+    if (!storageAdmin) {
+        console.error("Storage Admin SDK not initialized. Returning empty list.");
+        return [];
     }
 
     try {
@@ -134,17 +168,13 @@ export async function getStorageFiles() {
 
         const fileDetails = await Promise.all(
             files
-              // Filter out "folder" objects
               .filter(file => !file.name.endsWith('/'))
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
-                
-                // Generate a long-lived signed URL for permanent access
                 const [signedUrl] = await file.getSignedUrl({
                     action: 'read',
-                    expires: '01-01-2100', // A very distant future date
+                    expires: '01-01-2100',
                 });
-
                 return {
                     name: file.name,
                     type: metadata.contentType || 'application/octet-stream',
@@ -159,7 +189,6 @@ export async function getStorageFiles() {
 
     } catch (error) {
         console.error("Critical error fetching Storage files. Check your service account permissions and bucket configuration.", String(error));
-        // Return an empty array on error to prevent page crash and avoid showing mock data.
         return [];
     }
 }
