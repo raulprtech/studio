@@ -23,7 +23,6 @@ if (!admin.apps.length && hasCredentials) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-            databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseio.com`,
         });
         console.log('Firebase Admin SDK initialized successfully.');
     } catch (error: any) {
@@ -34,9 +33,8 @@ if (!admin.apps.length && hasCredentials) {
 const isFirebaseConfigured = admin.apps.length > 0 && hasCredentials;
 
 if (isFirebaseConfigured) {
-    // Explicitly connect to the 'blog' database if it's not the default one.
-    // The check for '(default)' is a safeguard for standard configurations.
-    const dbId = process.env.FIREBASE_DATABASE_ID || 'blog';
+    // This will connect to the default database in the project.
+    // If you created a named database (e.g., 'blog'), ensure it's the default or specify its ID.
     firestoreAdmin = admin.firestore();
     authAdmin = admin.auth();
     storageAdmin = admin.storage();

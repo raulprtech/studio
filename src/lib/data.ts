@@ -1,5 +1,4 @@
 
-
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
@@ -33,8 +32,8 @@ async function ensureDefaultSchemas() {
 }
 
 export async function getCollections() {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        console.warn(`Firebase no está en modo real. Devolviendo colecciones de ejemplo.`);
+    if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
+        console.warn(`Firebase is not in live mode. Returning mock collections.`);
         return Object.keys(mockData).map(name => ({
             name,
             count: mockData[name]?.length || 0,
@@ -48,7 +47,7 @@ export async function getCollections() {
         // Ensure that the default schemas for 'posts' and 'projects' exist.
         await ensureDefaultSchemas();
 
-        const collectionRefs = await firestoreAdmin!.listCollections();
+        const collectionRefs = await firestoreAdmin.listCollections();
         const collectionIds = collectionRefs
             .map(col => col.id)
             .filter(name => !name.startsWith('_'));
@@ -79,7 +78,7 @@ export async function getCollections() {
                 if (result.status === 'fulfilled') {
                     return result.value;
                 } else {
-                    console.error(`Error al obtener datos para la colección ${collectionIds[index]}:`, String(result.reason));
+                    console.error(`Error fetching data for collection ${collectionIds[index]}:`, String(result.reason));
                     return null;
                 }
             })
@@ -89,12 +88,10 @@ export async function getCollections() {
 
     } catch (error) {
         const errorMessage = String(error);
-        // This specific error code (5 NOT_FOUND) often means the Firestore database hasn't been created yet.
-        // We'll treat it as a warning instead of a critical error to avoid breaking the app layout in dev mode.
-        if (errorMessage.includes('NOT_FOUND')) {
-            console.warn(`Advertencia de Firebase: No se encontró la base de datos de Firestore. ¿La has creado en tu proyecto de Firebase? La aplicación continuará con una lista de colecciones vacía. Error original: ${errorMessage}`);
+        if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('Could not load the default credentials')) {
+            console.warn(`Warning: Could not connect to Firestore. Has the database been created in your Firebase project, and are your service account credentials correct? The app will continue with an empty collection list. Original error: ${errorMessage}`);
         } else {
-            console.error("Error al listar las colecciones de Firebase:", errorMessage);
+            console.error("Error listing Firebase collections:", errorMessage);
         }
         return [];
     }
@@ -116,7 +113,7 @@ function formatBytes(bytes: number, decimals = 2) {
 
 export async function getStorageFiles() {
     if (getMode() !== 'live' || !isFirebaseConfigured || !storageAdmin) {
-        console.warn(`Storage no está en modo real. Devolviendo archivos de ejemplo.`);
+        console.warn(`Storage is not in live mode. Returning mock files.`);
         return mockData.storage || [];
     }
 
@@ -125,7 +122,7 @@ export async function getStorageFiles() {
         const [bucketExists] = await bucket.exists();
 
         if (!bucketExists) {
-            console.error(`Error: El bucket de almacenamiento "${bucket.name}" no existe. Por favor, revisa tu configuración de Firebase Storage y la variable de entorno 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'.`);
+            console.error(`Error: The storage bucket "${bucket.name}" does not exist. Please check your Firebase Storage settings and the 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET' environment variable.`);
             return [];
         }
 
@@ -142,10 +139,10 @@ export async function getStorageFiles() {
               .map(async (file) => {
                 const [metadata] = await file.getMetadata();
                 
-                // Generate a signed URL that's valid for 1 hour for secure access.
+                // Generate a long-lived signed URL for permanent access
                 const [signedUrl] = await file.getSignedUrl({
                     action: 'read',
-                    expires: Date.now() + 60 * 60 * 1000, // 1 hour
+                    expires: '01-01-2100', // A very distant future date
                 });
 
                 return {
@@ -161,7 +158,7 @@ export async function getStorageFiles() {
         return fileDetails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     } catch (error) {
-        console.error("Error crítico al obtener archivos de Storage. Revisa los permisos de tu cuenta de servicio y la configuración del bucket.", String(error));
+        console.error("Critical error fetching Storage files. Check your service account permissions and bucket configuration.", String(error));
         // Return an empty array on error to prevent page crash and avoid showing mock data.
         return [];
     }

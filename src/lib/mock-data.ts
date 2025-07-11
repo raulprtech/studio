@@ -1,5 +1,4 @@
 
-
 import { firestoreAdmin, storageAdmin, isFirebaseConfigured } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
@@ -9,11 +8,11 @@ async function preloadCollection(collectionId: string) {
     if (!firestoreAdmin) return;
     const mockCollectionData = mockData[collectionId];
     if (!mockCollectionData || mockCollectionData.length === 0) {
-        console.log(`No hay datos de ejemplo para precargar en la colección '${collectionId}'.`);
+        console.log(`No mock data to preload for collection '${collectionId}'.`);
         return;
     }
 
-    console.log(`La colección '${collectionId}' está vacía. Precargando ${mockCollectionData.length} documentos de ejemplo...`);
+    console.log(`Collection '${collectionId}' is empty. Preloading ${mockCollectionData.length} mock documents...`);
     const collectionRef = firestoreAdmin.collection(collectionId);
     const batch = firestoreAdmin.batch();
 
@@ -34,20 +33,20 @@ async function preloadCollection(collectionId: string) {
     });
 
     await batch.commit();
-    console.log(`Precarga completada para la colección '${collectionId}'.`);
+    console.log(`Preloading complete for collection '${collectionId}'.`);
 }
 
 
 export async function getCollectionDocuments(collectionId: string) {
   const collectionsToPreload = ['posts', 'projects'];
 
-  if (getMode() !== 'live' || !isFirebaseConfigured) {
-      console.warn(`Firebase no está en modo real. Devolviendo datos de ejemplo para la colección: ${collectionId}`);
+  if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
+      console.warn(`Firebase is not in live mode. Returning mock data for collection: ${collectionId}`);
       return mockData[collectionId] || [];
   }
 
   try {
-      const collectionRef = firestoreAdmin!.collection(collectionId);
+      const collectionRef = firestoreAdmin.collection(collectionId);
       let snapshot = await collectionRef.get();
       
       if (snapshot.empty && collectionsToPreload.includes(collectionId)) {
@@ -61,42 +60,42 @@ export async function getCollectionDocuments(collectionId: string) {
       }
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-      console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
+      console.error(`Error fetching documents for collection "${collectionId}":`, String(error));
       return [];
   }
 }
 
 export async function getCollectionSchema(collectionId: string): Promise<{ definition: string; icon: string | null }> {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        console.warn(`Firebase no está en modo real. Devolviendo esquema de ejemplo para la colección: ${collectionId}`);
+    if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
+        console.warn(`Firebase is not in live mode. Returning mock schema for collection: ${collectionId}`);
         const mock = mockSchemas[collectionId];
         if (mock) {
             return { definition: mock.definition, icon: mock.icon };
         }
         return { 
-            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // La aplicación está en modo demo. Este es un esquema por defecto para '${collectionId}'.\n});`,
+            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // The app is in demo mode. This is a default schema for '${collectionId}'.\n});`,
             icon: null 
         };
     }
 
     try {
-      const schemaDoc = await firestoreAdmin!.collection('_schemas').doc(collectionId).get();
+      const schemaDoc = await firestoreAdmin.collection('_schemas').doc(collectionId).get();
       const data = schemaDoc.data();
       let definition = data?.definition;
       const icon = data?.icon || null;
   
       if (!definition) {
-          const collectionRef = firestoreAdmin!.collection(collectionId);
+          const collectionRef = firestoreAdmin.collection(collectionId);
           const snapshot = await collectionRef.limit(1).get();
           
           if (snapshot.empty) {
-              definition = "z.object({\n  // La colección está vacía o no existe. No se puede inferir el esquema.\n});";
+              definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Collection is empty or does not exist. Cannot infer schema.\n});`;
           } else {
               const firstItem = snapshot.docs[0].data();
               const getZodType = (value: any): string => {
                   const type = typeof value;
                   if (type === 'string') {
-                      if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Dirección de correo inválida" })';
+                      if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email({ message: "Invalid email address" })';
                       if (!isNaN(Date.parse(value))) return 'z.string().datetime()';
                       return 'z.string()';
                   }
@@ -117,21 +116,21 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
       return { definition, icon };
   
     } catch (error) {
-      console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
-      const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n  // Revisa los logs del servidor y la configuración de Firebase para más detalles.\n});`;
+      console.error(`Error getting collection schema for "${collectionId}":`, String(error));
+      const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n  // An error occurred fetching the schema.\n  // Check server logs and Firebase configuration for details.\n});`;
       return { definition, icon: null };
     }
   }
 
 async function fetchCollection(collectionName: string, limit: number) {
-    if (!firestoreAdmin) throw new Error("Firestore no inicializado");
+    if (!firestoreAdmin) throw new Error("Firestore not initialized");
     const snapshot = await firestoreAdmin.collection(collectionName).limit(limit).get();
     if (snapshot.empty) return [];
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 async function getPublicStorageImages(limit: number) {
-    if (!storageAdmin) throw new Error("Almacenamiento no inicializado");
+    if (!storageAdmin) throw new Error("Storage not initialized");
 
     const bucket = storageAdmin.bucket();
     const [files] = await bucket.getFiles({ maxResults: limit * 2 });
@@ -156,7 +155,7 @@ async function getPublicStorageImages(limit: number) {
 
 export async function fetchPublicData() {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
-        console.warn("Firebase no está en modo real. Devolviendo datos de ejemplo para la página pública.");
+        console.warn("Firebase is not in live mode. Returning mock data for public page.");
         return {
             products: mockData.products.slice(0, 3),
             posts: mockData.posts.slice(0, 2),
@@ -177,7 +176,7 @@ export async function fetchPublicData() {
         ]);
         return { products, posts, galleryImages };
     } catch (error) {
-        console.error("Error al obtener datos públicos de Firebase:", String(error));
+        console.error("Error fetching public data from Firebase:", String(error));
         return {
             products: [],
             posts: [],
