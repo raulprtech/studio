@@ -23,7 +23,7 @@ if (!admin.apps.length && hasCredentials) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-            databaseURL: `https://blog.firebaseio.com`,
+            databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseio.com`,
         });
         console.log('Firebase Admin SDK initialized successfully.');
     } catch (error: any) {
