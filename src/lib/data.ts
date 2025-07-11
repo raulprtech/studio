@@ -23,7 +23,8 @@ async function ensureDefaultSchemas() {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 });
-                console.log(`Successfully preloaded schema for '${collectionName}'.`);
+                await preloadCollection(collectionName);
+                console.log(`Successfully preloaded schema and data for '${collectionName}'.`);
             } else {
                 console.warn(`Could not find a mock schema for '${collectionName}' to preload.`);
             }
@@ -44,7 +45,6 @@ export async function getCollections() {
     }
 
     try {
-        // Ensure that the default schemas for 'posts' and 'projects' exist.
         await ensureDefaultSchemas();
 
         const collectionRefs = await firestoreAdmin.listCollections();
