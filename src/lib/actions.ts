@@ -273,37 +273,6 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   }
 }
 
-async function ensureFirestoreInitialized() {
-    if (!firestoreAdmin) return;
-    
-    const initDocRef = firestoreAdmin.collection('_internal_init').doc('init_check');
-
-    try {
-        await initDocRef.get();
-    } catch (error: any) {
-        if (error.code === 5) { // 5 is the gRPC code for NOT_FOUND
-            console.log("Database not found, attempting to initialize by writing a document...");
-            try {
-                // First write attempt to "wake up" the database
-                await initDocRef.set({ initializedAt: admin.firestore.FieldValue.serverTimestamp() });
-                console.log("Initial write sent, re-checking status...");
-                // Allow a brief moment for the initialization to propagate
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                // Second write attempt, which should now succeed
-                await initDocRef.set({ initializedAt: admin.firestore.FieldValue.serverTimestamp() });
-                console.log("Firestore database initialized successfully.");
-            } catch (initError) {
-                console.error("Failed to initialize Firestore database after initial attempt:", String(initError));
-                throw new Error("Could not initialize Firestore database. Please ensure it is enabled in your Firebase project.");
-            }
-        } else {
-            // Re-throw other errors
-            throw error;
-        }
-    }
-}
-
-
 const createCollectionSchema = z.object({
   collectionName: z.string().min(1, 'El nombre de la colección es obligatorio.').regex(/^[a-zA-Z0-9_-]+$/, 'El nombre de la colección solo puede contener letras, números, guiones bajos y guiones.'),
   schemaDefinition: z.string().min(1, 'La definición del esquema es obligatoria.'),
@@ -335,9 +304,6 @@ export async function createCollectionAction(prevState: any, formData: FormData)
   const { collectionName, schemaDefinition, icon } = validatedFields.data;
 
   try {
-    // Ensure the database is ready before proceeding
-    await ensureFirestoreInitialized();
-
     const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
     const doc = await schemaDocRef.get();
     if (doc.exists) {
@@ -761,13 +727,13 @@ export async function uploadFileAction(formData: FormData, folder: string) {
             metadata: { contentType: file.type },
         });
 
-        // Make the file public to get a stable, permanent URL
-        await fileUpload.makePublic();
+        // Generate a long-lived signed URL for permanent access
+        const [signedUrl] = await fileUpload.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2100', // A very distant future date
+        });
 
-        // Construct the public URL
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
-
-        return { success: true, url: publicUrl };
+        return { success: true, url: signedUrl };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));
