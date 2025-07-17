@@ -1,4 +1,5 @@
 
+
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { mockData, mockSchemas } from './mock-data-client';
 import admin from 'firebase-admin';
@@ -139,9 +140,8 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
     } catch (error) {
         if ((error as any).code !== 5) {
             console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
-            console.warn(`Devolviendo datos de demostración para la colección "${collectionId}" debido a un error.`);
         }
-        return mockData[collectionId] || [];
+        return [];
     }
 }
 

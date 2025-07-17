@@ -180,7 +180,7 @@ export default async function PortfolioPage() {
                       width={600}
                       height={400}
                       className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
-                      data-ai-hint={project.hint}
+                      data-ai-hint={project.hint || ''}
                     />
                 </CardHeader>
                 <CardContent className="p-6 space-y-4 flex-grow">
