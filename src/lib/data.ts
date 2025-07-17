@@ -1,5 +1,6 @@
 
-import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
+
+import { firestoreAdmin, storageAdmin, isFirebaseConfigured } from './firebase-admin';
 import { getMode } from './mode';
 import { mockData, mockSchemas } from './mock-data-client';
 import admin from 'firebase-admin';
@@ -12,7 +13,7 @@ async function preloadCollection(collectionId: string) {
         return;
     }
 
-    console.log(`Preloading ${mockCollectionData.length} mock documents for collection '${collectionId}'...`);
+    console.log(`Collection '${collectionId}' is empty. Preloading ${mockCollectionData.length} mock documents...`);
     const collectionRef = firestoreAdmin.collection(collectionId);
     const batch = firestoreAdmin.batch();
 
@@ -46,27 +47,31 @@ async function ensureDefaultSchemasAndData() {
         const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
         const dataCollectionRef = firestoreAdmin.collection(collectionName);
         
-        const [schemaSnap, dataSnap] = await Promise.all([
-            schemaDocRef.get(),
-            dataCollectionRef.limit(1).get()
-        ]);
+        try {
+            const [schemaSnap, dataSnap] = await Promise.all([
+                schemaDocRef.get(),
+                dataCollectionRef.limit(1).get()
+            ]);
 
-        if (!schemaSnap.exists) {
-            console.log(`Schema for '${collectionName}' not found. Preloading...`);
-            const mockSchema = mockSchemas[collectionName];
-            if (mockSchema) {
-                await schemaDocRef.set({
-                    definition: mockSchema.definition,
-                    icon: mockSchema.icon || null,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                });
+            if (!schemaSnap.exists) {
+                console.log(`Schema for '${collectionName}' not found. Preloading...`);
+                const mockSchema = mockSchemas[collectionName];
+                if (mockSchema) {
+                    await schemaDocRef.set({
+                        definition: mockSchema.definition,
+                        icon: mockSchema.icon || null,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    });
+                }
             }
-        }
-        
-        if (dataSnap.empty) {
-            console.log(`Collection '${collectionName}' is empty. Preloading data...`);
-             await preloadCollection(collectionName);
+            
+            if (dataSnap.empty) {
+                console.log(`Collection '${collectionName}' is empty. Preloading data...`);
+                 await preloadCollection(collectionName);
+            }
+        } catch (error) {
+             console.error(`Error ensuring default schemas/data for ${collectionName}:`, String(error));
         }
     }
 }
@@ -152,13 +157,25 @@ export async function getStorageFiles() {
     }
 
     try {
-        const bucket = storageAdmin.bucket();
-        const [bucketExists] = await bucket.exists();
-
-        if (!bucketExists) {
-            console.error(`Error: The storage bucket "${bucket.name}" does not exist. Please check your Firebase Storage settings and the 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET' environment variable.`);
+        const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+        if (!bucketName) {
+            console.error("Error: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is not set in environment variables.");
             return [];
         }
+
+        const bucket = storageAdmin.bucket(bucketName);
+        
+        try {
+            const [bucketExists] = await bucket.exists();
+            if (!bucketExists) {
+                console.error(`Error: The storage bucket "${bucket.name}" does not exist. Please check your Firebase Storage settings and environment variables.`);
+                return [];
+            }
+        } catch (e) {
+            console.error(`Error checking if bucket exists: ${String(e)}`);
+            return [];
+        }
+
 
         const [files] = await bucket.getFiles({ maxResults: 50 });
 
