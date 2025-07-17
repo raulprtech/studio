@@ -1,21 +1,13 @@
 
-
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { mockData, mockSchemas } from './mock-data-client';
 import admin from 'firebase-admin';
 
-export async function getCollections() {
+async function ensureDefaultCollections() {
   if (!isFirebaseConfigured || !firestoreAdmin) {
-    console.warn("Firebase no está configurado. Devolviendo colecciones de demostración.");
-    return Object.keys(mockSchemas).map(name => ({
-        name,
-        count: mockData[name]?.length || 0,
-        schemaFields: (mockSchemas[name].definition.match(/:\s*z\./g) || []).length,
-        lastUpdated: new Date().toISOString(),
-        icon: mockSchemas[name].icon || null
-    }));
+    return;
   }
-
+  
   try {
     const collectionsToEnsure = ['posts', 'projects'];
     for (const collectionName of collectionsToEnsure) {
@@ -25,7 +17,17 @@ export async function getCollections() {
         const [schemaSnap, dataSnap] = await Promise.all([
             schemaDocRef.get(),
             dataCollectionRef.limit(1).get()
-        ]);
+        ]).catch(err => {
+            // This catch block is crucial for brand new projects where Firestore DB doesn't exist yet.
+            // The error will be "NOT_FOUND", and we can safely ignore it and let the app use mock data.
+            if (err.code !== 5) { // 5 is the gRPC code for NOT_FOUND
+                console.error(`Error checking for default collections: ${String(err)}`);
+            }
+            return [null, null];
+        });
+
+        // If schemaSnap or dataSnap is null, it means the initial check failed (likely DB not found), so we abort.
+        if (!schemaSnap || !dataSnap) continue;
 
         if (!schemaSnap.exists) {
             const mockSchema = mockSchemas[collectionName];
@@ -45,8 +47,10 @@ export async function getCollections() {
                 const batch = firestoreAdmin.batch();
                 mockCollectionData.forEach(doc => {
                     const docRef = dataCollectionRef.doc(doc.id);
+                    // Create a mutable copy of the doc to avoid modifying the original mock data
                     const dataToSet: { [key: string]: any } = { ...doc };
                     delete dataToSet.id;
+                    // Convert JS Dates in mock data to Firestore Timestamps
                     Object.keys(dataToSet).forEach(key => {
                         if (dataToSet[key] instanceof Date) {
                             dataToSet[key] = admin.firestore.Timestamp.fromDate(dataToSet[key]);
@@ -58,12 +62,38 @@ export async function getCollections() {
             }
         }
     }
+  } catch (error) {
+     if ((error as any).code !== 5) {
+        console.error(`Error ensuring default collections:`, String(error));
+     }
+  }
+}
 
+
+export async function getCollections() {
+  if (!isFirebaseConfigured || !firestoreAdmin) {
+    console.warn("Firebase no está configurado. Devolviendo colecciones de demostración.");
+    return Object.keys(mockSchemas).map(name => ({
+        name,
+        count: mockData[name]?.length || 0,
+        schemaFields: (mockSchemas[name].definition.match(/:\s*z\./g) || []).length,
+        lastUpdated: new Date().toISOString(),
+        icon: mockSchemas[name].icon || null
+    }));
+  }
+
+  await ensureDefaultCollections();
+
+  try {
     const collectionRefs = await firestoreAdmin.listCollections();
     const collectionIds = collectionRefs
         .map(col => col.id)
         .filter(name => !name.startsWith('_'));
 
+    if (collectionIds.length === 0) {
+        return [];
+    }
+    
     const promises = collectionIds.map(async (name) => {
       const [schemaDoc, countSnapshot] = await Promise.all([
         firestoreAdmin!.collection('_schemas').doc(name).get(),
@@ -85,7 +115,9 @@ export async function getCollections() {
 
     return await Promise.all(promises);
   } catch (error) {
-    console.error("Error fetching Firebase collections:", String(error));
+    if ((error as any).code !== 5) {
+        console.error("Error fetching Firebase collections:", String(error));
+    }
     return [];
   }
 }
@@ -97,6 +129,7 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
     }
 
     try {
+        await ensureDefaultCollections();
         const collectionRef = firestoreAdmin.collection(collectionId);
         const snapshot = await collectionRef.get();
         if (snapshot.empty) {
@@ -104,8 +137,10 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
         }
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-        console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
-        console.warn(`Devolviendo datos de demostración para la colección "${collectionId}" debido a un error.`);
+        if ((error as any).code !== 5) {
+            console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
+            console.warn(`Devolviendo datos de demostración para la colección "${collectionId}" debido a un error.`);
+        }
         return mockData[collectionId] || [];
     }
 }
