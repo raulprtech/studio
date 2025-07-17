@@ -1,4 +1,5 @@
 
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCollectionDocuments } from '@/lib/mock-data';
@@ -40,7 +41,7 @@ export default async function BlogIndexPage({
   };
 }) {
   const allPosts = await getCollectionDocuments('posts');
-  let publishedPosts = allPosts.filter(post => post.status === 'Publicado');
+  let publishedPosts: any[] = allPosts.filter((post: any) => post.status === 'Publicado');
 
   const query = searchParams?.q || '';
   const category = searchParams?.category || '';
@@ -61,7 +62,7 @@ export default async function BlogIndexPage({
     publishedPosts = publishedPosts.filter(post => post.category === category);
   }
   
-  const uniqueCategories = [...new Set(allPosts.filter(p => p.status === 'Publicado' && p.category).map(p => p.category))];
+  const uniqueCategories = [...new Set(allPosts.filter((p: any) => p.status === 'Publicado' && p.category).map((p: any) => p.category))];
 
   // Pagination logic
   const totalPosts = publishedPosts.length;

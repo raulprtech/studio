@@ -1,4 +1,5 @@
 
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -63,8 +64,8 @@ export default async function PortfolioPage() {
   
   const allPosts = await getCollectionDocuments('posts');
   const posts = allPosts
-    .filter(p => p.status === 'Publicado' && p.publishedAt)
-    .sort((a, b) => new Date(b.publishedAt?.toDate ? b.publishedAt.toDate() : b.publishedAt).getTime() - new Date(a.publishedAt?.toDate ? a.publishedAt.toDate() : a.publishedAt).getTime())
+    .filter((p: any) => p.status === 'Publicado' && p.publishedAt)
+    .sort((a: any, b: any) => new Date(b.publishedAt?.toDate ? b.publishedAt.toDate() : b.publishedAt).getTime() - new Date(a.publishedAt?.toDate ? a.publishedAt.toDate() : a.publishedAt).getTime())
     .slice(0, 3);
 
   const experiences = [
@@ -170,7 +171,7 @@ export default async function PortfolioPage() {
         <section id="proyectos" className="py-24">
           <SectionTitle label="MI PORTAFOLIO" title="Proyectos Destacados" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
+            {projects.map((project: any) => (
               <Card key={project.id} className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 group flex flex-col">
                 <CardHeader className="p-0">
                     <Image
@@ -214,7 +215,7 @@ export default async function PortfolioPage() {
         <section id="blog" className="py-24">
           <SectionTitle label="DESDE MI BLOG" title="Artículos Recientes" />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post) => (
+            {posts.map((post: any) => (
               <Link href={`/blog/${post.id}`} key={post.id} className="group">
                 <Card className="overflow-hidden bg-card/80 backdrop-blur-sm border-border/50 h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
                   <CardHeader className="p-0">

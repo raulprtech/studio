@@ -1,8 +1,8 @@
 
 
+
 import { firestoreAdmin, storageAdmin, isFirebaseConfigured } from './firebase-admin';
-import { getMode } from './mode';
-import { mockData, mockSchemas } from './mock-data-client';
+import { mockSchemas, mockData } from './mock-data-client';
 import admin from 'firebase-admin';
 
 async function preloadCollection(collectionId: string) {
@@ -78,15 +78,8 @@ async function ensureDefaultSchemasAndData() {
 
 
 export async function getCollections() {
-    if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
-        console.warn(`Firebase is not in live mode. Returning mock collections.`);
-        return Object.keys(mockData).map(name => ({
-            name,
-            count: mockData[name]?.length || 0,
-            schemaFields: Object.keys(mockData[name]?.[0] || {}).length,
-            lastUpdated: new Date().toISOString(),
-            icon: mockSchemas[name]?.icon || null,
-        }));
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return [];
     }
 
     try {
@@ -146,11 +139,8 @@ function formatBytes(bytes: number, decimals = 2) {
 
 
 export async function getStorageFiles(pathPrefix?: string) {
-    const isLive = getMode() === 'live' && isFirebaseConfigured;
-
-    if (!isLive || !storageAdmin) {
-        console.warn(`Storage is not in live mode. Returning mock files.`);
-        return { files: mockData.storage || [], folders: ['covers', 'projects', 'articles'] };
+    if (!isFirebaseConfigured || !storageAdmin) {
+        return { files: [], folders: [] };
     }
     
     try {

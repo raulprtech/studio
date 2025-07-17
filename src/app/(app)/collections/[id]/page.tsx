@@ -1,3 +1,4 @@
+
 import Link from "next/link"
 import { PlusCircle, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -132,6 +133,19 @@ export default async function SingleCollectionPage({ params }: { params: { id: s
               ))}
             </TableBody>
           </Table>
+          {data.length === 0 && (
+             <div className="text-center py-10 text-muted-foreground">
+                <p>No se encontraron documentos en esta colección.</p>
+                {canEdit && (
+                    <Button asChild className="mt-4">
+                        <Link href={newDocumentHref}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            {buttonText}
+                        </Link>
+                    </Button>
+                )}
+             </div>
+          )}
         </CardContent>
       </Card>
     </div>

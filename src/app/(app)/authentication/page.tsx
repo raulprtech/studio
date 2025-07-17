@@ -1,4 +1,5 @@
 
+
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -29,15 +30,12 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getRequiredCurrentUser } from "@/lib/auth"
 import { authAdmin, isFirebaseConfigured } from "@/lib/firebase-admin"
-import { mockData } from "@/lib/mock-data-client"
 import { EditRoleMenuItem, SendPasswordResetMenuItem, ToggleUserStatusMenuItem } from "./components/user-action-items"
-import { getMode } from "@/lib/mode"
 import { AddUserButton } from "./components/add-user-dialog"
 
 export default async function AuthenticationPage() {
   const currentUser = await getRequiredCurrentUser();
   let users: any[] = [];
-  const useLive = getMode() === 'live' && isFirebaseConfigured;
 
   const roleDisplayMap: { [key: string]: string } = {
     Admin: 'Administrador',
@@ -45,7 +43,7 @@ export default async function AuthenticationPage() {
     Viewer: 'Lector',
   };
 
-  if (useLive && authAdmin) {
+  if (isFirebaseConfigured && authAdmin) {
     try {
       const userRecords = await authAdmin.listUsers();
       users = userRecords.users.map(user => ({
@@ -60,10 +58,12 @@ export default async function AuthenticationPage() {
       }));
     } catch (error) {
         console.error("Error al obtener usuarios de Firebase Auth:", String(error));
+        // If there's an error, users will be an empty array
         users = [];
     }
   } else {
-    users = mockData.users.map(u => ({...u, uid: u.id, lastSignIn: new Date().toISOString(), createdAt: new Date().toISOString(), avatar: 'https://placehold.co/40x40.png', disabled: u.disabled || false}));
+    // If firebase is not configured, show an empty state
+    users = [];
   }
 
   const isAdmin = currentUser.role === 'Admin';
@@ -136,6 +136,16 @@ export default async function AuthenticationPage() {
               ))}
             </TableBody>
           </Table>
+           {!isFirebaseConfigured && (
+              <div className="text-center py-10 text-muted-foreground">
+                <p>Firebase no está configurado. Por favor, añade tus credenciales de Firebase.</p>
+              </div>
+            )}
+            {isFirebaseConfigured && users.length === 0 && (
+              <div className="text-center py-10 text-muted-foreground">
+                <p>No se encontraron usuarios.</p>
+              </div>
+            )}
         </CardContent>
       </Card>
     </div>

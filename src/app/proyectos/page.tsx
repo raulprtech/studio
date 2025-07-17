@@ -1,4 +1,5 @@
 
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCollectionDocuments } from '@/lib/mock-data';
@@ -12,7 +13,7 @@ export const metadata = {
 };
 
 export default async function ProjectsPage() {
-  const projects = await getCollectionDocuments('projects');
+  const projects: any[] = await getCollectionDocuments('projects');
 
   return (
     <div className="py-12">

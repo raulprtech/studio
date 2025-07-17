@@ -1,32 +1,7 @@
 
-import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { getMode } from './mode';
-import { isFirebaseConfigured } from './firebase-admin';
 
-// MOCK DATA for when analytics is not configured
-const mockAnalyticsData = {
-    summary: {
-        totalUsers: '1.234',
-        activeUsers: '57',
-        newUsers: '256',
-        sessions: '2.456',
-    },
-    userChartData: [
-        { date: 'Ene', users: 400 },
-        { date: 'Feb', users: 300 },
-        { date: 'Mar', users: 500 },
-        { date: 'Abr', users: 200 },
-        { date: 'May', users: 800 },
-        { date: 'Jun', users: 700 },
-    ],
-    topPages: [
-        { page: '/', views: '10.234' },
-        { page: '/productos', views: '8.765' },
-        { page: '/blog', views: '5.432' },
-        { page: '/sobre-nosotros', views: '2.109' },
-        { page: '/contacto', views: '1.876' },
-    ]
-};
+import { BetaAnalyticsDataClient } from '@google-analytics/data';
+import { isFirebaseConfigured } from './firebase-admin';
 
 const emptyAnalyticsData = {
     summary: { totalUsers: '0', activeUsers: '0', newUsers: '0', sessions: '0' },
@@ -34,15 +9,14 @@ const emptyAnalyticsData = {
     topPages: []
 };
 
-function isAnalyticsLive(): boolean {
-    const isAnalyticsEnvConfigured = !!process.env.GOOGLE_ANALYTICS_PROPERTY_ID && isFirebaseConfigured;
-    return getMode() === 'live' && isAnalyticsEnvConfigured;
+function isAnalyticsConfigured(): boolean {
+    return !!process.env.GOOGLE_ANALYTICS_PROPERTY_ID && isFirebaseConfigured;
 }
 
 export async function getAnalyticsData() {
-    if (!isAnalyticsLive()) {
-        // Not in live mode, return mock data
-        return mockAnalyticsData;
+    if (!isAnalyticsConfigured()) {
+        console.warn("Analytics is not configured. Returning empty data.");
+        return emptyAnalyticsData;
     }
 
     const propertyId = process.env.GOOGLE_ANALYTICS_PROPERTY_ID;

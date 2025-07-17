@@ -1,28 +1,27 @@
+
 import * as React from 'react';
-import { cookies } from 'next/headers';
 import { isFirebaseConfigured } from '@/lib/firebase-admin';
-import { ModeSwitch } from './dashboard/components/mode-switch';
 import { AppLayoutClient } from './components/app-layout-client';
 import { getCollections } from '@/lib/data';
 import { getRequiredCurrentUser } from '@/lib/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getRequiredCurrentUser();
-  const mode = cookies().get('app-mode')?.value === 'live' ? 'live' : 'demo';
-  const isConfigured = isFirebaseConfigured;
   const collections = await getCollections();
 
-  const modeSwitchComponent = (
-    <>
-      <ModeSwitch initialMode={mode} isConfigured={isConfigured} />
-      <p className="text-xs text-muted-foreground pt-2">
-        {isConfigured ? "Alterna entre datos reales y de demostración." : "Firebase no configurado. Solo modo demo disponible."}
-      </p>
-    </>
-  );
-
   return (
-    <AppLayoutClient user={user} modeSwitch={modeSwitchComponent} collections={collections}>
+    <AppLayoutClient user={user} collections={collections}>
+      {!isFirebaseConfigured && (
+          <Alert variant="destructive" className="m-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Firebase no está configurado</AlertTitle>
+              <AlertDescription>
+                  Tu aplicación no está conectada a Firebase. Por favor, añade las variables de entorno de tu proyecto de Firebase al archivo `.env.local` para habilitar todas las funcionalidades.
+              </AlertDescription>
+          </Alert>
+      )}
       {children}
     </AppLayoutClient>
   );

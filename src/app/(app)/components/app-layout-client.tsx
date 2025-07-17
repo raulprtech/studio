@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -8,7 +9,6 @@ import {
   Database,
   Folder,
   Settings,
-  Bookmark,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -19,24 +19,21 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarInset,
   SidebarGroup,
 } from '@/components/ui/sidebar';
 import { AppHeader } from '@/components/app-header';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePinnedCollections } from '@/hooks/use-pinned-collections';
 import { DynamicIcon } from '@/components/dynamic-icon';
 import { type AuthenticatedUser } from '@/lib/auth';
-import { TestTube2 } from 'lucide-react';
 
 type Collection = {
   name: string;
   icon?: string | null;
 }
 
-export function AppLayoutClient({ children, user, modeSwitch, collections }: { children: React.ReactNode, user: AuthenticatedUser, modeSwitch: React.ReactNode, collections: Collection[] }) {
+export function AppLayoutClient({ children, user, collections }: { children: React.ReactNode, user: AuthenticatedUser, collections: Collection[] }) {
   const pathname = usePathname();
   const { pinnedCollections, isClient } = usePinnedCollections();
 
@@ -130,17 +127,7 @@ export function AppLayoutClient({ children, user, modeSwitch, collections }: { c
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-            <div className="border-t border-sidebar-border -mx-2 mb-2 pt-2 px-2">
-                <Card className="shadow-none border-none bg-transparent p-0">
-                    <CardHeader className="p-0 pb-2 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-sm font-medium">Modo de Aplicación</CardTitle>
-                        <TestTube2 className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        {modeSwitch}
-                    </CardContent>
-                </Card>
-            </div>
+           {/* Footer can be used for other things later */}
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

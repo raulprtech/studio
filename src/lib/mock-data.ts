@@ -1,7 +1,7 @@
 
-import { firestoreAdmin, storageAdmin, isFirebaseConfigured } from './firebase-admin';
-import { getMode } from './mode';
-import { mockData, mockSchemas } from './mock-data-client';
+
+import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
+import { mockSchemas, mockData } from './mock-data-client';
 import admin from 'firebase-admin';
 
 async function preloadCollection(collectionId: string) {
@@ -40,9 +40,9 @@ async function preloadCollection(collectionId: string) {
 export async function getCollectionDocuments(collectionId: string) {
   const collectionsToPreload = ['posts', 'projects'];
 
-  if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
-      console.warn(`Firebase is not in live mode. Returning mock data for collection: ${collectionId}`);
-      return mockData[collectionId] || [];
+  if (!isFirebaseConfigured || !firestoreAdmin) {
+      console.warn(`Firebase is not configured. Returning empty array for collection: ${collectionId}`);
+      return [];
   }
 
   try {
@@ -66,14 +66,9 @@ export async function getCollectionDocuments(collectionId: string) {
 }
 
 export async function getCollectionSchema(collectionId: string): Promise<{ definition: string; icon: string | null }> {
-    if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
-        console.warn(`Firebase is not in live mode. Returning mock schema for collection: ${collectionId}`);
-        const mock = mockSchemas[collectionId];
-        if (mock) {
-            return { definition: mock.definition, icon: mock.icon };
-        }
+    if (!isFirebaseConfigured || !firestoreAdmin) {
         return { 
-            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // The app is in demo mode. This is a default schema for '${collectionId}'.\n});`,
+            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Firebase is not configured.\n});`,
             icon: null 
         };
     }
@@ -129,58 +124,25 @@ async function fetchCollection(collectionName: string, limit: number) {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-async function getPublicStorageImages(limit: number) {
-    if (!storageAdmin) throw new Error("Storage not initialized");
-
-    const bucket = storageAdmin.bucket();
-    const [files] = await bucket.getFiles({ maxResults: limit * 2 });
-    
-    const imageFiles = files.filter(file => file.metadata.contentType?.startsWith('image/')).slice(0, limit);
-
-    const urls = await Promise.all(
-        imageFiles.map(async (file) => {
-            const [url] = await file.getSignedUrl({
-                action: 'read',
-                expires: '03-09-2491'
-            });
-            return {
-                url,
-                name: file.name,
-                hint: "gallery image"
-            };
-        })
-    );
-    return urls;
-}
-
 export async function fetchPublicData() {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        console.warn("Firebase is not in live mode. Returning mock data for public page.");
+    if (!isFirebaseConfigured) {
         return {
-            products: mockData.products.slice(0, 3),
-            posts: mockData.posts.slice(0, 2),
-            galleryImages: [
-                { url: "https://placehold.co/600x400.png", name: "placeholder-1.png", hint: "abstract art" },
-                { url: "https://placehold.co/600x400.png", name: "placeholder-2.png", hint: "nature landscape" },
-                { url: "https://placehold.co/600x400.png", name: "placeholder-3.png", hint: "cityscape" },
-                { url: "https://placehold.co/600x400.png", name: "placeholder-4.png", hint: "tech gadget" },
-            ]
+            projects: [],
+            posts: [],
         }
     }
 
     try {
-        const [products, posts, galleryImages] = await Promise.all([
-            fetchCollection('products', 3),
+        const [projects, posts] = await Promise.all([
+            fetchCollection('projects', 3),
             fetchCollection('posts', 2),
-            getPublicStorageImages(4)
         ]);
-        return { products, posts, galleryImages };
+        return { projects, posts };
     } catch (error) {
         console.error("Error fetching public data from Firebase:", String(error));
         return {
-            products: [],
+            projects: [],
             posts: [],
-            galleryImages: []
         };
     }
 }

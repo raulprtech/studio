@@ -1,5 +1,6 @@
 
 
+
 "use server";
 
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
@@ -9,26 +10,15 @@ import { z, ZodError } from "zod";
 import { authAdmin, firestoreAdmin, storageAdmin, isFirebaseConfigured } from "./firebase-admin";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
-import { mockData } from "./mock-data-client";
-import { cookies } from "next/headers";
 import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
-import { getMode } from "./mode";
 import { generateCollectionIdeas } from "@/ai/flows/generate-collection-ideas";
 import { getCollectionSchema } from "./mock-data";
 
 
-// #region Mode Actions
-export async function setAppModeAction(mode: 'live' | 'demo') {
-  cookies().set('app-mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 365 }); // Set for a year
-  revalidatePath('/', 'layout');
-  return { success: true, message: `Modo cambiado a ${mode}` };
-}
-// #endregion
-
 // #region AI Helper Actions
 
 async function getZodSchemaFromString(collectionId: string): Promise<z.ZodObject<any, any, any> | null> {
-    if (getMode() !== 'live' || !isFirebaseConfigured) return null;
+    if (!isFirebaseConfigured) return null;
     try {
         const { definition } = await getCollectionSchema(collectionId);
         if (!definition) return null;
@@ -128,17 +118,16 @@ export async function getAnalyticsAdviceAction(analyticsData: AnalyticsAdviceInp
 
 
 export async function getCollectionIdeasAction(collectionName: string) {
-  const useLive = getMode() === 'live' && isFirebaseConfigured;
   let documents: any[];
 
   try {
-    if (useLive) {
-      const snapshot = await firestoreAdmin!.collection(collectionName).limit(5).get();
-      documents = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    } else {
-      documents = (mockData[collectionName] || []).slice(0, 5);
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return { ideas: null, error: "Firebase no está configurado para obtener documentos." };
     }
-
+      
+    const snapshot = await firestoreAdmin.collection(collectionName).limit(5).get();
+    documents = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    
     if (documents.length === 0) {
         return { ideas: null, error: "No hay documentos en esta colección para generar ideas." };
     }
@@ -223,10 +212,10 @@ const updateSchemaSchema = z.object({
 });
 
 export async function updateSchemaAction(prevState: any, formData: FormData) {
-  if (getMode() !== 'live' || !isFirebaseConfigured) {
+  if (!isFirebaseConfigured || !firestoreAdmin) {
     return {
         errors: null,
-        message: "Acción fallida: La aplicación está en modo demo. Cambia a modo real para guardar en Firestore.",
+        message: "Acción fallida: Firebase no está configurado.",
         success: false,
     };
   }
@@ -248,7 +237,7 @@ export async function updateSchemaAction(prevState: any, formData: FormData) {
   const { collectionId, schemaDefinition, icon } = validatedFields.data;
 
   try {
-    const schemaDocRef = firestoreAdmin!.collection('_schemas').doc(collectionId);
+    const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionId);
     await schemaDocRef.set({
       definition: schemaDefinition,
       icon: icon || null,
@@ -281,9 +270,9 @@ const createCollectionSchema = z.object({
 });
 
 export async function createCollectionAction(prevState: any, formData: FormData) {
-  if (getMode() !== 'live' || !isFirebaseConfigured || !firestoreAdmin) {
+  if (!isFirebaseConfigured || !firestoreAdmin) {
     return {
-        message: "Acción fallida: La aplicación está en modo demo o Firebase no está configurado.",
+        message: "Acción fallida: Firebase no está configurado.",
         success: false,
     };
   }
@@ -338,8 +327,8 @@ export async function createCollectionAction(prevState: any, formData: FormData)
 }
 
 export async function getSchemaFieldsAction(collectionId: string): Promise<{ fields: { name: string; type: string }[] | null; error: string | null }> {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { fields: null, error: "La generación de formularios solo está disponible en modo real." };
+    if (!isFirebaseConfigured) {
+        return { fields: null, error: "Firebase no está configurado." };
     }
     try {
         const schema = await getZodSchemaFromString(collectionId);
@@ -368,8 +357,8 @@ const createUserSchema = z.object({
 });
 
 export async function createUserAction(prevState: any, formData: FormData) {
-  if (getMode() !== 'live' || !isFirebaseConfigured) {
-    return { message: "Acción fallida: La aplicación está en modo demo.", success: false, errors: {} };
+  if (!isFirebaseConfigured || !authAdmin) {
+    return { message: "Acción fallida: Firebase Auth no está configurado.", success: false, errors: {} };
   }
 
   const validatedFields = createUserSchema.safeParse({
@@ -390,13 +379,13 @@ export async function createUserAction(prevState: any, formData: FormData) {
   const { email, password, displayName, role } = validatedFields.data;
 
   try {
-    const userRecord = await authAdmin!.createUser({
+    const userRecord = await authAdmin.createUser({
       email,
       password,
       displayName,
     });
     
-    await authAdmin!.setCustomUserClaims(userRecord.uid, { role });
+    await authAdmin.setCustomUserClaims(userRecord.uid, { role });
 
     revalidatePath('/authentication');
     return { message: `Usuario ${displayName} creado con éxito.`, success: true, errors: {} };
@@ -416,8 +405,8 @@ const updateUserRoleSchema = z.object({
 });
 
 export async function updateUserRoleAction(prevState: any, formData: FormData) {
-  if (getMode() !== 'live' || !isFirebaseConfigured) {
-    return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
+  if (!isFirebaseConfigured || !authAdmin) {
+    return { message: "Acción fallida: Firebase Auth no está configurado.", success: false };
   }
 
   const validatedFields = updateUserRoleSchema.safeParse({
@@ -436,7 +425,7 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
   const { uid, role } = validatedFields.data;
   
   try {
-    await authAdmin!.setCustomUserClaims(uid, { role });
+    await authAdmin.setCustomUserClaims(uid, { role });
     revalidatePath('/authentication');
     return { message: `Rol actualizado a ${role} con éxito.`, success: true };
   } catch (error) {
@@ -445,11 +434,11 @@ export async function updateUserRoleAction(prevState: any, formData: FormData) {
 }
 
 export async function sendPasswordResetAction(email: string) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
+    if (!isFirebaseConfigured || !authAdmin) {
+        return { message: "Acción fallida: Firebase Auth no está configurado.", success: false };
     }
     try {
-        await authAdmin!.generatePasswordResetLink(email);
+        await authAdmin.generatePasswordResetLink(email);
         return { message: `Restablecimiento de contraseña iniciado con éxito para ${email}.`, success: true };
     } catch (error) {
         return { message: `No se pudo enviar el restablecimiento de contraseña: ${error instanceof Error ? error.message : 'Error desconocido'}`, success: false };
@@ -458,11 +447,11 @@ export async function sendPasswordResetAction(email: string) {
 
 
 export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
+    if (!isFirebaseConfigured || !authAdmin) {
+        return { message: "Acción fallida: Firebase Auth no está configurado.", success: false };
     }
     try {
-        await authAdmin!.updateUser(uid, { disabled: isDisabled });
+        await authAdmin.updateUser(uid, { disabled: isDisabled });
         revalidatePath('/authentication');
         const status = isDisabled ? "deshabilitado" : "habilitado";
         return { message: `Usuario ${status} con éxito.`, success: true };
@@ -475,8 +464,8 @@ export async function toggleUserStatusAction(uid: string, isDisabled: boolean) {
 // #region Document Management Actions
 
 export async function createDocumentAction(prevState: any, formData: FormData) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false, redirectUrl: null, errors: null };
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return { message: "Acción fallida: Firebase Firestore no está configurado.", success: false, redirectUrl: null, errors: null };
     }
 
     const collectionId = formData.get('collectionId') as string;
@@ -498,7 +487,7 @@ export async function createDocumentAction(prevState: any, formData: FormData) {
         dataToCreate.updatedAt = admin.firestore.Timestamp.now();
 
         try {
-            const docRef = await firestoreAdmin!.collection(collectionId).add(dataToCreate);
+            const docRef = await firestoreAdmin.collection(collectionId).add(dataToCreate);
             revalidatePath(`/collections/${collectionId}`);
             return {
                 success: true,
@@ -547,7 +536,7 @@ export async function createDocumentAction(prevState: any, formData: FormData) {
             updatedAt: admin.firestore.Timestamp.now(),
         };
 
-        const docRef = await firestoreAdmin!.collection(collectionId).add(dataToCreate);
+        const docRef = await firestoreAdmin.collection(collectionId).add(dataToCreate);
         
         revalidatePath(`/collections/${collectionId}`);
         if(collectionId === 'projects') { revalidatePath('/proyectos'); revalidatePath('/'); }
@@ -575,17 +564,17 @@ export async function createDocumentAction(prevState: any, formData: FormData) {
 
 
 export async function duplicateDocumentAction(collectionId: string, documentId: string) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return { message: "Acción fallida: Firebase Firestore no está configurado.", success: false };
     }
     try {
-        const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
+        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
             return { message: `Documento con ID ${documentId} no encontrado.`, success: false };
         }
         const data = docSnap.data();
-        await firestoreAdmin!.collection(collectionId).add(data!);
+        await firestoreAdmin.collection(collectionId).add(data!);
         revalidatePath(`/collections/${collectionId}`);
         return { message: `Documento duplicado con éxito.`, success: true };
     } catch (error) {
@@ -594,11 +583,11 @@ export async function duplicateDocumentAction(collectionId: string, documentId: 
 }
 
 export async function deleteDocumentAction(collectionId: string, documentId: string) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return { message: "Acción fallida: Firebase Firestore no está configurado.", success: false };
     }
     try {
-        await firestoreAdmin!.collection(collectionId).doc(documentId).delete();
+        await firestoreAdmin.collection(collectionId).doc(documentId).delete();
         revalidatePath(`/collections/${collectionId}`);
         return { message: `Documento eliminado con éxito.`, success: true };
     } catch (error) {
@@ -607,18 +596,12 @@ export async function deleteDocumentAction(collectionId: string, documentId: str
 }
 
 export async function getDocumentAction(collectionId: string, documentId: string) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        console.warn("Firebase no está en modo real. Devolviendo datos de ejemplo para getDocumentAction.");
-        const collectionData = mockData[collectionId] || [];
-        const document = collectionData.find(doc => doc.id === documentId);
-        if (!document) {
-            return { data: null, error: "Documento no encontrado en los datos de ejemplo." };
-        }
-        return { data: document, error: null };
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return { data: null, error: "Firebase no está configurado." };
     }
 
     try {
-        const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
+        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
             return { data: null, error: "Documento no encontrado." };
@@ -630,8 +613,8 @@ export async function getDocumentAction(collectionId: string, documentId: string
 }
 
 export async function updateDocumentAction(prevState: any, formData: FormData) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { message: "Acción fallida: La aplicación está en modo demo.", success: false };
+    if (!isFirebaseConfigured || !firestoreAdmin) {
+        return { message: "Acción fallida: Firebase Firestore no está configurado.", success: false };
     }
 
     const collectionId = formData.get('collectionId') as string;
@@ -642,7 +625,7 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
     }
 
     try {
-        const docRef = firestoreAdmin!.collection(collectionId).doc(documentId);
+        const docRef = firestoreAdmin.collection(collectionId).doc(documentId);
         const originalDocSnap = await docRef.get();
         if (!originalDocSnap.exists) {
             return { message: "Documento no encontrado.", success: false };
@@ -702,11 +685,7 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
 
 // #region Storage Actions
 export async function uploadFileAction(formData: FormData) {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { success: true, url: 'https://placehold.co/800x600.png', error: null };
-    }
-
-    if (!storageAdmin) {
+    if (!isFirebaseConfigured || !storageAdmin) {
         return { success: false, error: "El almacenamiento de Firebase no está configurado." };
     }
 
@@ -744,10 +723,6 @@ export async function uploadFileAction(formData: FormData) {
 }
 
 export async function deleteFileAction(filePath: string) {
-    if (getMode() !== 'live') {
-        return { success: false, error: "La aplicación está en modo demo." };
-    }
-
     if (!isFirebaseConfigured || !storageAdmin) {
         return { success: false, error: "El almacenamiento de Firebase no está configurado." };
     }
@@ -755,11 +730,33 @@ export async function deleteFileAction(filePath: string) {
     try {
         const bucket = storageAdmin.bucket();
         await bucket.file(filePath).delete();
-        revalidatePath('/storage');
+        revalidatePath('/storage', 'layout');
         return { success: true, message: "Archivo eliminado con éxito." };
     } catch (error) {
         console.error("Error al eliminar el archivo:", String(error));
         return { success: false, error: `No se pudo eliminar el archivo: ${String(error)}` };
+    }
+}
+
+export async function createFolderAction(folderPath: string) {
+    if (!isFirebaseConfigured || !storageAdmin) {
+        return { success: false, error: "El almacenamiento de Firebase no está configurado." };
+    }
+    
+    // In Firebase Storage, folders are created implicitly by creating a file inside them.
+    // We create a hidden placeholder file to "create" the folder.
+    const placeholderFileName = `${folderPath}/.placeholder`;
+
+    try {
+        const bucket = storageAdmin.bucket();
+        const file = bucket.file(placeholderFileName);
+        await file.save('', { contentType: 'application/octet-stream' });
+        
+        revalidatePath('/storage', 'layout');
+        return { success: true, message: `Carpeta '${folderPath}' creada con éxito.` };
+    } catch (error) {
+        console.error("Error al crear la carpeta:", String(error));
+        return { success: false, error: `No se pudo crear la carpeta: ${String(error)}` };
     }
 }
 // #endregion
