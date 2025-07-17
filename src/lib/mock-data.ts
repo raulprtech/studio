@@ -1,6 +1,7 @@
 
 
 
+
 import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
 import { mockSchemas, mockData } from './mock-data-client';
 import admin from 'firebase-admin';
@@ -37,25 +38,57 @@ async function preloadCollection(collectionId: string) {
     console.log(`Preloading complete for collection '${collectionId}'.`);
 }
 
+async function ensureDefaultCollections() {
+    if (!firestoreAdmin) return;
+    
+    const collectionsToEnsure = ['posts', 'projects'];
+
+    for (const collectionName of collectionsToEnsure) {
+        const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
+        const dataCollectionRef = firestoreAdmin.collection(collectionName);
+        
+        try {
+            const [schemaSnap, dataSnap] = await Promise.all([
+                schemaDocRef.get(),
+                dataCollectionRef.limit(1).get()
+            ]);
+
+            if (!schemaSnap.exists) {
+                console.log(`Schema for '${collectionName}' not found. Preloading...`);
+                const mockSchema = mockSchemas[collectionName];
+                if (mockSchema) {
+                    await schemaDocRef.set({
+                        definition: mockSchema.definition,
+                        icon: mockSchema.icon || null,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    });
+                }
+            }
+            
+            if (dataSnap.empty) {
+                console.log(`Collection '${collectionName}' is empty. Preloading data...`);
+                 await preloadCollection(collectionName);
+            }
+        } catch (error) {
+             console.error(`Error ensuring default collections for ${collectionName}:`, String(error));
+        }
+    }
+}
+
 
 export async function getCollectionDocuments(collectionId: string) {
-  const collectionsToPreload = ['posts', 'projects'];
-
   if (!isFirebaseConfigured || !firestoreAdmin) {
       console.warn(`Firebase is not configured. Returning empty array for collection: ${collectionId}`);
       return [];
   }
 
   try {
-      const collectionRef = firestoreAdmin.collection(collectionId);
-      let snapshot = await collectionRef.get();
+      await ensureDefaultCollections();
       
-      if (snapshot.empty && collectionsToPreload.includes(collectionId)) {
-          await preloadCollection(collectionId);
-          // Re-fetch after preloading
-          snapshot = await collectionRef.get();
-      }
-
+      const collectionRef = firestoreAdmin.collection(collectionId);
+      const snapshot = await collectionRef.get();
+      
       if (snapshot.empty) {
           return [];
       }

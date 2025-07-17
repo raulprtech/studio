@@ -2,7 +2,7 @@
 
 
 
-import { firestoreAdmin, storageAdmin, isFirebaseConfigured } from './firebase-admin';
+import { firestoreAdmin, isFirebaseConfigured } from './firebase-admin';
 import { mockSchemas, mockData } from './mock-data-client';
 import admin from 'firebase-admin';
 
@@ -39,12 +39,12 @@ async function preloadCollection(collectionId: string) {
 }
 
 
-async function ensureDefaultSchemasAndData() {
+async function ensureDefaultCollections() {
     if (!firestoreAdmin) return;
     
-    const schemasToEnsure = ['posts', 'projects'];
+    const collectionsToEnsure = ['posts', 'projects'];
 
-    for (const collectionName of schemasToEnsure) {
+    for (const collectionName of collectionsToEnsure) {
         const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
         const dataCollectionRef = firestoreAdmin.collection(collectionName);
         
@@ -72,7 +72,7 @@ async function ensureDefaultSchemasAndData() {
                  await preloadCollection(collectionName);
             }
         } catch (error) {
-             console.error(`Error ensuring default schemas/data for ${collectionName}:`, String(error));
+             console.error(`Error ensuring default collections for ${collectionName}:`, String(error));
         }
     }
 }
@@ -84,7 +84,7 @@ export async function getCollections() {
     }
 
     try {
-        await ensureDefaultSchemasAndData();
+        await ensureDefaultCollections();
 
         const collectionRefs = await firestoreAdmin.listCollections();
         const collectionIds = collectionRefs
