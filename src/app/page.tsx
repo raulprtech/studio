@@ -176,7 +176,7 @@ export default async function PortfolioPage() {
                 <CardHeader className="p-0">
                     <Image
                       src={project.coverImageUrl || "https://placehold.co/600x400.png"}
-                      alt={project.title}
+                      alt={project.title || 'Imagen del Proyecto'}
                       width={600}
                       height={400}
                       className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
@@ -184,7 +184,7 @@ export default async function PortfolioPage() {
                     />
                 </CardHeader>
                 <CardContent className="p-6 space-y-4 flex-grow">
-                  <h3 className="text-xl font-bold">{project.title}</h3>
+                  <h3 className="text-xl font-bold">{project.title || project.description || 'Proyecto sin título'}</h3>
                   <p className="text-muted-foreground text-sm">{project.description}</p>
                    <div className="flex flex-wrap gap-2">
                       {project.tags?.map((tag: string) => (
