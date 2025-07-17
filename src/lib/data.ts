@@ -145,67 +145,57 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export async function getStorageFiles() {
-    if (getMode() !== 'live' || !isFirebaseConfigured) {
+export async function getStorageFiles(pathPrefix?: string) {
+    const isLive = getMode() === 'live' && isFirebaseConfigured;
+
+    if (!isLive || !storageAdmin) {
         console.warn(`Storage is not in live mode. Returning mock files.`);
-        return mockData.storage || [];
+        return { files: mockData.storage || [], folders: ['covers', 'projects', 'articles'] };
     }
     
-    if (!storageAdmin) {
-        console.error("Storage Admin SDK not initialized. Returning empty list.");
-        return [];
-    }
-
     try {
         const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
         if (!bucketName) {
             console.error("Error: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is not set in environment variables.");
-            return [];
+            return { files: [], folders: [] };
         }
 
         const bucket = storageAdmin.bucket(bucketName);
         
-        try {
-            const [bucketExists] = await bucket.exists();
-            if (!bucketExists) {
-                console.error(`Error: The storage bucket "${bucket.name}" does not exist. Please check your Firebase Storage settings and environment variables.`);
-                return [];
-            }
-        } catch (e) {
-            console.error(`Error checking if bucket exists: ${String(e)}`);
-            return [];
+        const [bucketExists] = await bucket.exists();
+        if (!bucketExists) {
+            console.error(`Error: The storage bucket "${bucket.name}" does not exist.`);
+            return { files: [], folders: [] };
         }
 
+        const [allFiles] = await bucket.getFiles({ prefix: pathPrefix ? `${pathPrefix}/` : '', delimiter: '/' });
+        const folders = (allFiles as any).prefixes?.map((p: string) => p.slice(0, -1)) || [];
+        
+        const filePromises = allFiles
+          .filter(file => !file.name.endsWith('/'))
+          .map(async (file) => {
+            const [metadata] = await file.getMetadata();
+            const [signedUrl] = await file.getSignedUrl({
+                action: 'read',
+                expires: '01-01-2100',
+            });
+            return {
+                name: file.name,
+                type: metadata.contentType || 'application/octet-stream',
+                size: formatBytes(Number(metadata.size)),
+                date: metadata.updated,
+                url: signedUrl,
+                hint: "file icon"
+            };
+        });
+        
+        const files = await Promise.all(filePromises);
+        files.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-        const [files] = await bucket.getFiles({ maxResults: 50 });
-
-        if (files.length === 0) {
-            return [];
-        }
-
-        const fileDetails = await Promise.all(
-            files
-              .filter(file => !file.name.endsWith('/'))
-              .map(async (file) => {
-                const [metadata] = await file.getMetadata();
-                const [signedUrl] = await file.getSignedUrl({
-                    action: 'read',
-                    expires: '01-01-2100',
-                });
-                return {
-                    name: file.name,
-                    type: metadata.contentType || 'application/octet-stream',
-                    size: formatBytes(Number(metadata.size)),
-                    date: metadata.updated,
-                    url: signedUrl,
-                    hint: "file icon"
-                };
-            })
-        );
-        return fileDetails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return { files, folders };
 
     } catch (error) {
         console.error("Critical error fetching Storage files. Check your service account permissions and bucket configuration.", String(error));
-        return [];
+        return { files: [], folders: [] };
     }
 }

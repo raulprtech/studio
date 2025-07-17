@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
@@ -17,16 +18,18 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { uploadFileAction } from "@/lib/actions";
 
-export function StorageActions() {
+export function StorageActions({ currentFolder }: { currentFolder?: string }) {
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, startUploading] = useTransition();
+  const [folder, setFolder] = useState(currentFolder || "");
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    setFolder(currentFolder || "");
+  }, [currentFolder]);
   
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -34,13 +37,14 @@ export function StorageActions() {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('folder', folder);
 
     startUploading(async () => {
-      const result = await uploadFileAction(formData, 'general');
+      const result = await uploadFileAction(formData);
       if (result.success) {
         toast({ title: "Archivo Subido", description: "El archivo se ha subido con éxito." });
         setIsOpen(false);
-        router.refresh(); // Re-fetches data on the server
+        router.refresh();
       } else {
         toast({ title: "Error de Subida", description: result.error || "No se pudo subir el archivo.", variant: "destructive" });
       }
@@ -68,10 +72,20 @@ export function StorageActions() {
         <DialogHeader>
           <DialogTitle>Subir un nuevo archivo</DialogTitle>
           <DialogDescription>
-            Selecciona un archivo de tu dispositivo para subirlo al almacenamiento.
+            Selecciona un archivo y una carpeta para subirlo al almacenamiento.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+                <Label htmlFor="folder-name">Nombre de la Carpeta (opcional)</Label>
+                <Input 
+                  id="folder-name" 
+                  value={folder}
+                  onChange={(e) => setFolder(e.target.value)}
+                  placeholder="Ej: imagenes/avatars" 
+                  disabled={isUploading} 
+                />
+            </div>
             <div className="grid gap-2">
                 <Label htmlFor="file-upload">Archivo</Label>
                 <Input id="file-upload" type="file" onChange={handleFileUpload} disabled={isUploading} />

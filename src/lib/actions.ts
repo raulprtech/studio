@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
@@ -700,11 +701,9 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
 // #endregion
 
 // #region Storage Actions
-export async function uploadFileAction(formData: FormData, folder: string) {
+export async function uploadFileAction(formData: FormData) {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
-        const isCover = folder === 'covers';
-        const placeholderUrl = isCover ? 'https://placehold.co/1200x630.png' : 'https://placehold.co/800x600.png';
-        return { success: true, url: placeholderUrl };
+        return { success: true, url: 'https://placehold.co/800x600.png' };
     }
 
     if (!storageAdmin) {
@@ -712,6 +711,7 @@ export async function uploadFileAction(formData: FormData, folder: string) {
     }
 
     const file = formData.get('file') as File | null;
+    const folder = formData.get('folder') as string || 'general';
     if (!file) {
         return { success: false, error: "No se encontró ningún archivo." };
     }
