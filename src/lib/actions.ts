@@ -703,7 +703,7 @@ export async function updateDocumentAction(prevState: any, formData: FormData) {
 // #region Storage Actions
 export async function uploadFileAction(formData: FormData) {
     if (getMode() !== 'live' || !isFirebaseConfigured) {
-        return { success: true, url: 'https://placehold.co/800x600.png' };
+        return { success: true, url: 'https://placehold.co/800x600.png', error: null };
     }
 
     if (!storageAdmin) {
@@ -727,13 +727,15 @@ export async function uploadFileAction(formData: FormData) {
             metadata: { contentType: file.type },
         });
 
-        // Generate a long-lived signed URL for permanent access
         const [signedUrl] = await fileUpload.getSignedUrl({
             action: 'read',
-            expires: '01-01-2100', // A very distant future date
+            expires: '01-01-2100',
         });
 
-        return { success: true, url: signedUrl };
+        // Revalidate the storage path to show the new file immediately
+        revalidatePath('/storage', 'layout');
+
+        return { success: true, url: signedUrl, error: null };
 
     } catch (error) {
         console.error("Error al subir el archivo:", String(error));

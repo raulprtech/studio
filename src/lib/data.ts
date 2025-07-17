@@ -168,8 +168,8 @@ export async function getStorageFiles(pathPrefix?: string) {
             return { files: [], folders: [] };
         }
 
-        const [allFiles] = await bucket.getFiles({ prefix: pathPrefix ? `${pathPrefix}/` : '', delimiter: '/' });
-        const folders = (allFiles as any).prefixes?.map((p: string) => p.slice(0, -1)) || [];
+        const [allFiles, , apiResponse] = await bucket.getFiles({ prefix: pathPrefix ? `${pathPrefix}/` : '', delimiter: '/' });
+        const folders = apiResponse.prefixes?.map((p: string) => p.slice(0, -1)) || [];
         
         const filePromises = allFiles
           .filter(file => !file.name.endsWith('/'))
