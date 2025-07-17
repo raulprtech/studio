@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import React from "react"
 import { FileText, FileImage, FileAudio, Folder as FolderIcon } from "lucide-react"
 
 import {
@@ -73,7 +74,7 @@ export default async function StoragePage({ params }: { params: { folder?: strin
                 </BreadcrumbList>
             </Breadcrumb>
         </div>
-        {canEdit && currentPath && <StorageActions currentFolder={currentPath} />}
+        {canEdit && <StorageActions currentFolder={currentPath} />}
       </div>
       
       {folders.length > 0 && (
@@ -89,18 +90,15 @@ export default async function StoragePage({ params }: { params: { folder?: strin
                     </Link>
                 ))}
             </div>
-            <h2 className="text-lg font-semibold text-muted-foreground pt-4">Archivos</h2>
+            {(files.length > 0) && <h2 className="text-lg font-semibold text-muted-foreground pt-4">Archivos</h2>}
           </>
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {files.length === 0 && folders.length === 0 && (
             <div className="md:col-span-2 lg:col-span-3 xl:col-span-4 text-center text-muted-foreground py-16">
-                No hay archivos en esta carpeta.
-                 {!currentPath && (
-                  <p>Sube uno para empezar o crea una nueva carpeta al subir.</p>
-                )}
-                 {canEdit && !currentPath && <div className="mt-4"><StorageActions /></div>}
+                <p className="mb-4">No hay archivos ni carpetas aquí.</p>
+                {canEdit && <StorageActions currentFolder={currentPath} />}
             </div>
         )}
         {files.map((file) => (
