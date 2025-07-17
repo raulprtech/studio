@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useTransition, useState, useEffect } from "react";
@@ -89,7 +90,7 @@ export function FileActionItems({ file }: FileActionProps) {
 
   if (!isMounted) {
     return (
-        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" disabled>
+        <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
             <MoreVertical className="h-4 w-4" />
             <span className="sr-only">Abrir menú de archivo</span>
         </Button>
@@ -100,7 +101,7 @@ export function FileActionItems({ file }: FileActionProps) {
     <AlertDialog>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7">
+          <Button variant="ghost" size="icon" className="h-7 w-7">
             <MoreVertical className="h-4 w-4" />
             <span className="sr-only">Abrir menú de archivo</span>
           </Button>

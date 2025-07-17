@@ -26,12 +26,12 @@ import { FileActionItems } from "../components/file-action-items"
 
 function FileIcon({ fileType }: { fileType: string }) {
   if (fileType.startsWith("image/")) {
-    return <FileImage className="w-8 h-8 text-muted-foreground" />;
+    return <FileImage className="w-16 h-16 text-muted-foreground" />;
   }
   if (fileType.startsWith("audio/")) {
-    return <FileAudio className="w-8 h-8 text-muted-foreground" />;
+    return <FileAudio className="w-16 h-16 text-muted-foreground" />;
   }
-  return <FileText className="w-8 h-8 text-muted-foreground" />;
+  return <FileText className="w-16 h-16 text-muted-foreground" />;
 }
 
 export default async function StoragePage({ params }: { params: { folder?: string[] }}) {
@@ -43,7 +43,7 @@ export default async function StoragePage({ params }: { params: { folder?: strin
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center">
+      <div className="flex items-start md:items-center">
         <div className="flex-1">
           <h1 className="text-2xl font-semibold">Almacenamiento</h1>
             <Breadcrumb>
@@ -80,13 +80,13 @@ export default async function StoragePage({ params }: { params: { folder?: strin
       {folders.length > 0 && (
           <>
             <h2 className="text-lg font-semibold text-muted-foreground">Carpetas</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 {folders.map((folder) => (
-                    <Link href={`/storage/${folder}`} key={folder}>
-                        <Card className="hover:bg-muted/50 transition-colors flex flex-col items-center justify-center p-6 gap-2">
+                    <Link href={`/storage/${folder}`} key={folder} className="group">
+                        <div className="border rounded-lg p-6 flex flex-col items-center justify-center gap-2 aspect-square hover:bg-muted/50 transition-colors">
                              <FolderIcon className="w-16 h-16 text-primary" />
-                             <p className="font-medium truncate w-full text-center">{folder.split('/').pop()}</p>
-                        </Card>
+                             <p className="font-medium truncate w-full text-center text-sm">{folder.split('/').pop()}</p>
+                        </div>
                     </Link>
                 ))}
             </div>
@@ -94,37 +94,37 @@ export default async function StoragePage({ params }: { params: { folder?: strin
           </>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {files.length === 0 && folders.length === 0 && (
-            <div className="md:col-span-2 lg:col-span-3 xl:col-span-4 text-center text-muted-foreground py-16">
-                <p className="mb-4">No hay archivos ni carpetas aquí.</p>
+            <div className="col-span-full text-center text-muted-foreground py-16">
+                <p className="mb-4">Esta carpeta está vacía.</p>
                 {canEdit && <StorageActions currentFolder={currentPath} />}
             </div>
         )}
         {files.map((file) => (
           <Card key={file.name} className="relative group">
-            <CardHeader className="h-10">
-              {canEdit && (
+            {canEdit && (
+              <CardHeader className="absolute top-0 right-0 z-10 p-2">
                 <FileActionItems file={file} />
-              )}
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center p-6 pt-0">
+              </CardHeader>
+            )}
+            <CardContent className="flex flex-col items-center justify-center p-6 pt-8">
               {file.type.startsWith("image/") ? (
                 <Image
                   src={file.url}
                   alt={file.name}
                   width={400}
                   height={300}
-                  className="rounded-md aspect-[4/3] object-cover"
+                  className="rounded-md aspect-video object-cover"
                   data-ai-hint={file.hint}
                 />
               ) : (
-                <div className="flex items-center justify-center w-full h-full aspect-[4/3] bg-muted rounded-md">
+                <div className="flex items-center justify-center w-full h-full aspect-video bg-muted rounded-md">
                    <FileIcon fileType={file.type} />
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col items-start text-sm">
+            <CardFooter className="flex flex-col items-start text-sm p-4">
                 <p className="font-medium truncate w-full" title={file.name}>{file.name.split('/').pop()}</p>
                 <p className="text-muted-foreground">{file.size}</p>
             </CardFooter>
