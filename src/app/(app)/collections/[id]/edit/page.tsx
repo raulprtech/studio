@@ -6,7 +6,7 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { EditSchemaForm } from "./components/edit-schema-form"
-import { getCollectionSchema } from "@/lib/mock-data"
+import { getCollectionSchema } from "@/lib/data"
 
 export default async function EditCollectionSchemaPage({ params }: { params: { id: string } }) {
     const collectionId = params.id;

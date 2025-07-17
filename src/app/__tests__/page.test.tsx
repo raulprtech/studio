@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PortfolioPage from '@/app/page';
-import { getCollectionDocuments } from '@/lib/mock-data';
+import { getCollectionDocuments } from '@/lib/data';
 
 // Mockea la función de obtención de datos
-jest.mock('@/lib/mock-data', () => ({
+jest.mock('@/lib/data', () => ({
   getCollectionDocuments: jest.fn(),
 }));
 

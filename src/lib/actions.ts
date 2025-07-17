@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
 import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
 import { generateCollectionIdeas } from "@/ai/flows/generate-collection-ideas";
-import { getCollectionSchema } from "./mock-data";
+import { getCollectionSchema } from "./data";
 
 
 // #region AI Helper Actions

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { getCollectionDocuments } from '@/lib/mock-data';
+import { getCollectionDocuments } from '@/lib/data';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

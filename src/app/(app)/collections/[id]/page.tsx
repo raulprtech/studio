@@ -26,7 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AiSummaryButton } from "./components/ai-summary-button"
-import { getCollectionDocuments } from "@/lib/mock-data"
+import { getCollectionDocuments } from "@/lib/data"
 import { getRequiredCurrentUser } from "@/lib/auth"
 import { DeleteDocumentMenuItem, DuplicateDocumentMenuItem, EditDocumentMenuItem } from "./components/collection-action-items"
 import { AiBrainstormButton } from "./components/ai-brainstorm-button"

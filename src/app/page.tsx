@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Github, Twitter, Linkedin, Dribbble, ArrowRight, Mail, Phone, MapPin, Download, Send } from "lucide-react";
 import { PublicHeader } from "@/components/public-header";
 import { PublicFooter } from "@/components/public-footer";
-import { getCollectionDocuments } from "@/lib/mock-data";
+import { getCollectionDocuments } from "@/lib/data";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
