@@ -20,6 +20,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarGroup,
+  SidebarInset,
 } from '@/components/ui/sidebar';
 import { AppHeader } from '@/components/app-header';
 import { usePathname } from 'next/navigation';
