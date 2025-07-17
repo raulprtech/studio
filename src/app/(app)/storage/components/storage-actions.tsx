@@ -18,17 +18,17 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { uploadFileAction } from "@/lib/actions";
 
-export function StorageActions({ currentFolder }: { currentFolder?: string }) {
+export function StorageActions({ currentFolder = "" }: { currentFolder?: string }) {
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, startUploading] = useTransition();
-  const [folder, setFolder] = useState(currentFolder || "");
+  const [folder, setFolder] = useState(currentFolder);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
-    setFolder(currentFolder || "");
+    setFolder(currentFolder);
   }, [currentFolder]);
   
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +37,11 @@ export function StorageActions({ currentFolder }: { currentFolder?: string }) {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', folder);
+    
+    // Only append folder if it's not an empty string
+    if (folder) {
+        formData.append('folder', folder);
+    }
 
     startUploading(async () => {
       const result = await uploadFileAction(formData);
