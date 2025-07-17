@@ -1,7 +1,7 @@
+
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { mockData, mockSchemas } from './mock-data-client';
 import admin from 'firebase-admin';
-
 
 export async function getCollections() {
   if (!isFirebaseConfigured || !firestoreAdmin) {
@@ -16,52 +16,46 @@ export async function getCollections() {
   }
 
   try {
-    const collectionRefs = await firestoreAdmin.listCollections();
-    const collectionIds = collectionRefs
-        .map(col => col.id)
-        .filter(name => !name.startsWith('_'));
-
-    if (collectionIds.length === 0) {
-        return [];
+    // Get collections from the _schemas collection instead of listCollections()
+    const schemasSnapshot = await firestoreAdmin.collection('_schemas').get();
+    if (schemasSnapshot.empty) {
+      return [];
     }
-    
-    const promises = collectionIds.map(async (name) => {
-      try {
-        const [schemaDoc, countSnapshot] = await Promise.all([
-          firestoreAdmin!.collection('_schemas').doc(name).get(),
-          firestoreAdmin!.collection(name).count().get()
-        ]);
 
-        const schemaData = schemaDoc.data();
+    const collectionDataPromises = schemasSnapshot.docs.map(async (schemaDoc) => {
+      const collectionName = schemaDoc.id;
+      const schemaData = schemaDoc.data();
+      
+      try {
+        const countSnapshot = await firestoreAdmin.collection(collectionName).count().get();
         const schemaString = schemaData?.definition || '';
         const fieldCount = (schemaString.match(/:\s*z\./g) || []).length;
         
         return {
-          name,
+          name: collectionName,
           count: countSnapshot.data().count,
           schemaFields: fieldCount,
           lastUpdated: schemaData?.updatedAt?.toDate().toISOString() || new Date().toISOString(),
           icon: schemaData?.icon || null
         };
       } catch (error) {
-        // Handle cases where a collection might exist but its schema or count fails
+        // This might happen if a schema exists for a collection that was deleted.
+        // We'll log it but not crash the app.
         if ((error as any).code !== 5) {
-            console.error(`Error processing collection "${name}":`, String(error));
+             console.warn(`Could not get count for collection "${collectionName}": ${String(error)}`);
         }
-        return {
-          name,
-          count: 0,
-          schemaFields: 0,
-          lastUpdated: new Date().toISOString(),
-          icon: null,
-        };
+        return null; // Return null to filter it out later
       }
     });
 
-    return (await Promise.all(promises)).filter(Boolean);
+    const collections = (await Promise.all(collectionDataPromises)).filter(Boolean);
+    // Type assertion to satisfy TypeScript after filtering nulls
+    return collections as { name: string; count: number; schemaFields: number; lastUpdated: string; icon: string | null; }[];
+
   } catch (error) {
+    // This will catch errors reading the _schemas collection itself.
     if ((error as any).code !== 5) {
-        console.error("Error al obtener colecciones de Firebase:", String(error));
+        console.error("Error al obtener colecciones desde _schemas:", String(error));
     }
     return [];
   }
