@@ -1,75 +1,6 @@
-
-
-
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { mockData, mockSchemas } from './mock-data-client';
 import admin from 'firebase-admin';
-
-async function ensureDefaultCollections() {
-  if (!isFirebaseConfigured || !firestoreAdmin) {
-    return;
-  }
-  
-  try {
-    const collectionsToEnsure = ['posts', 'projects'];
-    for (const collectionName of collectionsToEnsure) {
-        const schemaDocRef = firestoreAdmin.collection('_schemas').doc(collectionName);
-        const dataCollectionRef = firestoreAdmin.collection(collectionName);
-        
-        const [schemaSnap, dataSnap] = await Promise.all([
-            schemaDocRef.get(),
-            dataCollectionRef.limit(1).get()
-        ]).catch(err => {
-            // This catch block is crucial for brand new projects where Firestore DB doesn't exist yet.
-            // The error will be "NOT_FOUND", and we can safely ignore it and let the app use mock data.
-            if (err.code !== 5) { // 5 is the gRPC code for NOT_FOUND
-                console.error(`Error checking for default collections: ${String(err)}`);
-            }
-            return [null, null];
-        });
-
-        // If schemaSnap or dataSnap is null, it means the initial check failed (likely DB not found), so we abort.
-        if (!schemaSnap || !dataSnap) continue;
-
-        if (!schemaSnap.exists) {
-            const mockSchema = mockSchemas[collectionName];
-            if (mockSchema) {
-                await schemaDocRef.set({
-                    definition: mockSchema.definition,
-                    icon: mockSchema.icon || null,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                });
-            }
-        }
-        
-        if (dataSnap.empty) {
-             const mockCollectionData = mockData[collectionName];
-            if (mockCollectionData?.length > 0) {
-                const batch = firestoreAdmin.batch();
-                mockCollectionData.forEach(doc => {
-                    const docRef = dataCollectionRef.doc(doc.id);
-                    // Create a mutable copy of the doc to avoid modifying the original mock data
-                    const dataToSet: { [key: string]: any } = { ...doc };
-                    delete dataToSet.id;
-                    // Convert JS Dates in mock data to Firestore Timestamps
-                    Object.keys(dataToSet).forEach(key => {
-                        if (dataToSet[key] instanceof Date) {
-                            dataToSet[key] = admin.firestore.Timestamp.fromDate(dataToSet[key]);
-                        }
-                    });
-                    batch.set(docRef, dataToSet);
-                });
-                await batch.commit();
-            }
-        }
-    }
-  } catch (error) {
-     if ((error as any).code !== 5) {
-        console.error(`Error ensuring default collections:`, String(error));
-     }
-  }
-}
 
 
 export async function getCollections() {
@@ -84,8 +15,6 @@ export async function getCollections() {
     }));
   }
 
-  await ensureDefaultCollections();
-
   try {
     const collectionRefs = await firestoreAdmin.listCollections();
     const collectionIds = collectionRefs
@@ -97,28 +26,42 @@ export async function getCollections() {
     }
     
     const promises = collectionIds.map(async (name) => {
-      const [schemaDoc, countSnapshot] = await Promise.all([
-        firestoreAdmin!.collection('_schemas').doc(name).get(),
-        firestoreAdmin!.collection(name).count().get()
-      ]);
+      try {
+        const [schemaDoc, countSnapshot] = await Promise.all([
+          firestoreAdmin!.collection('_schemas').doc(name).get(),
+          firestoreAdmin!.collection(name).count().get()
+        ]);
 
-      const schemaData = schemaDoc.data();
-      const schemaString = schemaData?.definition || '';
-      const fieldCount = (schemaString.match(/:\s*z\./g) || []).length;
-      
-      return {
-        name,
-        count: countSnapshot.data().count,
-        schemaFields: fieldCount,
-        lastUpdated: schemaData?.updatedAt?.toDate().toISOString() || new Date().toISOString(),
-        icon: schemaData?.icon || null
-      };
+        const schemaData = schemaDoc.data();
+        const schemaString = schemaData?.definition || '';
+        const fieldCount = (schemaString.match(/:\s*z\./g) || []).length;
+        
+        return {
+          name,
+          count: countSnapshot.data().count,
+          schemaFields: fieldCount,
+          lastUpdated: schemaData?.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+          icon: schemaData?.icon || null
+        };
+      } catch (error) {
+        // Handle cases where a collection might exist but its schema or count fails
+        if ((error as any).code !== 5) {
+            console.error(`Error processing collection "${name}":`, String(error));
+        }
+        return {
+          name,
+          count: 0,
+          schemaFields: 0,
+          lastUpdated: new Date().toISOString(),
+          icon: null,
+        };
+      }
     });
 
-    return await Promise.all(promises);
+    return (await Promise.all(promises)).filter(Boolean);
   } catch (error) {
     if ((error as any).code !== 5) {
-        console.error("Error fetching Firebase collections:", String(error));
+        console.error("Error al obtener colecciones de Firebase:", String(error));
     }
     return [];
   }
@@ -131,7 +74,6 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
     }
 
     try {
-        await ensureDefaultCollections();
         const collectionRef = firestoreAdmin.collection(collectionId);
         const snapshot = await collectionRef.get();
         if (snapshot.empty) {
@@ -139,9 +81,10 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
         }
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-        if ((error as any).code !== 5) {
+        if ((error as any).code !== 5) { // 5 is gRPC code for NOT_FOUND
             console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
         }
+        // Return empty array if collection not found or on other errors, to prevent app crash
         return [];
     }
 }
@@ -194,7 +137,9 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
       return { definition, icon: null };
   
     } catch (error) {
-      console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
+      if ((error as any).code !== 5) {
+          console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
+      }
       return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n});`, icon: null };
     }
 }
@@ -238,7 +183,9 @@ export async function getStorageFiles(pathPrefix?: string) {
 
         return { files, folders };
     } catch (error) {
-        console.error("Error fetching Storage files:", String(error));
+        if ((error as any).code !== 5) {
+            console.error("Error fetching Storage files:", String(error));
+        }
         return { files: [], folders: [] };
     }
 }
