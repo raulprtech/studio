@@ -1,18 +1,10 @@
 
-
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
-import { mockData, mockSchemas } from './mock-data-client';
 
 export async function getCollections() {
   if (!isFirebaseConfigured || !firestoreAdmin) {
-    console.warn("Firebase no está configurado. Devolviendo datos de demostración para colecciones.");
-    return Object.keys(mockSchemas).map(key => ({
-        name: key,
-        count: mockData[key]?.length || 0,
-        schemaFields: mockSchemas[key].definition.split('\n').length - 4,
-        lastUpdated: new Date().toISOString(),
-        icon: mockSchemas[key].icon || 'Database'
-    }));
+    console.error("ERROR: Firebase no está configurado. No se pueden obtener colecciones.");
+    return [];
   }
 
   try {
@@ -39,7 +31,6 @@ export async function getCollections() {
           icon: schemaData?.icon || null
         };
       } catch (error) {
-        // Ignora errores para colecciones individuales (p. ej., permisos), pero regístralos.
         console.warn(`No se pudo obtener el conteo para la colección "${collectionName}": ${String(error)}`);
         return null;
       }
@@ -48,30 +39,16 @@ export async function getCollections() {
     const collections = (await Promise.all(collectionDataPromises)).filter(Boolean);
     return collections as { name: string; count: number; schemaFields: number; lastUpdated: string; icon: string | null; }[];
 
-  } catch (error: any) {
-    // Si el error es 5 NOT_FOUND, es un problema de configuración de la API/permisos
-    if (error.code === 5) {
-        console.warn(`
-Error 'NOT_FOUND' al acceder a Firestore. Esto usualmente significa que la API de Cloud Firestore no está habilitada o que la cuenta de servicio no tiene los permisos correctos.
-Revisa los permisos en la Google Cloud Console para tu proyecto. Devolviendo datos de demostración.
-        `);
-        return Object.keys(mockSchemas).map(key => ({
-            name: key,
-            count: mockData[key]?.length || 0,
-            schemaFields: mockSchemas[key].definition.split('\n').length - 4,
-            lastUpdated: new Date().toISOString(),
-            icon: mockSchemas[key].icon || 'Database'
-        }));
-    }
-    console.error("Error al obtener colecciones desde _schemas:", String(error));
+  } catch (error) {
+    console.error("Error crítico al obtener la lista de colecciones desde _schemas:", String(error));
     return [];
   }
 }
 
 export async function getCollectionDocuments(collectionId: string): Promise<any[]> {
     if (!isFirebaseConfigured || !firestoreAdmin) {
-        console.warn(`Firebase no está configurado. Devolviendo datos de demostración para la colección: ${collectionId}`);
-        return mockData[collectionId] || [];
+        console.error(`ERROR: Firebase no está configurado. No se pueden obtener documentos para la colección: ${collectionId}`);
+        return [];
     }
 
     try {
@@ -83,20 +60,15 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error: any) {
         console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
-        // Si el error es 5 NOT_FOUND, es un problema de configuración de la API/permisos
-        if (error.code === 5) {
-            console.warn(`Devolviendo datos de demostración para la colección "${collectionId}" debido a un error de configuración de la API de Firestore.`);
-            return mockData[collectionId] || [];
-        }
         return [];
     }
 }
 
 export async function getCollectionSchema(collectionId: string): Promise<{ definition: string; icon: string | null }> {
     if (!isFirebaseConfigured || !firestoreAdmin) {
-      return mockSchemas[collectionId] || { 
+      return { 
           definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Firebase no está configurado.\n});`,
-          icon: null 
+          icon: 'AlertCircle' 
       };
     }
 
@@ -106,42 +78,12 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
           const data = schemaDoc.data();
           return { definition: data?.definition || '', icon: data?.icon || null };
       }
-
-      // Si no hay esquema, intenta inferir (si la colección existe)
-      const collectionRef = firestoreAdmin.collection(collectionId);
-      const snapshot = await collectionRef.limit(1).get();
       
-      if (snapshot.empty) {
-          return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // La colección está vacía o no existe. No se puede inferir el esquema.\n});`, icon: null };
-      }
-      
-      const firstItem = snapshot.docs[0].data();
-      const getZodType = (value: any): string => {
-          if (typeof value === 'string') {
-              if (/\S+@\S+\.\S+/.test(value)) return 'z.string().email()';
-              if (!isNaN(Date.parse(value))) return 'z.string().datetime()';
-              return 'z.string()';
-          }
-          if (typeof value === 'number') return 'z.number()';
-          if (typeof value === 'boolean') return 'z.boolean()';
-          if (value === null) return 'z.any().nullable()';
-          if (value && typeof value.toDate === 'function') return 'z.date()';
-          return 'z.any()';
-      }
-      const schemaFields = Object.entries(firstItem)
-          .map(([key, value]) => `  ${key}: ${getZodType(value)}`)
-          .join(',\n');
-      
-      const definition = `import { z } from 'zod';\n\nexport const schema = z.object({\n${schemaFields}\n});`;
-      return { definition, icon: null };
+      return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // No se encontró un esquema para esta colección en '_schemas'.\n});`, icon: 'HelpCircle' };
   
     } catch (error: any) {
       console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
-      if (error.code === 5) {
-          console.warn(`Devolviendo esquema de demostración para "${collectionId}" debido a un error de configuración de la API de Firestore.`);
-          return mockSchemas[collectionId] || { definition: `// Error de configuración de API`, icon: 'AlertCircle' };
-      }
-      return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n});`, icon: null };
+      return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n});`, icon: 'AlertTriangle' };
     }
 }
 
@@ -184,9 +126,7 @@ export async function getStorageFiles(pathPrefix?: string) {
 
         return { files, folders };
     } catch (error) {
-        if ((error as any).code !== 5) {
-            console.error("Error fetching Storage files:", String(error));
-        }
+        console.error("Error fetching Storage files:", String(error));
         return { files: [], folders: [] };
     }
 }
