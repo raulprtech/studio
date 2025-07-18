@@ -1,4 +1,5 @@
 
+
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 
 export async function getCollections() {
