@@ -1,4 +1,5 @@
 
+
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
 import { mockData, mockSchemas } from './mock-data-client';
 import admin from 'firebase-admin';
@@ -53,10 +54,13 @@ export async function getCollections() {
     return collections as { name: string; count: number; schemaFields: number; lastUpdated: string; icon: string | null; }[];
 
   } catch (error) {
-    // This will catch errors reading the _schemas collection itself.
-    if ((error as any).code !== 5) {
-        console.error("Error al obtener colecciones desde _schemas:", String(error));
+    // If we get a NOT_FOUND error here, it means the database itself doesn't exist.
+    // In this case, we fall back to demo data.
+    if ((error as any).code === 5) {
+      console.warn("Error 5 NOT_FOUND al obtener _schemas. La base de datos de Firestore probablemente no está creada. Devolviendo colecciones de demostración.");
+      return getCollections(); // Re-call to get mock data
     }
+    console.error("Error al obtener colecciones desde _schemas:", String(error));
     return [];
   }
 }
@@ -75,10 +79,15 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
         }
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-        if ((error as any).code !== 5) { // 5 is gRPC code for NOT_FOUND
-            console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
+        // If the database doesn't exist, Firestore throws a 5 NOT_FOUND error.
+        // In this specific case, we fall back to mock data.
+        if ((error as any).code === 5) {
+            console.warn(`Error 5 NOT_FOUND para la colección "${collectionId}". La base de datos de Firestore probablemente no está creada. Devolviendo datos de demostración.`);
+            return mockData[collectionId] || [];
         }
-        // Return empty array if collection not found or on other errors, to prevent app crash
+        
+        console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
+        // Return empty array for other errors to prevent app crash
         return [];
     }
 }
@@ -131,9 +140,11 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
       return { definition, icon: null };
   
     } catch (error) {
-      if ((error as any).code !== 5) {
-          console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
+      if ((error as any).code === 5) {
+          console.warn(`Error 5 NOT_FOUND para el esquema "${collectionId}". La base de datos de Firestore probablemente no está creada. Devolviendo esquema de demostración.`);
+          return mockSchemas[collectionId] || { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Error: Base de datos no encontrada.\n});`, icon: null };
       }
+      console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
       return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n});`, icon: null };
     }
 }
