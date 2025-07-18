@@ -1,6 +1,7 @@
 
 
 
+
 "use server";
 
 import { generateSchemaSuggestion } from "@/ai/flows/generate-schema-suggestion";
@@ -12,7 +13,7 @@ import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
 import { generateAnalyticsAdvice, type AnalyticsAdviceInput } from "@/ai/flows/generate-analytics-advice";
 import { generateCollectionIdeas } from "@/ai/flows/generate-collection-ideas";
-import { getCollectionSchema } from "./data";
+import { getCollectionSchema, getCollections } from "./data";
 
 
 // #region AI Helper Actions
@@ -757,6 +758,59 @@ export async function createFolderAction(folderPath: string) {
     } catch (error) {
         console.error("Error al crear la carpeta:", String(error));
         return { success: false, error: `No se pudo crear la carpeta: ${String(error)}` };
+    }
+}
+// #endregion
+
+// #region Debug Actions
+export async function checkFirestoreConnectionAction() {
+  if (!isFirebaseConfigured) {
+    return { success: false, message: 'Firebase Admin SDK no está configurado. Revisa tus variables de entorno.', code: 'sdk-not-configured' };
+  }
+  if (!firestoreAdmin) {
+    return { success: false, message: 'La instancia de Firestore Admin no está disponible.', code: 'firestore-not-initialized' };
+  }
+
+  try {
+    // Perform a simple read operation to check connectivity and permissions
+    await firestoreAdmin.collection('_internal_test').doc('connection_check').get();
+    return { success: true, message: 'La conexión con Firestore se ha establecido correctamente.', code: 'ok' };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Falló la operación de lectura en Firestore: ${error.message}`,
+      code: error.code || 'unknown-error',
+    };
+  }
+}
+
+export async function getCollectionsForDebugAction() {
+    const logs: { message: string, type: 'info' | 'success' | 'error' }[] = [];
+    
+    const addLog = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+        logs.push({ message, type });
+    };
+
+    addLog('Iniciando getCollectionsForDebugAction...');
+    if (!isFirebaseConfigured) {
+        addLog('isFirebaseConfigured es false.', 'error');
+        return { success: false, collections: null, logs };
+    }
+    addLog('isFirebaseConfigured es true.', 'success');
+
+    if (!firestoreAdmin) {
+        addLog('firestoreAdmin es nulo.', 'error');
+        return { success: false, collections: null, logs };
+    }
+    addLog('firestoreAdmin está inicializado.', 'success');
+    
+    try {
+        const collections = await getCollections();
+        addLog(`getCollections devolvió ${collections.length} colecciones.`, 'success');
+        return { success: true, collections, logs };
+    } catch (error: any) {
+        addLog(`Error al llamar a getCollections: ${error.message}`, 'error');
+        return { success: false, collections: null, logs };
     }
 }
 // #endregion

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from 'react';
@@ -9,6 +10,7 @@ import {
   Database,
   Folder,
   Settings,
+  Bug,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -116,14 +118,25 @@ export function AppLayoutClient({ children, user, collections }: { children: Rea
               </SidebarMenuButton>
             </SidebarMenuItem>
             {isAdmin && (
-              <SidebarMenuItem>
-                <SidebarMenuButton href="/settings" asChild isActive={isActive('/settings')}>
-                  <Link href="/settings">
-                    <Settings />
-                    <span>Configuración</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+               <SidebarGroup>
+                <SidebarGroupLabel>Configuración</SidebarGroupLabel>
+                <SidebarMenuItem>
+                    <SidebarMenuButton href="/settings" asChild isActive={isActive('/settings')}>
+                        <Link href="/settings">
+                        <Settings />
+                        <span>General</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton href="/debug" asChild isActive={isActive('/debug')}>
+                        <Link href="/debug">
+                        <Bug />
+                        <span>Depuración</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarGroup>
             )}
           </SidebarMenu>
         </SidebarContent>
