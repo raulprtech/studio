@@ -1,23 +1,13 @@
 
-
 import { firestoreAdmin, isFirebaseConfigured, storageAdmin } from './firebase-admin';
-import { mockData, mockSchemas } from './mock-data-client';
-import admin from 'firebase-admin';
 
 export async function getCollections() {
   if (!isFirebaseConfigured || !firestoreAdmin) {
-    console.warn("Firebase no está configurado. Devolviendo colecciones de demostración.");
-    return Object.keys(mockSchemas).map(name => ({
-        name,
-        count: mockData[name]?.length || 0,
-        schemaFields: (mockSchemas[name].definition.match(/:\s*z\./g) || []).length,
-        lastUpdated: new Date().toISOString(),
-        icon: mockSchemas[name].icon || null
-    }));
+    console.warn("Firebase no está configurado. No se pueden obtener colecciones.");
+    return [];
   }
 
   try {
-    // Get collections from the _schemas collection instead of listCollections()
     const schemasSnapshot = await firestoreAdmin.collection('_schemas').get();
     if (schemasSnapshot.empty) {
       return [];
@@ -40,26 +30,17 @@ export async function getCollections() {
           icon: schemaData?.icon || null
         };
       } catch (error) {
-        // This might happen if a schema exists for a collection that was deleted.
-        // We'll log it but not crash the app.
         if ((error as any).code !== 5) {
              console.warn(`Could not get count for collection "${collectionName}": ${String(error)}`);
         }
-        return null; // Return null to filter it out later
+        return null;
       }
     });
 
     const collections = (await Promise.all(collectionDataPromises)).filter(Boolean);
-    // Type assertion to satisfy TypeScript after filtering nulls
     return collections as { name: string; count: number; schemaFields: number; lastUpdated: string; icon: string | null; }[];
 
   } catch (error) {
-    // If we get a NOT_FOUND error here, it means the database itself doesn't exist.
-    // In this case, we fall back to demo data.
-    if ((error as any).code === 5) {
-      console.warn("Error 5 NOT_FOUND al obtener _schemas. La base de datos de Firestore probablemente no está creada. Devolviendo colecciones de demostración.");
-      return getCollections(); // Re-call to get mock data
-    }
     console.error("Error al obtener colecciones desde _schemas:", String(error));
     return [];
   }
@@ -67,8 +48,8 @@ export async function getCollections() {
 
 export async function getCollectionDocuments(collectionId: string): Promise<any[]> {
     if (!isFirebaseConfigured || !firestoreAdmin) {
-        console.warn(`Firebase no está configurado. Devolviendo datos de demostración para la colección: ${collectionId}`);
-        return mockData[collectionId] || [];
+        console.warn(`Firebase no está configurado. No se pueden obtener documentos para la colección: ${collectionId}`);
+        return [];
     }
 
     try {
@@ -79,29 +60,17 @@ export async function getCollectionDocuments(collectionId: string): Promise<any[
         }
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-        // If the database doesn't exist, Firestore throws a 5 NOT_FOUND error.
-        // In this specific case, we fall back to mock data.
-        if ((error as any).code === 5) {
-            console.warn(`Error 5 NOT_FOUND para la colección "${collectionId}". La base de datos de Firestore probablemente no está creada. Devolviendo datos de demostración.`);
-            return mockData[collectionId] || [];
-        }
-        
         console.error(`Error al obtener documentos para la colección "${collectionId}":`, String(error));
-        // Return empty array for other errors to prevent app crash
         return [];
     }
 }
 
 export async function getCollectionSchema(collectionId: string): Promise<{ definition: string; icon: string | null }> {
     if (!isFirebaseConfigured || !firestoreAdmin) {
-        const mockSchema = mockSchemas[collectionId];
-        if (mockSchema) {
-            return { definition: mockSchema.definition, icon: mockSchema.icon };
-        }
-        return { 
-            definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Firebase no está configurado.\n});`,
-            icon: null 
-        };
+      return { 
+          definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Firebase no está configurado.\n});`,
+          icon: null 
+      };
     }
 
     try {
@@ -111,7 +80,6 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
           return { definition: data?.definition || '', icon: data?.icon || null };
       }
 
-      // Fallback a la inferencia si el esquema no existe
       const collectionRef = firestoreAdmin.collection(collectionId);
       const snapshot = await collectionRef.limit(1).get();
       
@@ -140,10 +108,6 @@ export async function getCollectionSchema(collectionId: string): Promise<{ defin
       return { definition, icon: null };
   
     } catch (error) {
-      if ((error as any).code === 5) {
-          console.warn(`Error 5 NOT_FOUND para el esquema "${collectionId}". La base de datos de Firestore probablemente no está creada. Devolviendo esquema de demostración.`);
-          return mockSchemas[collectionId] || { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Error: Base de datos no encontrada.\n});`, icon: null };
-      }
       console.error(`Error al obtener el esquema de la colección para "${collectionId}":`, String(error));
       return { definition: `import { z } from 'zod';\n\nexport const schema = z.object({\n  // Ocurrió un error al obtener el esquema.\n});`, icon: null };
     }
