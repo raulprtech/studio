@@ -23,6 +23,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarInset,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { AppHeader } from '@/components/app-header';
 import { usePathname } from 'next/navigation';
