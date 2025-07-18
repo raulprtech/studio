@@ -11,13 +11,12 @@ let storageAdmin: Storage | undefined;
 const serviceAccount = {
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    // The private key must be formatted correctly before passing to the SDK.
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
 };
 
 const hasCredentials = !!(serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey);
+const isFirebaseConfigured = admin.apps.length > 0 && hasCredentials;
 
-// Initialize Firebase only if it hasn't been initialized yet and credentials are provided
 if (!admin.apps.length && hasCredentials) {
     try {
         admin.initializeApp({
@@ -25,20 +24,19 @@ if (!admin.apps.length && hasCredentials) {
             storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
         });
         console.log('Firebase Admin SDK initialized successfully.');
+        firestoreAdmin = admin.firestore();
+        authAdmin = admin.auth();
+        storageAdmin = admin.storage();
     } catch (error: any) {
-        console.error('Firebase Admin SDK Initialization Error:', error.message);
+        console.error('Firebase Admin SDK Initialization Error:', error.stack);
     }
-}
-
-const isFirebaseConfigured = admin.apps.length > 0 && hasCredentials;
-
-if (isFirebaseConfigured) {
+} else if (admin.apps.length && hasCredentials) {
+    // If initialized, just get the services
     firestoreAdmin = admin.firestore();
     authAdmin = admin.auth();
     storageAdmin = admin.storage();
 } else if (!hasCredentials) {
-    console.warn('Firebase Admin credentials not provided in .env.local. App will default to demo mode.');
+    console.warn('Firebase Admin credentials not provided in .env.local. Some features will be disabled.');
 }
-
 
 export { firestoreAdmin, authAdmin, storageAdmin, isFirebaseConfigured };
