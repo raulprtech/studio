@@ -32,14 +32,21 @@ export async function getCollections() {
         };
       } catch (error) {
         console.warn(`No se pudo obtener el conteo para la colección "${collectionName}": ${String(error)}`);
-        return null;
+        // Return a representation of the collection even if count fails
+        return {
+          name: collectionName,
+          count: 0,
+          schemaFields: 0,
+          lastUpdated: schemaData?.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+          icon: schemaData?.icon || null
+        };
       }
     });
 
     const collections = (await Promise.all(collectionDataPromises)).filter(Boolean);
     return collections as { name: string; count: number; schemaFields: number; lastUpdated: string; icon: string | null; }[];
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error crítico al obtener la lista de colecciones desde _schemas:", String(error));
     return [];
   }

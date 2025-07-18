@@ -9,23 +9,23 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import admin from 'firebase-admin';
 
-// This function checks if Firestore has been initialized by trying a simple read.
-async function getFirestoreStatus(): Promise<{ ready: boolean, permissionError: boolean }> {
-  if (!isFirebaseConfigured) return { ready: false, permissionError: false };
-  try {
-    // Attempt a simple, low-cost read operation.
-    await admin.firestore().collection('_internal_test').limit(1).get();
-    return { ready: true, permissionError: false };
-  } catch (error: any) {
-    // A '5 NOT_FOUND' error specifically indicates the database hasn't been created or there's a permission issue with the API.
-    if (error.code === 5) {
-        // This is a permission/API enablement issue, not that the DB doesn't exist.
-        return { ready: false, permissionError: true };
+async function getFirestoreStatus(): Promise<{ ready: boolean; permissionError: boolean }> {
+    if (!isFirebaseConfigured) {
+        return { ready: false, permissionError: false };
     }
-     // For other errors, we might not be sure if it's a creation problem or something else.
-    return { ready: false, permissionError: false };
-  }
+    try {
+        await admin.firestore().collection('_schemas').limit(1).get();
+        return { ready: true, permissionError: false };
+    } catch (error: any) {
+        if (error.code === 5) {
+            console.error("Firestore API Permission/Not-Enabled Error Detected. Code: 5 NOT_FOUND.", error.message);
+            return { ready: false, permissionError: true };
+        }
+        console.error("An unexpected error occurred while checking Firestore status.", error);
+        return { ready: false, permissionError: false };
+    }
 }
+
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getRequiredCurrentUser();
@@ -34,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <AppLayoutClient user={user} collections={collections}>
-      {!firestoreStatus.ready && isFirebaseConfigured && (
+       {!firestoreStatus.ready && isFirebaseConfigured && (
           <Alert variant="destructive" className="m-4">
               <AlertCircle className="h-4 w-4" />
               {firestoreStatus.permissionError ? (
