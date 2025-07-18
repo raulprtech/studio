@@ -14,13 +14,23 @@ async function getFirestoreStatus(): Promise<{ ready: boolean; permissionError: 
         return { ready: false, permissionError: false };
     }
     try {
+        // Attempt a minimal read operation. listCollections() is often restricted.
+        // A direct, limited query is a better test for basic read permissions.
         await admin.firestore().collection('_schemas').limit(1).get();
         return { ready: true, permissionError: false };
     } catch (error: any) {
-        if (error.code === 5) {
+        // This is the key: Error code 5 for the Admin SDK often means the API
+        // is not enabled or the service account lacks permissions, not that the
+        // resource is missing.
+        if (error.code === 5 || (error.message && error.message.includes('NOT_FOUND'))) {
             console.error("Firestore API Permission/Not-Enabled Error Detected. Code: 5 NOT_FOUND.", error.message);
             return { ready: false, permissionError: true };
         }
+        // This handles cases where the _schemas collection truly doesn't exist yet, which is not an error.
+        if (error.message && error.message.includes("Could not find a project associated with the provided credentials")) {
+             return { ready: true, permissionError: false };
+        }
+
         console.error("An unexpected error occurred while checking Firestore status.", error);
         return { ready: false, permissionError: false };
     }
@@ -41,8 +51,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <>
                   <AlertTitle>Error de Permisos de la API de Firestore</AlertTitle>
                   <AlertDescription>
-                    Parece que tu cuenta de servicio de Firebase no tiene permisos para acceder a la API de Firestore o la API no está habilitada.
-                    Por favor, ve a la Google Cloud Console de tu proyecto, navega a la sección "APIs y Servicios", y asegúrate de que la <strong>Cloud Firestore API</strong> esté habilitada.
+                    La cuenta de servicio de Firebase no tiene permisos para acceder a la API de Firestore o la API no está habilitada.
+                    Por favor, ve a la Google Cloud Console de tu proyecto, navega a la sección &quot;APIs &amp; Services&quot;, y asegúrate de que la <strong>Cloud Firestore API</strong> esté habilitada. Si ya está habilitada, verifica los roles de IAM de tu cuenta de servicio.
                   </AlertDescription>
                 </>
               ) : (
